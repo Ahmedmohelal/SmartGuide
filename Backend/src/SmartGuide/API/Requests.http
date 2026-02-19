@@ -1,0 +1,27 @@
+@baseUrl="https://localhost:7269"
+
+### Get all requests
+POST {{baseUrl}}/api/register
+{
+
+}
+###
+### Register a new user
+POST https://localhost:7269/api/register
+Content-Type: application/json
+
+{
+  "FirstName": "Sawsan",
+  "LastName": "Elsebaey",
+  "UserName": "sawsan123",
+  "Email": "sawsan@example.com",
+  "Password": "123456"
+}
+
+### Login
+POST https://localhost:7269/api/login
+Content-Type: application/json
+{
+   "Email": "Ahmed8@example.com",
+  "Password": "123456Sa@",
+}
