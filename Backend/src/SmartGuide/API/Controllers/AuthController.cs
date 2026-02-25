@@ -54,6 +54,19 @@ namespace API.Controllers
 
         }
 
+        [HttpPost("refreshtoken")]
+        public async Task<IActionResult> RefreshTokenAsync([FromBody] RefreshTokenRequestDto model)
+        {
+            if (!ModelState.IsValid || string.IsNullOrWhiteSpace(model.RefreshToken))
+                return BadRequest(new { errorCode = "InvalidRequest", errorMessage = "Refresh token is required." });
+
+            var result = await _authService.RefreshTokenAsync(model.RefreshToken);
+
+            if (!result.IsSuccess)
+                return Unauthorized(new { result.ErrorCode, result.ErrorMessage });
+
+            return Ok(result.Auth);
+        }
 
         [HttpPost("addRole")]
         public async Task<IActionResult> AddRoleAsync([FromBody] AddRoleDto model)

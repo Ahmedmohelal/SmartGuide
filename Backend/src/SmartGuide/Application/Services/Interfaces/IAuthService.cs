@@ -10,9 +10,8 @@ namespace Application.Services.Interfaces
         public Task<AuthDto> RegisterAsync(RegisterDto model);
         public Task<AuthDto> GetTokenAsync(TokenRequestDto model);
 
-        public  Task<string> AddRoleAsync(AddRoleDto model);
+        public Task<string> AddRoleAsync(AddRoleDto model);
 
-
-
+        public Task<AuthRefreshResult> RefreshTokenAsync(string refreshToken);
     }
 }

@@ -67,7 +67,7 @@ namespace Infrastructure.Services.Identity
         }
 
 
-        public async Task<User> FindByEmailAsync(string email)
+        public async Task<User?> FindByEmailAsync(string email)
         {
             var applicationUser = await _userManager.FindByEmailAsync(email);
             if (applicationUser == null) return null;
@@ -77,14 +77,27 @@ namespace Infrastructure.Services.Identity
                 Id = applicationUser.Id,
                 FirstName = applicationUser.FirstName,
                 LastName = applicationUser.LastName,
-                Email = applicationUser.Email,
-                UserName = applicationUser.UserName           
-                
+                Email = applicationUser.Email!,
+                UserName = applicationUser.UserName!
             };
-
         }
 
-        public async Task<User> FindByUserNameAsync(string userName)
+        public async Task<User?> FindByIdAsync(string userId)
+        {
+            var applicationUser = await _userManager.FindByIdAsync(userId);
+            if (applicationUser == null) return null;
+
+            return new User
+            {
+                Id = applicationUser.Id,
+                FirstName = applicationUser.FirstName,
+                LastName = applicationUser.LastName,
+                Email = applicationUser.Email!,
+                UserName = applicationUser.UserName!
+            };
+        }
+
+        public async Task<User?> FindByUserNameAsync(string userName)
         {
             var applicationUser = await _userManager.FindByNameAsync(userName);
             if (applicationUser == null) return null;
@@ -94,9 +107,8 @@ namespace Infrastructure.Services.Identity
                 Id = applicationUser.Id,
                 FirstName = applicationUser.FirstName,
                 LastName = applicationUser.LastName,
-                Email = applicationUser.Email,
-                UserName = applicationUser.UserName
-
+                Email = applicationUser.Email!,
+                UserName = applicationUser.UserName!
             };
         }
 

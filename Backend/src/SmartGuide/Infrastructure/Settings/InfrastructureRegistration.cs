@@ -14,11 +14,11 @@ namespace Infrastructure.Settings
 {
     public static class InfrastructureRegistration
     {
-        public static IServiceCollection InfrastructureConfiguration(this IServiceCollection services,IConfiguration configuration)
+        public static IServiceCollection InfrastructureConfiguration(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
-                    configuration.GetConnectionString("DefaultConnection")));
+                    configuration.GetConnectionString("AhmedDefaultConnection")));
 
             services.AddIdentity<ApplicationUser, IdentityRole>(options =>
             {
@@ -32,28 +32,29 @@ namespace Infrastructure.Settings
             services.Configure<JWT>(configuration.GetSection("JWT"));
 
             var JWT = configuration.GetSection("JWT");
-             services.AddAuthentication(
-                options =>
-                {
-                    options.DefaultAuthenticateScheme=JwtBearerDefaults.AuthenticationScheme;
-                    options.DefaultChallengeScheme=JwtBearerDefaults.AuthenticationScheme;
-                }).AddJwtBearer(op=>
+            services.AddAuthentication(
+               options =>
+               {
+                   options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                   options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+               }).AddJwtBearer(op =>
 
-                    op.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
-                    {
-                        ValidateIssuer = true,
-                        ValidateAudience=true,
-                        ValidateIssuerSigningKey = true,
-                        ValidateLifetime=true,
-                        ValidIssuer = JWT["Issuer"],
-                        ValidAudience= JWT["Audience"],
-                        IssuerSigningKey = new SymmetricSecurityKey(
-                            System.Text.Encoding.UTF8.GetBytes(JWT["Key"]!)),
-                        ClockSkew = TimeSpan.Zero
-                    });
+                   op.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+                   {
+                       ValidateIssuer = true,
+                       ValidateAudience = true,
+                       ValidateIssuerSigningKey = true,
+                       ValidateLifetime = true,
+                       ValidIssuer = JWT["Issuer"],
+                       ValidAudience = JWT["Audience"],
+                       IssuerSigningKey = new SymmetricSecurityKey(
+                           System.Text.Encoding.UTF8.GetBytes(JWT["Key"]!)),
+                       ClockSkew = TimeSpan.Zero
+                   });
 
             services.AddScoped<IUserService, UserServiceAdapter>();
-             services.AddScoped<ITokenService, TokenService>();
+            services.AddScoped<ITokenService, TokenService>();
+            services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 
             return services;
         }

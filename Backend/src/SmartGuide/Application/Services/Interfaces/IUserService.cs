@@ -7,13 +7,15 @@ namespace Application.Services.Interfaces
 {
     public interface IUserService
     {
-        public Task<User> FindByEmailAsync(string email);
+        public Task<User?> FindByEmailAsync(string email);
 
-        public Task<User> FindByUserNameAsync(string userName);
+        public Task<User?> FindByUserNameAsync(string userName);
+
+        public Task<User?> FindByIdAsync(string userId);
 
         public Task<(User user, string errors)> CreateAsync(User user, string password);
 
-        public Task<string>  AddToRoleAsync(User user, string role);
+        public Task<string> AddToRoleAsync(User user, string role);
 
         public Task<bool> CheckPasswordAsync(User user, string password);
 

@@ -14,7 +14,6 @@ namespace Application.Settings
         {
             services.AddScoped<IAuthService, AuthService>();
 
-
             return services;
         }
 
