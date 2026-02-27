@@ -1,4 +1,4 @@
-﻿using Application.DTOs;
+using Application.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -15,14 +15,19 @@ namespace Application.Services.Interfaces
 
         public Task<(User user, string errors)> CreateAsync(User user, string password);
 
+        public Task<(User? user, string? errors)> CreateExternalUserAsync(User user);
+
         public Task<string> AddToRoleAsync(User user, string role);
 
         public Task<bool> CheckPasswordAsync(User user, string password);
-
         public Task<List<string>> GetRolesAsync(User user);
 
         public Task<bool> RoleExistsAsync(string role);
 
         public Task<bool> IsInRoleAsync(User user, string role);
+
+        public Task<string?> GeneratePasswordResetTokenAsync(User user);
+
+        public Task<string> ResetPasswordAsync(User user, string token, string newPassword);
     }
 }

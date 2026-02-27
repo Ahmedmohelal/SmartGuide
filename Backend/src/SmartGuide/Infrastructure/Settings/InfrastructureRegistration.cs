@@ -1,6 +1,8 @@
-﻿using Application.Services.Interfaces;
+using Application.Services.Interfaces;
 using Infrastructure.Data;
 using Infrastructure.Identity;
+using Infrastructure.Services.Auth;
+using Infrastructure.Services.Email;
 using Infrastructure.Services.Identity;
 using Infrastructure.Services.Token;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -18,7 +20,7 @@ namespace Infrastructure.Settings
         {
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
-                    configuration.GetConnectionString("AhmedDefaultConnection")));
+                    configuration.GetConnectionString("DefaultConnection")));
 
             services.AddIdentity<ApplicationUser, IdentityRole>(options =>
             {
@@ -52,9 +54,14 @@ namespace Infrastructure.Settings
                        ClockSkew = TimeSpan.Zero
                    });
 
+            services.Configure<GoogleAuthOptions>(configuration.GetSection(GoogleAuthOptions.SectionName));
+            services.Configure<EmailSettings>(configuration.GetSection(EmailSettings.SectionName));
+
             services.AddScoped<IUserService, UserServiceAdapter>();
             services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IRefreshTokenService, RefreshTokenService>();
+            services.AddScoped<IGoogleAuthService, GoogleAuthService>();
+            services.AddScoped<IEmailService, EmailService>();
 
             return services;
         }

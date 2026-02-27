@@ -1,4 +1,4 @@
-﻿using Application.DTOs;
+using Application.DTOs;
 using Application.Services.Interfaces;
 using Application.Services.UseCases;
 using Microsoft.AspNetCore.Authorization;
@@ -80,8 +80,53 @@ namespace API.Controllers
                 return BadRequest(result);
 
             return Ok(new { result, model });
-
         }
 
+        [HttpPost("forgot-password")]
+        [AllowAnonymous]
+        public async Task<ActionResult<OperationResultDto>> ForgotPasswordAsync([FromBody] ForgotPasswordDto model)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var result = await _authService.ForgotPasswordAsync(model);
+
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+       
+        [HttpPost("reset-password")]
+        [AllowAnonymous]
+        public async Task<ActionResult<OperationResultDto>> ResetPasswordAsync([FromBody] ResetPasswordDto model)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var result = await _authService.ResetPasswordAsync(model);
+
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+      
+        [HttpPost("google-login")]
+        [AllowAnonymous]
+        public async Task<ActionResult<AuthResponseDto>> GoogleLoginAsync([FromBody] GoogleLoginRequestDto model)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var result = await _authService.GoogleLoginAsync(model.IdToken);
+
+            if (!result.IsSuccess)
+                return BadRequest(result.Message);
+
+            return Ok(result.Auth);
+        }
     }
 }

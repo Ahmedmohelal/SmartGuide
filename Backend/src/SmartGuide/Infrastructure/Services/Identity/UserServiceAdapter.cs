@@ -1,10 +1,8 @@
-﻿using Application.DTOs;
+using Application.DTOs;
 using Application.Services.Interfaces;
 using Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Services.Identity
 {
@@ -12,11 +10,16 @@ namespace Infrastructure.Services.Identity
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly ILogger<UserServiceAdapter> _logger;
 
-        public UserServiceAdapter(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
+        public UserServiceAdapter(
+            UserManager<ApplicationUser> userManager,
+            RoleManager<IdentityRole> roleManager,
+            ILogger<UserServiceAdapter> logger)
         {
             _userManager = userManager;
             _roleManager = roleManager;
+            _logger = logger;
         }
 
         public async Task<string> AddToRoleAsync(User user, string role)
@@ -66,6 +69,36 @@ namespace Infrastructure.Services.Identity
             return (user, null);
         }
 
+        public async Task<(User? user, string? errors)> CreateExternalUserAsync(User user)
+        {
+            var applicationUser = new ApplicationUser
+            {
+                FirstName = user.FirstName ?? string.Empty,
+                LastName = user.LastName ?? string.Empty,
+                Email = user.Email,
+                UserName = user.UserName,
+                EmailConfirmed = true
+            };
+
+            var password = Convert.ToBase64String(Guid.NewGuid().ToByteArray()) + "Aa1!";
+            var result = await _userManager.CreateAsync(applicationUser, password);
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                _logger.LogWarning("External user creation failed for {Email}: {Errors}", user.Email, errors);
+                return (null, errors);
+            }
+
+            var createdUser = new User
+            {
+                Id = applicationUser.Id,
+                FirstName = applicationUser.FirstName,
+                LastName = applicationUser.LastName,
+                Email = applicationUser.Email!,
+                UserName = applicationUser.UserName!
+            };
+            return (createdUser, null);
+        }
 
         public async Task<User?> FindByEmailAsync(string email)
         {
@@ -138,6 +171,29 @@ namespace Infrastructure.Services.Identity
             var applicationUser = await _userManager.FindByNameAsync(user.UserName);
             if (applicationUser == null) return false;
             return await _userManager.IsInRoleAsync(applicationUser, role);
+        }
+
+        public async Task<string?> GeneratePasswordResetTokenAsync(User user)
+        {
+            var applicationUser = await _userManager.FindByNameAsync(user.UserName);
+            if (applicationUser == null) return null;
+
+            return await _userManager.GeneratePasswordResetTokenAsync(applicationUser);
+        }
+
+        public async Task<string> ResetPasswordAsync(User user, string token, string newPassword)
+        {
+            var applicationUser = await _userManager.FindByNameAsync(user.UserName);
+            if (applicationUser == null) return "User not found.";
+
+            var result = await _userManager.ResetPasswordAsync(applicationUser, token, newPassword);
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                return errors;
+            }
+
+            return string.Empty;
         }
     }
 }

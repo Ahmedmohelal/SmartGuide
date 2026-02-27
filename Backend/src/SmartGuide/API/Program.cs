@@ -1,6 +1,8 @@
+using Application.Services.Interfaces;
 using Application.Settings;
 using Infrastructure.Data;
 using Infrastructure.Identity;
+using Infrastructure.Services.Email;
 using Infrastructure.Settings;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -22,6 +24,7 @@ builder.Services.AddCors(options =>
 builder.Services.InfrastructureConfiguration(builder.Configuration);
 builder.Services.ApplicationConfiguration(builder.Configuration);
 
+//builder.Services.AddScoped<IEmailService, EmailService>();
 
 
 
