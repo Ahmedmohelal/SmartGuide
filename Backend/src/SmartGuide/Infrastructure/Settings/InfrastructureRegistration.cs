@@ -20,7 +20,7 @@ namespace Infrastructure.Settings
         {
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
-                    configuration.GetConnectionString("DefaultConnection"),
+                    configuration.GetConnectionString("AhmedDefaultConnection"),
                         sqlOptions => sqlOptions.EnableRetryOnFailure()
 ));
 

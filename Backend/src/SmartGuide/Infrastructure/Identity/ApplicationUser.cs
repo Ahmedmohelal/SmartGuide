@@ -10,5 +10,6 @@ namespace Infrastructure.Identity
         public string FirstName { get; set; } = null!;
         [Required]
         public string LastName { get; set; } = null!;
+        public string Country { get; set; }
     }
 }

@@ -47,7 +47,8 @@ namespace Application.Services.UseCases
                 FirstName = model.FirstName,
                 LastName = model.LastName,
                 UserName = model.UserName,
-                Email = model.Email
+                Email = model.Email,
+                Country = model.Country
             };
 
 
@@ -74,6 +75,7 @@ namespace Application.Services.UseCases
                 IsAuthanticated = true,
                 UserName = newUser.UserName,
                 Email = newUser.Email,
+                Country = newUser.Country,
                 Token = token,
                 RefreshToken = refreshToken,
                 ExpiresOn = expires,
@@ -101,6 +103,7 @@ namespace Application.Services.UseCases
                 IsAuthanticated = true,
                 Email = user.Email,
                 UserName = user.UserName,
+                Country = user.Country,
                 Token = token,
                 RefreshToken = refreshToken,
                 ExpiresOn = expires,
@@ -125,6 +128,7 @@ namespace Application.Services.UseCases
                 IsAuthanticated = true,
                 Email = result.User.Email,
                 UserName = result.User.UserName,
+                Country = result.User.Country,
                 Token = token,
                 RefreshToken = result.NewPlainToken,
                 ExpiresOn = expires,

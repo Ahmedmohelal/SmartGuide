@@ -45,14 +45,15 @@ namespace Infrastructure.Services.Identity
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 Email = user.Email,
-                UserName = user.UserName
+                UserName = user.UserName,
+                Country = user.Country
             };
 
             var result = await _userManager.CreateAsync(applicationUser, password);
             if (!result.Succeeded)
             {
                 var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                return (null, errors);
+                return (null, errors)!;
             }
 
             user = new User
@@ -111,7 +112,8 @@ namespace Infrastructure.Services.Identity
                 FirstName = applicationUser.FirstName,
                 LastName = applicationUser.LastName,
                 Email = applicationUser.Email!,
-                UserName = applicationUser.UserName!
+                UserName = applicationUser.UserName!,
+                Country = applicationUser.Country
             };
         }
 
@@ -126,6 +128,7 @@ namespace Infrastructure.Services.Identity
                 FirstName = applicationUser.FirstName,
                 LastName = applicationUser.LastName,
                 Email = applicationUser.Email!,
+                Country = applicationUser.Country,
                 UserName = applicationUser.UserName!
             };
         }
