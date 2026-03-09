@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
@@ -29,6 +30,15 @@ namespace Application.DTOs
         [Required]
         [Compare("Password", ErrorMessage = "Password and Confirm Password must match")]
         public string ConfirmPassword { get; set; }
+
+        [Required(ErrorMessage = "Role is required.")]
+        public string Role { get; set; }
+
+        [Display(Name = "Guide License Image")]
+        public IFormFile? GuideLicenseImage { get; set; }
+
+        [Display(Name = "National ID Image")]
+        public IFormFile? NationalIdImage { get; set; }
 
     }
 }

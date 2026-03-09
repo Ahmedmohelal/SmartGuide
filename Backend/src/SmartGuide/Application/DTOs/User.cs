@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -16,7 +17,11 @@ namespace Application.DTOs
 
         public string UserName { get; set; }
         public string Country { get; set; }
+        public string Role { get; set; }
 
+        public string? GuideLicenseImage { get; set; }
+
+        public string? NationalIdImage { get; set; }
 
     }
 }

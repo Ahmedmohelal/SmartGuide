@@ -1,8 +1,9 @@
-using System.Net;
 using Application.DTOs;
 using Application.Helper;
 using Application.Services.Interfaces;
 using Microsoft.Extensions.Logging;
+using System.ComponentModel;
+using System.Net;
 
 namespace Application.Services.UseCases
 {
@@ -14,6 +15,7 @@ namespace Application.Services.UseCases
         private readonly IGoogleAuthService _googleAuthService;
         private readonly IEmailService _emailService;
         private readonly ILogger<AuthService> _logger;
+        private readonly IAttachmentService _attachmentService;
 
         public AuthService(
             ITokenService tokenService,
@@ -21,7 +23,8 @@ namespace Application.Services.UseCases
             IRefreshTokenService refreshTokenService,
             IGoogleAuthService googleAuthService,
             IEmailService emailService,
-            ILogger<AuthService> logger)
+            ILogger<AuthService> logger,
+            IAttachmentService attachmentService)
         {
             _tokenService = tokenService;
             _userService = userService;
@@ -29,6 +32,7 @@ namespace Application.Services.UseCases
             _googleAuthService = googleAuthService;
             _emailService = emailService;
             _logger = logger;
+            _attachmentService = attachmentService;
         }
 
         public async Task<AuthDto> RegisterAsync(RegisterDto model)
@@ -42,27 +46,46 @@ namespace Application.Services.UseCases
             if (model.ConfirmPassword != model.Password)
                 return new AuthDto { Message = "Password and Confirm Password do not match." };
 
+            string? licenseImage = null;
+            string? nationalIdImage = null;
+
+            if (model.Role == "TourGuide")
+            {
+                if (model.GuideLicenseImage == null || model.NationalIdImage == null)
+                    return new AuthDto { Message = "Guide images required" };
+
+                licenseImage = await _attachmentService.Upload("licenses", model.GuideLicenseImage);
+
+                nationalIdImage = await _attachmentService.Upload("nationalIds", model.NationalIdImage);
+            }
+
             var newUser = new User
             {
                 FirstName = model.FirstName,
                 LastName = model.LastName,
                 UserName = model.UserName,
                 Email = model.Email,
-                Country = model.Country
+                Country = model.Country,
+                Role = model.Role,
+                GuideLicenseImage = licenseImage,
+                NationalIdImage = nationalIdImage
             };
-
 
             var (appUser, errors) = await _userService.CreateAsync(newUser, model.Password);
 
 
             if (!string.IsNullOrEmpty(errors))
             {
+                await _attachmentService.Delete(licenseImage, "licenses");
+                await _attachmentService.Delete(nationalIdImage, "nationalIds");
                 return new AuthDto { Message = errors };
             }
-            var roleErrors = await _userService.AddToRoleAsync(appUser, Roles.Tourist);
+            var roleErrors = await _userService.AddToRoleAsync(appUser, model.Role);
 
             if (!string.IsNullOrEmpty(roleErrors))
             {
+                await _attachmentService.Delete(licenseImage, "licenses");
+                await _attachmentService.Delete(nationalIdImage, "nationalIds");
                 return new AuthDto { Message = roleErrors };
             }
 
@@ -80,7 +103,8 @@ namespace Application.Services.UseCases
                 RefreshToken = refreshToken,
                 ExpiresOn = expires,
                 RefreshTokenExpiresOn = refreshExpires,
-                Roles = new List<string> { Roles.Tourist }
+                Roles = new List<string> { newUser.Role },
+                IsGuideVerified = false
             };
 
         }

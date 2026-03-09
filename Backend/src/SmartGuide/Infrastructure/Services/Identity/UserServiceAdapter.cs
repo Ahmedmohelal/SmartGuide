@@ -46,7 +46,10 @@ namespace Infrastructure.Services.Identity
                 LastName = user.LastName,
                 Email = user.Email,
                 UserName = user.UserName,
-                Country = user.Country
+                Country = user.Country,
+                Role = user.Role,
+                GuideLicenseImage = user.GuideLicenseImage,
+                NationalIdImage = user.NationalIdImage
             };
 
             var result = await _userManager.CreateAsync(applicationUser, password);
@@ -62,11 +65,12 @@ namespace Infrastructure.Services.Identity
                 FirstName = applicationUser.FirstName,
                 LastName = applicationUser.LastName,
                 Email = applicationUser.Email,
-                UserName = applicationUser.UserName
+                UserName = applicationUser.UserName,
+                Country = applicationUser.Country,
+                Role = applicationUser.Role,
+                GuideLicenseImage = applicationUser.GuideLicenseImage,
+                NationalIdImage = applicationUser.NationalIdImage
             };
-
-
-
             return (user, null);
         }
 
@@ -77,8 +81,12 @@ namespace Infrastructure.Services.Identity
                 FirstName = user.FirstName ?? string.Empty,
                 LastName = user.LastName ?? string.Empty,
                 Email = user.Email,
+                Country = user.Country,
                 UserName = user.UserName,
-                EmailConfirmed = true
+                EmailConfirmed = true,
+                Role = user.Role,
+                GuideLicenseImage = user.GuideLicenseImage,
+                NationalIdImage = user.NationalIdImage
             };
 
             var password = Convert.ToBase64String(Guid.NewGuid().ToByteArray()) + "Aa1!";
@@ -94,9 +102,13 @@ namespace Infrastructure.Services.Identity
             {
                 Id = applicationUser.Id,
                 FirstName = applicationUser.FirstName,
+                Country = applicationUser.Country,
                 LastName = applicationUser.LastName,
                 Email = applicationUser.Email!,
-                UserName = applicationUser.UserName!
+                UserName = applicationUser.UserName!,
+                Role = applicationUser.Role,
+                GuideLicenseImage = applicationUser.GuideLicenseImage,
+                NationalIdImage = applicationUser.NationalIdImage
             };
             return (createdUser, null);
         }
@@ -113,7 +125,10 @@ namespace Infrastructure.Services.Identity
                 LastName = applicationUser.LastName,
                 Email = applicationUser.Email!,
                 UserName = applicationUser.UserName!,
-                Country = applicationUser.Country
+                Country = applicationUser.Country,
+                Role = applicationUser.Role,
+                GuideLicenseImage = applicationUser.GuideLicenseImage,
+                NationalIdImage = applicationUser.NationalIdImage
             };
         }
 
@@ -129,7 +144,10 @@ namespace Infrastructure.Services.Identity
                 LastName = applicationUser.LastName,
                 Email = applicationUser.Email!,
                 Country = applicationUser.Country,
-                UserName = applicationUser.UserName!
+                UserName = applicationUser.UserName!,
+                Role = applicationUser.Role,
+                GuideLicenseImage = applicationUser.GuideLicenseImage,
+                NationalIdImage = applicationUser.NationalIdImage
             };
         }
 
@@ -143,8 +161,12 @@ namespace Infrastructure.Services.Identity
                 Id = applicationUser.Id,
                 FirstName = applicationUser.FirstName,
                 LastName = applicationUser.LastName,
+                Country = applicationUser.Country,
                 Email = applicationUser.Email!,
-                UserName = applicationUser.UserName!
+                UserName = applicationUser.UserName!,
+                Role = applicationUser.Role,
+                GuideLicenseImage = applicationUser.GuideLicenseImage,
+                NationalIdImage = applicationUser.NationalIdImage
             };
         }
 

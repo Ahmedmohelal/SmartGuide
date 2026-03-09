@@ -17,5 +17,7 @@ namespace Application.DTOs
         public DateTime ExpiresOn { get; set; }
         public DateTime? RefreshTokenExpiresOn { get; set; }
         public List<string> Roles { get; set; } = new();
+        public bool IsGuideVerified { get; set; } = false;
+
     }
 }
