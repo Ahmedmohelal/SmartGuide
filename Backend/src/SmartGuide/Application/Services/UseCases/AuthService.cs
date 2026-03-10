@@ -77,7 +77,8 @@ namespace Application.Services.UseCases
                 Country = model.Country,
                 Role = model.Role.Trim(),
                 GuideLicenseImage = licenseImage,
-                NationalIdImage = nationalIdImage
+                NationalIdImage = nationalIdImage,
+                WhatsAppNumber = model.WhatsAppNumber
             };
 
             var (appUser, errors) = await _userService.CreateAsync(newUser, model.Password);
@@ -108,6 +109,7 @@ namespace Application.Services.UseCases
                 UserName = appUser.UserName,
                 Email = appUser.Email,
                 Country = appUser.Country,
+                WhatsAppNumber = appUser.WhatsAppNumber,
                 Token = token,
                 RefreshToken = refreshToken,
                 ExpiresOn = expires,
@@ -144,6 +146,7 @@ namespace Application.Services.UseCases
                 Email = user.Email,
                 UserName = user.UserName,
                 Country = user.Country,
+                WhatsAppNumber = user.WhatsAppNumber,
                 Token = token,
                 RefreshToken = refreshToken,
                 ExpiresOn = expires,
@@ -169,6 +172,7 @@ namespace Application.Services.UseCases
                 Email = result.User.Email,
                 UserName = result.User.UserName,
                 Country = result.User.Country,
+                WhatsAppNumber = result.User.WhatsAppNumber,
                 Token = token,
                 RefreshToken = result.NewPlainToken,
                 ExpiresOn = expires,

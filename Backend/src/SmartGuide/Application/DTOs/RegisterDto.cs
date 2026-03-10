@@ -23,7 +23,12 @@ namespace Application.DTOs
         [Required(ErrorMessage = "Email is required.")]
         [EmailAddress(ErrorMessage = "Invalid email address.")]
         public string Email { get; set; }
-        
+
+        [Display(Name = "WhatsApp Number")]
+        [MaxLength(20, ErrorMessage = "WhatsApp number cannot exceed 20 characters.")]
+        [RegularExpression(@"^\+?[0-9\s\-()]{10,20}$", ErrorMessage = "Invalid WhatsApp number format. Use digits, optional + prefix, spaces, hyphens, or parentheses.")]
+        public string? WhatsAppNumber { get; set; }
+
         [Required(ErrorMessage = "Password is required.")]
         public string Password { get; set; }
 
@@ -40,9 +45,6 @@ namespace Application.DTOs
         [Display(Name = "National ID Image")]
         public IFormFile? NationalIdImage { get; set; }
 
-        [Display(Name = "WhatsApp Number")]
-        [MaxLength(20, ErrorMessage = "WhatsApp number cannot exceed 20 characters.")]
-        [RegularExpression(@"^\+?[0-9\s\-()]{10,20}$", ErrorMessage = "Invalid WhatsApp number format. Use digits, optional + prefix, spaces, hyphens, or parentheses.")]
-        public string? WhatsAppNumber { get; set; }
+     
     }
 }
