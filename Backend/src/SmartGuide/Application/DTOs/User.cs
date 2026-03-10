@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -23,5 +23,9 @@ namespace Application.DTOs
 
         public string? NationalIdImage { get; set; }
 
+        /// <summary>
+        /// Optional WhatsApp number for contact (e.g. E.164 format).
+        /// </summary>
+        public string? WhatsAppNumber { get; set; }
     }
 }

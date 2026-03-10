@@ -1,4 +1,4 @@
-﻿using Infrastructure.Data.Entities.Enums;
+using Infrastructure.Data.Entities.Enums;
 using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
 
@@ -19,5 +19,10 @@ namespace Infrastructure.Identity
 
         public string? NationalIdImage { get; set; }
         public GuideVerificationStatus IsGuideVerified { get; set; } = GuideVerificationStatus.NotVerified;
+
+        /// <summary>
+        /// Optional WhatsApp number for contact (e.g. E.164 format).
+        /// </summary>
+        public string? WhatsAppNumber { get; set; }
     }
 }

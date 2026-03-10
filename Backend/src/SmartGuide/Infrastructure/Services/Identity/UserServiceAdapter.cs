@@ -49,7 +49,8 @@ namespace Infrastructure.Services.Identity
                 Country = user.Country,
                 Role = user.Role,
                 GuideLicenseImage = user.GuideLicenseImage,
-                NationalIdImage = user.NationalIdImage
+                NationalIdImage = user.NationalIdImage,
+                WhatsAppNumber = user.WhatsAppNumber
             };
 
             var result = await _userManager.CreateAsync(applicationUser, password);
@@ -69,7 +70,8 @@ namespace Infrastructure.Services.Identity
                 Country = applicationUser.Country,
                 Role = applicationUser.Role,
                 GuideLicenseImage = applicationUser.GuideLicenseImage,
-                NationalIdImage = applicationUser.NationalIdImage
+                NationalIdImage = applicationUser.NationalIdImage,
+                WhatsAppNumber = applicationUser.WhatsAppNumber
             };
             return (user, null);
         }
@@ -86,7 +88,8 @@ namespace Infrastructure.Services.Identity
                 EmailConfirmed = true,
                 Role = user.Role,
                 GuideLicenseImage = user.GuideLicenseImage,
-                NationalIdImage = user.NationalIdImage
+                NationalIdImage = user.NationalIdImage,
+                WhatsAppNumber = user.WhatsAppNumber
             };
 
             var password = Convert.ToBase64String(Guid.NewGuid().ToByteArray()) + "Aa1!";
@@ -108,7 +111,8 @@ namespace Infrastructure.Services.Identity
                 UserName = applicationUser.UserName!,
                 Role = applicationUser.Role,
                 GuideLicenseImage = applicationUser.GuideLicenseImage,
-                NationalIdImage = applicationUser.NationalIdImage
+                NationalIdImage = applicationUser.NationalIdImage,
+                WhatsAppNumber = applicationUser.WhatsAppNumber
             };
             return (createdUser, null);
         }
@@ -128,7 +132,8 @@ namespace Infrastructure.Services.Identity
                 Country = applicationUser.Country,
                 Role = applicationUser.Role,
                 GuideLicenseImage = applicationUser.GuideLicenseImage,
-                NationalIdImage = applicationUser.NationalIdImage
+                NationalIdImage = applicationUser.NationalIdImage,
+                WhatsAppNumber = applicationUser.WhatsAppNumber
             };
         }
 
@@ -147,7 +152,8 @@ namespace Infrastructure.Services.Identity
                 UserName = applicationUser.UserName!,
                 Role = applicationUser.Role,
                 GuideLicenseImage = applicationUser.GuideLicenseImage,
-                NationalIdImage = applicationUser.NationalIdImage
+                NationalIdImage = applicationUser.NationalIdImage,
+                WhatsAppNumber = applicationUser.WhatsAppNumber
             };
         }
 
@@ -166,7 +172,8 @@ namespace Infrastructure.Services.Identity
                 UserName = applicationUser.UserName!,
                 Role = applicationUser.Role,
                 GuideLicenseImage = applicationUser.GuideLicenseImage,
-                NationalIdImage = applicationUser.NationalIdImage
+                NationalIdImage = applicationUser.NationalIdImage,
+                WhatsAppNumber = applicationUser.WhatsAppNumber
             };
         }
 
