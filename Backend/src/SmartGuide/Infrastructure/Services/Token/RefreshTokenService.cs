@@ -83,17 +83,11 @@ namespace Infrastructure.Services.Token
             return RefreshTokenValidationResult.Success(user, newPlainToken, newExpiresAt);
         }
 
-        private async Task RevokeAllUserTokensAsync(string userId, CancellationToken cancellationToken)
+        public async Task RevokeAllUserTokensAsync(string userId, CancellationToken cancellationToken)
         {
-            var tokens = await _dbContext.RefreshTokens
+            await _dbContext.RefreshTokens
                 .Where(rt => rt.UserId == userId && !rt.RevokedAt.HasValue)
-                .ToListAsync(cancellationToken);
-
-            var now = DateTime.UtcNow;
-            foreach (var token in tokens)
-                token.RevokedAt = now;
-
-            await _dbContext.SaveChangesAsync(cancellationToken);
+                .ExecuteUpdateAsync(s => s.SetProperty(rt => rt.RevokedAt, DateTime.UtcNow), cancellationToken);
         }
 
         private static string GenerateSecureToken()
@@ -107,6 +101,19 @@ namespace Infrastructure.Services.Token
             var bytes = System.Text.Encoding.UTF8.GetBytes(plainToken);
             var hash = SHA256.HashData(bytes);
             return Convert.ToHexString(hash);
+        }
+
+        public async Task<string?> GetUserIdFromRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(refreshToken))
+                return null;
+
+            var tokenHash = HashToken(refreshToken);
+
+            return await _dbContext.RefreshTokens
+                .Where(rt => rt.TokenHash == tokenHash && !rt.RevokedAt.HasValue && rt.ExpirationDate > DateTime.UtcNow)
+                .Select(rt => rt.UserId)
+                .FirstOrDefaultAsync(cancellationToken);
         }
     }
 }

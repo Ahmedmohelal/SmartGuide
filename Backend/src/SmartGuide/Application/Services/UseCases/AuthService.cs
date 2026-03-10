@@ -423,5 +423,20 @@ namespace Application.Services.UseCases
 
             return GoogleLoginResultDto.Success(auth);
         }
+
+        public async Task<OperationResultDto> LogoutAsync(LogoutRequestDto model, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(model.RefreshToken))
+                return new OperationResultDto { IsSuccess = false, Message = "Refresh token is required." };
+
+            var userId = await _refreshTokenService.GetUserIdFromRefreshTokenAsync(model.RefreshToken, cancellationToken);
+
+            if (userId == null)
+                return new OperationResultDto { IsSuccess = false, Message = "Invalid or expired refresh token." };
+
+            await _refreshTokenService.RevokeAllUserTokensAsync(userId, cancellationToken);
+
+            return new OperationResultDto { IsSuccess = true, Message = "Logged out successfully." };
+        }
     }
 }

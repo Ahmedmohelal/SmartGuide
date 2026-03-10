@@ -23,5 +23,7 @@ namespace Application.Services.Interfaces
         public Task<OperationResultDto> ResetPasswordAsync(ResetPasswordDto model);
 
         public Task<GoogleLoginResultDto> GoogleLoginAsync(string idToken);
+
+        public Task<OperationResultDto> LogoutAsync(LogoutRequestDto model, CancellationToken cancellationToken = default);
     }
 }

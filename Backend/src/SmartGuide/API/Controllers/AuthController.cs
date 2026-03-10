@@ -69,6 +69,7 @@ namespace API.Controllers
         }
 
         [HttpPost("addRole")]
+        [Authorize]
         public async Task<IActionResult> AddRoleAsync([FromBody] AddRoleDto model)
         {
             if (!ModelState.IsValid)
@@ -166,6 +167,20 @@ namespace API.Controllers
                 return BadRequest(result.Message);
 
             return Ok(result.Auth);
+        }
+
+
+        [HttpPost("logout")]
+        [Authorize ]
+        public async Task<IActionResult> LogoutAsync([FromBody] LogoutRequestDto model)
+        {
+            var result = await _authService.LogoutAsync(model, HttpContext.RequestAborted);
+
+            if (!result.IsSuccess)
+                return BadRequest(new { errorCode = "LogoutFailed", errorMessage = "Failed to log out." });
+
+            return Ok(new { message = "Logged out successfully." });
+
         }
     }
 }
