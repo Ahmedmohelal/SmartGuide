@@ -9,5 +9,7 @@ namespace Application.Services.Interfaces
     {
         Task<string?> Upload(string folderName, IFormFile file);
         Task<bool> Delete(string fileName, string folderName);
+
+
     }
 }

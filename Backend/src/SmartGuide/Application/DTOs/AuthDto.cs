@@ -6,6 +6,7 @@ namespace Application.DTOs
 {
     public class AuthDto
     {
+        public string Id { get; set; }
         public string Message { get; set; }
         public bool IsAuthanticated { get; set; }
         public string UserName { get; set; }

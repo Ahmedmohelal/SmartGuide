@@ -42,23 +42,32 @@ namespace Application.Services.UseCases
 
             if (await _userService.FindByUserNameAsync(model.UserName) is not null)
                 return new AuthDto { Message = ErrorMessages.UserNameAlreadyExists };
-
-            if (model.ConfirmPassword != model.Password)
-                return new AuthDto { Message = "Password and Confirm Password do not match." };
+          
 
             string? licenseImage = null;
             string? nationalIdImage = null;
-
-            if (model.Role == "TourGuide")
+            if (model.Role.Trim().Equals(Roles.TourGuide.ToString(), StringComparison.OrdinalIgnoreCase))
             {
-                if (model.GuideLicenseImage == null || model.NationalIdImage == null)
-                    return new AuthDto { Message = "Guide images required" };
+                try
+                {
 
-                licenseImage = await _attachmentService.Upload("licenses", model.GuideLicenseImage);
+                    if (model.GuideLicenseImage == null || model.NationalIdImage == null)
+                        return new AuthDto { Message = "Guide images required" };
 
-                nationalIdImage = await _attachmentService.Upload("nationalIds", model.NationalIdImage);
+                    licenseImage = await _attachmentService.Upload("licenses", model.GuideLicenseImage);
+
+                    nationalIdImage = await _attachmentService.Upload("nationalIds", model.NationalIdImage);
+
+                }
+                catch
+                {
+
+                    await DeleteGuideImages(licenseImage, nationalIdImage);
+                    return new AuthDto { Message = ErrorMessages.UploadFailed };
+
+                }
+
             }
-
             var newUser = new User
             {
                 FirstName = model.FirstName,
@@ -66,7 +75,7 @@ namespace Application.Services.UseCases
                 UserName = model.UserName,
                 Email = model.Email,
                 Country = model.Country,
-                Role = model.Role,
+                Role = model.Role.Trim(),
                 GuideLicenseImage = licenseImage,
                 NationalIdImage = nationalIdImage
             };
@@ -76,16 +85,14 @@ namespace Application.Services.UseCases
 
             if (!string.IsNullOrEmpty(errors))
             {
-                await _attachmentService.Delete(licenseImage, "licenses");
-                await _attachmentService.Delete(nationalIdImage, "nationalIds");
+                await DeleteGuideImages(licenseImage, nationalIdImage);
                 return new AuthDto { Message = errors };
             }
             var roleErrors = await _userService.AddToRoleAsync(appUser, model.Role);
 
             if (!string.IsNullOrEmpty(roleErrors))
             {
-                await _attachmentService.Delete(licenseImage, "licenses");
-                await _attachmentService.Delete(nationalIdImage, "nationalIds");
+                await DeleteGuideImages(licenseImage, nationalIdImage);
                 return new AuthDto { Message = roleErrors };
             }
 
@@ -94,22 +101,31 @@ namespace Application.Services.UseCases
 
             return new AuthDto
             {
+
                 Message = "User Registered Successfully",
                 IsAuthanticated = true,
-                UserName = newUser.UserName,
-                Email = newUser.Email,
-                Country = newUser.Country,
+                Id = appUser.Id,
+                UserName = appUser.UserName,
+                Email = appUser.Email,
+                Country = appUser.Country,
                 Token = token,
                 RefreshToken = refreshToken,
                 ExpiresOn = expires,
                 RefreshTokenExpiresOn = refreshExpires,
-                Roles = new List<string> { newUser.Role },
+                Roles = await _userService.GetRolesAsync(appUser),
                 IsGuideVerified = false
             };
 
         }
 
+        private async Task DeleteGuideImages(string? licenseImage, string? nationalIdImage)
+        {
+            if (licenseImage != null)
+                await _attachmentService.Delete(licenseImage, "licenses");
 
+            if (nationalIdImage != null)
+                await _attachmentService.Delete(nationalIdImage, "nationalIds");
+        }
         public async Task<AuthDto> GetTokenAsync(TokenRequestDto model)
         {
             var user = await _userService.FindByEmailAsync(model.Email);
