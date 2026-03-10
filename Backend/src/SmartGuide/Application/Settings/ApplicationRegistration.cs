@@ -13,7 +13,7 @@ namespace Application.Settings
         public static IServiceCollection  ApplicationConfiguration(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddScoped<IAuthService, AuthService>();
-
+            services.AddScoped<IAttachmentService, AttachmentService>();
             return services;
         }
 

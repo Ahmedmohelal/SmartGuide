@@ -20,7 +20,7 @@ namespace API.Controllers
 
 
         [HttpPost("register")]
-        public async Task<IActionResult> RegisterAsync([FromBody] RegisterDto model)
+        public async Task<IActionResult> RegisterAsync([FromForm] RegisterDto model)
         {
 
             if (!ModelState.IsValid)

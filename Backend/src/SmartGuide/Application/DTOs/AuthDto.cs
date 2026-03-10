@@ -6,6 +6,7 @@ namespace Application.DTOs
 {
     public class AuthDto
     {
+        public string Id { get; set; }
         public string Message { get; set; }
         public bool IsAuthanticated { get; set; }
         public string UserName { get; set; }
@@ -17,5 +18,7 @@ namespace Application.DTOs
         public DateTime ExpiresOn { get; set; }
         public DateTime? RefreshTokenExpiresOn { get; set; }
         public List<string> Roles { get; set; } = new();
+        public bool IsGuideVerified { get; set; } = false;
+
     }
 }

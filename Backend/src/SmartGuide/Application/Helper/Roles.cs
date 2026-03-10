@@ -6,9 +6,9 @@ namespace Application.Helper
 {
     public static class Roles
     {
-        public const string Tourist = "Tourist";    
-        public const string Admin = "Admin";
-        public const string TourGuide = "TourGuide";
+        public const string Tourist = "tourist";    
+        public const string Admin = "admin";
+        public const string TourGuide = "tourguide";
 
 
     }
