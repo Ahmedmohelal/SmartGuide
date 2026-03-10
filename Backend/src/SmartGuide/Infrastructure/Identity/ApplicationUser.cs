@@ -22,6 +22,9 @@ namespace Infrastructure.Identity
         public string? NationalIdImage { get; set; }
         public GuideVerificationStatus IsGuideVerified { get; set; } = GuideVerificationStatus.NotVerified;
 
+        public string? ResetPasswordOtp { get; set; }
+        public DateTime? ResetPasswordOtpExpiry { get; set; }
+
         /// <summary>
         /// Optional WhatsApp number for contact (e.g. E.164 format).
         /// </summary>

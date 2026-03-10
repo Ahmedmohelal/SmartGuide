@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Application.DTOs
 {
-    public class ResetPasswordDto
+    public class VerifyResetOtpDto
     {
         [Required]
         [EmailAddress]
@@ -11,13 +11,6 @@ namespace Application.DTOs
         [Required]
         [RegularExpression(@"^\d{6}$")]
         public string Otp { get; set; } = string.Empty;
-
-        [Required]
-        [MinLength(6)]
-        public string NewPassword { get; set; } = string.Empty;
-
-        [Required]
-        [Compare(nameof(NewPassword))]
-        public string ConfirmPassword { get; set; } = string.Empty;
     }
 }
+

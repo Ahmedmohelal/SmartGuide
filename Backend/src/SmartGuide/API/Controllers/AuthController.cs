@@ -97,6 +97,42 @@ namespace API.Controllers
             return Ok(result);
         }
 
+        [HttpPost("send-reset-otp")]
+        [AllowAnonymous]
+        public async Task<ActionResult<OperationResultDto>> SendResetOtpAsync([FromBody] SendResetOtpDto model)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var result = await _authService.SendResetOtpAsync(model);
+
+            if (!result.IsSuccess && result.Message == "User not found.")
+                return NotFound(result);
+
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+        [HttpPost("verify-reset-otp")]
+        [AllowAnonymous]
+        public async Task<ActionResult<OperationResultDto>> VerifyResetOtpAsync([FromBody] VerifyResetOtpDto model)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var result = await _authService.VerifyResetOtpAsync(model);
+
+            if (!result.IsSuccess && result.Message == "User not found.")
+                return NotFound(result);
+
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
        
         [HttpPost("reset-password")]
         [AllowAnonymous]
@@ -106,6 +142,9 @@ namespace API.Controllers
                 return BadRequest(ModelState);
 
             var result = await _authService.ResetPasswordAsync(model);
+
+            if (!result.IsSuccess && result.Message == "User not found.")
+                return NotFound(result);
 
             if (!result.IsSuccess)
                 return BadRequest(result);

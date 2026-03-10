@@ -29,5 +29,9 @@ namespace Application.Services.Interfaces
         public Task<string?> GeneratePasswordResetTokenAsync(User user);
 
         public Task<string> ResetPasswordAsync(User user, string token, string newPassword);
+
+        public Task<bool> SetResetPasswordOtpAsync(User user, string otp, DateTime expiresAtUtc);
+        public Task<(string? otp, DateTime? expiresAtUtc)> GetResetPasswordOtpAsync(User user);
+        public Task<bool> ClearResetPasswordOtpAsync(User user);
     }
 }

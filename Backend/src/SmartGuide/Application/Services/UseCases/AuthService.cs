@@ -2,6 +2,8 @@ using Application.DTOs;
 using Application.Helper;
 using Application.Services.Interfaces;
 using Microsoft.Extensions.Logging;
+using System.Security.Cryptography;
+using System.Text;
 using System.ComponentModel;
 using System.Net;
 
@@ -141,8 +143,10 @@ namespace Application.Services.UseCases
 
             return new AuthDto
             {
+
                 Message = "Login successful",
                 IsAuthanticated = true,
+                Id= user.Id,
                 Email = user.Email,
                 UserName = user.UserName,
                 Country = user.Country,
@@ -183,12 +187,11 @@ namespace Application.Services.UseCases
             return AuthRefreshResult.Success(auth);
         }
 
-
         public async Task<string> AddRoleAsync(AddRoleDto model)
         {
             var user = await _userService.FindByEmailAsync(model.Email);
 
-            if (user is null || !_userService.RoleExistsAsync(model.Role).Result)
+            if (user is null || !await _userService.RoleExistsAsync(model.Role))
                 return "User or Role  Not Found";
 
             if (await _userService.IsInRoleAsync(user, model.Role))
@@ -203,47 +206,96 @@ namespace Application.Services.UseCases
 
         }
 
+        public async Task<OperationResultDto> SendResetOtpAsync(SendResetOtpDto model)
+        {
+            var user = await _userService.FindByEmailAsync(model.Email);
+            if (user is null)
+            {
+                return new OperationResultDto
+                {
+                    IsSuccess = false,
+                    Message = "User not found."
+                };
+            }
+
+            try
+            {
+                var otp = GenerateSixDigitOtp();
+                var expiresAtUtc = DateTime.UtcNow.AddMinutes(10);
+
+                var saved = await _userService.SetResetPasswordOtpAsync(user, otp, expiresAtUtc);
+                if (!saved)
+                {
+                    _logger.LogWarning("Failed to persist reset password OTP for {Email}.", user.Email);
+                    return new OperationResultDto
+                    {
+                        IsSuccess = false,
+                        Message = "Unable to process request. Please try again."
+                    };
+                }
+
+                var subject = "SmartGuide password reset OTP";
+                var body =
+                    $"""
+                    <p>Hello,</p>
+                    <p>Your password reset OTP is:</p>
+                    <h2>{otp}</h2>
+                    <p>This OTP expires in 10 minutes.</p>
+                    <p>If you did not request this, you can safely ignore this email.</p>
+                    """;
+
+                await _emailService.SendEmailAsync(user.Email, subject, body);
+
+                return new OperationResultDto
+                {
+                    IsSuccess = true,
+                    Message = "OTP has been sent to your email."
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error while sending reset OTP for {Email}.", model.Email);
+                return new OperationResultDto
+                {
+                    IsSuccess = false,
+                    Message = "Unable to process request. Please try again."
+                };
+            }
+        }
+
+        public async Task<OperationResultDto> VerifyResetOtpAsync(VerifyResetOtpDto model)
+        {
+            var user = await _userService.FindByEmailAsync(model.Email);
+            if (user is null)
+            {
+                return new OperationResultDto
+                {
+                    IsSuccess = false,
+                    Message = "User not found."
+                };
+            }
+
+            var isValid = await IsResetOtpValidAsync(user, model.Otp);
+            return new OperationResultDto
+            {
+                IsSuccess = isValid,
+                Message = isValid ? "OTP is valid." : "Invalid or expired OTP."
+            };
+        }
+
         public async Task<OperationResultDto> ForgotPasswordAsync(ForgotPasswordDto model)
         {
+           
             var user = await _userService.FindByEmailAsync(model.Email);
             if (user is not null)
             {
-                try
-                {
-                    var token = await _userService.GeneratePasswordResetTokenAsync(user);
-                    if (!string.IsNullOrEmpty(token))
-                    {
-                        var encodedEmail = WebUtility.UrlEncode(user.Email);
-                        var encodedToken = WebUtility.UrlEncode(token);
-                        var resetLink =
-                            $"https://localhost:5001/api/auth/reset-password?email={encodedEmail}&token={encodedToken}";
-
-                        var subject = "Reset your SmartGuide password";
-                        var body =
-                            $"""
-                            <p>Hello,</p>
-                            <p>You requested to reset your password. Click the link below to set a new password:</p>
-                            <p><a href="{resetLink}">Reset your password</a></p>
-                            <p>If you did not request this, you can safely ignore this email.</p>
-                            """;
-
-                        await _emailService.SendEmailAsync(user.Email, subject, body);
-                    }
-                    else
-                    {
-                        _logger.LogWarning("Failed to generate password reset token for user {Email}.", user.Email);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error while processing forgot password for {Email}.", model.Email);
-                }
+                _ = await SendResetOtpAsync(new SendResetOtpDto { Email = model.Email });
             }
 
             return new OperationResultDto
             {
                 IsSuccess = true,
-                Message = "If an account with this email exists, a reset link has been sent."
+                Message = "If an account with this email exists, an OTP has been sent."
             };
         }
 
@@ -255,12 +307,31 @@ namespace Application.Services.UseCases
                 return new OperationResultDto
                 {
                     IsSuccess = false,
-                    Message = "Invalid password reset request."
+                    Message = "User not found."
                 };
             }
-            var decodedToken = Uri.UnescapeDataString(model.Token);
 
-            var resetResult = await _userService.ResetPasswordAsync(user, decodedToken, model.NewPassword);
+            if (!await IsResetOtpValidAsync(user, model.Otp))
+            {
+                return new OperationResultDto
+                {
+                    IsSuccess = false,
+                    Message = "Invalid or expired OTP."
+                };
+            }
+
+            var token = await _userService.GeneratePasswordResetTokenAsync(user);
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                _logger.LogWarning("Failed to generate password reset token for {Email}.", user.Email);
+                return new OperationResultDto
+                {
+                    IsSuccess = false,
+                    Message = "Unable to reset password. Please try again."
+                };
+            }
+
+            var resetResult = await _userService.ResetPasswordAsync(user, token, model.NewPassword);
             if (!string.IsNullOrEmpty(resetResult))
             {
                 return new OperationResultDto
@@ -270,11 +341,36 @@ namespace Application.Services.UseCases
                 };
             }
 
+            _ = await _userService.ClearResetPasswordOtpAsync(user);
+
             return new OperationResultDto
             {
                 IsSuccess = true,
                 Message = "Password has been reset successfully."
             };
+        }
+
+        private static string GenerateSixDigitOtp()
+        {
+            var value = RandomNumberGenerator.GetInt32(0, 1_000_000);
+            return value.ToString("D6");
+        }
+
+        private async Task<bool> IsResetOtpValidAsync(User user, string otp)
+        {
+            var (storedOtp, expiresAtUtc) = await _userService.GetResetPasswordOtpAsync(user);
+            if (string.IsNullOrWhiteSpace(storedOtp) || expiresAtUtc is null)
+                return false;
+
+            if (DateTime.UtcNow > expiresAtUtc.Value)
+                return false;
+
+            if (storedOtp.Length != otp.Length)
+                return false;
+
+            var storedBytes = Encoding.UTF8.GetBytes(storedOtp);
+            var providedBytes = Encoding.UTF8.GetBytes(otp);
+            return CryptographicOperations.FixedTimeEquals(storedBytes, providedBytes);
         }
 
         public async Task<GoogleLoginResultDto> GoogleLoginAsync(string idToken)

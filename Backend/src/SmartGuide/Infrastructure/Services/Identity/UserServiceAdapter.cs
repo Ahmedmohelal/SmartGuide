@@ -22,9 +22,14 @@ namespace Infrastructure.Services.Identity
             _logger = logger;
         }
 
+        private Task<ApplicationUser?> FindApplicationUserAsync(User user)
+        {
+            return _userManager.FindByNameAsync(user.UserName);
+        }
+
         public async Task<string> AddToRoleAsync(User user, string role)
         {
-            var applicationUser = await _userManager.FindByNameAsync(user.UserName);
+            var applicationUser = await FindApplicationUserAsync(user);
             if (applicationUser == null)
                 return "User not found.";
 
@@ -179,14 +184,14 @@ namespace Infrastructure.Services.Identity
 
         public async Task<bool> CheckPasswordAsync(User user, string password)
         {
-            var applicationUser = await _userManager.FindByNameAsync(user.UserName);
+            var applicationUser = await FindApplicationUserAsync(user);
             if (applicationUser == null) return false;
             return await _userManager.CheckPasswordAsync(applicationUser, password);
         }
 
         public async Task<List<string>> GetRolesAsync(User user)
         {
-            var applicationUser = await _userManager.FindByNameAsync(user.UserName);
+            var applicationUser = await FindApplicationUserAsync(user);
             if (applicationUser == null) return new List<string>();
             var roles = await _userManager.GetRolesAsync(applicationUser);
             return roles.ToList();
@@ -200,14 +205,14 @@ namespace Infrastructure.Services.Identity
 
         public async Task<bool> IsInRoleAsync(User user, string role)
         {
-            var applicationUser = await _userManager.FindByNameAsync(user.UserName);
+            var applicationUser = await FindApplicationUserAsync(user);
             if (applicationUser == null) return false;
             return await _userManager.IsInRoleAsync(applicationUser, role);
         }
 
         public async Task<string?> GeneratePasswordResetTokenAsync(User user)
         {
-            var applicationUser = await _userManager.FindByNameAsync(user.UserName);
+            var applicationUser = await FindApplicationUserAsync(user);
             if (applicationUser == null) return null;
 
             return await _userManager.GeneratePasswordResetTokenAsync(applicationUser);
@@ -215,7 +220,7 @@ namespace Infrastructure.Services.Identity
 
         public async Task<string> ResetPasswordAsync(User user, string token, string newPassword)
         {
-            var applicationUser = await _userManager.FindByNameAsync(user.UserName);
+            var applicationUser = await FindApplicationUserAsync(user);
             if (applicationUser == null) return "User not found.";
 
             var result = await _userManager.ResetPasswordAsync(applicationUser, token, newPassword);
@@ -226,6 +231,54 @@ namespace Infrastructure.Services.Identity
             }
 
             return string.Empty;
+        }
+
+        public async Task<bool> SetResetPasswordOtpAsync(User user, string otp, DateTime expiresAtUtc)
+        {
+            var applicationUser = await FindApplicationUserAsync(user);
+            if (applicationUser == null) return false;
+
+            applicationUser.ResetPasswordOtp = otp;
+            applicationUser.ResetPasswordOtpExpiry = expiresAtUtc;
+
+            var result = await _userManager.UpdateAsync(applicationUser);
+            if (!result.Succeeded)
+            {
+                _logger.LogWarning("Failed to set reset password OTP for {Email}: {Errors}",
+                    applicationUser.Email,
+                    string.Join(", ", result.Errors.Select(e => e.Description)));
+                return false;
+            }
+
+            return true;
+        }
+
+        public async Task<(string? otp, DateTime? expiresAtUtc)> GetResetPasswordOtpAsync(User user)
+        {
+            var applicationUser = await FindApplicationUserAsync(user);
+            if (applicationUser == null) return (null, null);
+
+            return (applicationUser.ResetPasswordOtp, applicationUser.ResetPasswordOtpExpiry);
+        }
+
+        public async Task<bool> ClearResetPasswordOtpAsync(User user)
+        {
+            var applicationUser = await FindApplicationUserAsync(user);
+            if (applicationUser == null) return false;
+
+            applicationUser.ResetPasswordOtp = null;
+            applicationUser.ResetPasswordOtpExpiry = null;
+
+            var result = await _userManager.UpdateAsync(applicationUser);
+            if (!result.Succeeded)
+            {
+                _logger.LogWarning("Failed to clear reset password OTP for {Email}: {Errors}",
+                    applicationUser.Email,
+                    string.Join(", ", result.Errors.Select(e => e.Description)));
+                return false;
+            }
+
+            return true;
         }
     }
 }

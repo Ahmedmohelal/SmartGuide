@@ -14,6 +14,10 @@ namespace Application.Services.Interfaces
 
         public Task<AuthRefreshResult> RefreshTokenAsync(string refreshToken);
 
+        public Task<OperationResultDto> SendResetOtpAsync(SendResetOtpDto model);
+
+        public Task<OperationResultDto> VerifyResetOtpAsync(VerifyResetOtpDto model);
+
         public Task<OperationResultDto> ForgotPasswordAsync(ForgotPasswordDto model);
 
         public Task<OperationResultDto> ResetPasswordAsync(ResetPasswordDto model);
