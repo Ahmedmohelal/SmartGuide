@@ -1,4 +1,4 @@
-﻿using Infrastructure.Identity;
+﻿using Infrastructure.Data.Entities.Identity;
 
 namespace Infrastructure.Data.Entities
 {

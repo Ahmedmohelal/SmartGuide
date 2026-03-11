@@ -2,7 +2,6 @@
 using Application.Services.Interfaces;
 using Infrastructure.Data;
 using Infrastructure.Data.Entities;
-using Infrastructure.Identity;
 using Infrastructure.Settings;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;

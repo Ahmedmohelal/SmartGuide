@@ -1,9 +1,11 @@
 using Infrastructure.Data.Entities.Enums;
+using Infrastructure.Data.Entities.Profiles.TourGuide;
+using Infrastructure.Data.Entities.Profiles.Tourist;
 using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
 
 
-namespace Infrastructure.Identity
+namespace Infrastructure.Data.Entities.Identity
 {
     public class ApplicationUser : IdentityUser
     {
@@ -13,20 +15,17 @@ namespace Infrastructure.Identity
         public string LastName { get; set; } = null!;
         public string Country { get; set; }
         public string? WhatsAppNumber { get; set; }
-
-
         [Required]
         public string Role { get; set; } = null!;
         public string? GuideLicenseImage { get; set; }
-
         public string? NationalIdImage { get; set; }
         public GuideVerificationStatus IsGuideVerified { get; set; } = GuideVerificationStatus.NotVerified;
-
         public string? ResetPasswordOtp { get; set; }
         public DateTime? ResetPasswordOtpExpiry { get; set; }
 
-        /// <summary>
-        /// Optional WhatsApp number for contact (e.g. E.164 format).
-        /// </summary>
+        public virtual TouristProfile? TouristProfile { get; set; }
+        public virtual TourGuideProfile? TourGuideProfile { get; set; }
+
+
     }
 }

@@ -1,7 +1,6 @@
 using Application.Services.Interfaces;
 using Application.Settings;
 using Infrastructure.Data;
-using Infrastructure.Identity;
 using Infrastructure.Services.Email;
 using Infrastructure.Settings;
 using Microsoft.AspNetCore.Identity;

@@ -1,6 +1,6 @@
 using Application.Services.Interfaces;
 using Infrastructure.Data;
-using Infrastructure.Identity;
+using Infrastructure.Data.Entities.Identity;
 using Infrastructure.Services.Auth;
 using Infrastructure.Services.Email;
 using Infrastructure.Services.Identity;
