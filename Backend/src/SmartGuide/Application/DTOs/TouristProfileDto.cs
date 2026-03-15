@@ -1,7 +1,8 @@
 namespace Application.DTOs
 {
-    public class TourGuideProfileDto
+    public class TouristProfileDto
     {
+        public Guid Id { get; set; }
         public string UserId { get; set; } = string.Empty;
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;
@@ -9,12 +10,5 @@ namespace Application.DTOs
         public string Email { get; set; } = string.Empty;
         public string Country { get; set; } = string.Empty;
         public string? WhatsAppNumber { get; set; }
-        public string? Bio { get; set; } = string.Empty;
-        public double? PricePerDay { get; set; }
-        public double? Rating { get; set; }
-        public string? ProfilePictureUrl { get; set; } = string.Empty;
-        public List<string>? Cities { get; set; } = new();
-        public List<string>? Languages { get; set; } = new();
-        public List<string>? Gallery { get; set; } = new();
     }
 }

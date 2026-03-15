@@ -1,12 +1,8 @@
-﻿using Application.DTOs;
-using System;
-using System.Collections.Generic;
-using System.Text;
-
 namespace Application.Services.Interfaces
 {
-    public interface IProfileService
+    public interface IProfileService<TProfileDto, in TUpdateDto>
     {
-        Task<TourGuideProfileDto> GetProfileAsync(string userId);
+        Task<TProfileDto?> GetProfileByIdAsync(string userId);
+        Task<TProfileDto?> UpdateProfileAsync(string userId, TUpdateDto model);
     }
 }

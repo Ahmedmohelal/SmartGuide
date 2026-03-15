@@ -18,6 +18,7 @@ namespace Application.Services.UseCases
         private readonly IEmailService _emailService;
         private readonly ILogger<AuthService> _logger;
         private readonly IAttachmentService _attachmentService;
+        private readonly IProfileInitializerService _profileInitializerService;
 
         public AuthService(
             ITokenService tokenService,
@@ -26,7 +27,8 @@ namespace Application.Services.UseCases
             IGoogleAuthService googleAuthService,
             IEmailService emailService,
             ILogger<AuthService> logger,
-            IAttachmentService attachmentService)
+            IAttachmentService attachmentService,
+            IProfileInitializerService profileInitializerService)
         {
             _tokenService = tokenService;
             _userService = userService;
@@ -35,6 +37,7 @@ namespace Application.Services.UseCases
             _emailService = emailService;
             _logger = logger;
             _attachmentService = attachmentService;
+            _profileInitializerService = profileInitializerService;
         }
 
         public async Task<AuthDto> RegisterAsync(RegisterDto model)
@@ -98,6 +101,8 @@ namespace Application.Services.UseCases
                 await DeleteGuideImages(licenseImage, nationalIdImage);
                 return new AuthDto { Message = roleErrors };
             }
+
+            await _profileInitializerService.EnsureProfileExistsAsync(appUser.Id, model.Role.Trim());
 
             var (token, expires) = await _tokenService.CreateTokenAsync(appUser);
             var (refreshToken, refreshExpires) = await _refreshTokenService.CreateAsync(appUser.Id);
@@ -373,9 +378,9 @@ namespace Application.Services.UseCases
             return CryptographicOperations.FixedTimeEquals(storedBytes, providedBytes);
         }
 
-        public async Task<GoogleLoginResultDto> GoogleLoginAsync(string idToken)
+        public async Task<GoogleLoginResultDto> GoogleLoginAsync(string IdToken)
         {
-            var validationResult = await _googleAuthService.VerifyIdTokenAsync(idToken);
+            var validationResult = await _googleAuthService.VerifyIdTokenAsync(IdToken);
             if (!validationResult.IsSuccess)
             {
                 _logger.LogWarning("Google login failed: {Message}", validationResult.ErrorMessage);
@@ -407,6 +412,10 @@ namespace Application.Services.UseCases
                 if (!string.IsNullOrEmpty(roleErrors))
                 {
                     _logger.LogWarning("Failed to assign role to new Google user {Email}: {Errors}", createdUser.Email, roleErrors);
+                }
+                else
+                {
+                    await _profileInitializerService.EnsureProfileExistsAsync(createdUser.Id, Roles.Tourist);
                 }
 
                 user = createdUser;

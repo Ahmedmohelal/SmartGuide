@@ -1,9 +1,12 @@
 using Application.Services.Interfaces;
+using Application.DTOs;
+using Domain.Interfaces;
 using Infrastructure.Data;
 using Infrastructure.Data.Entities.Identity;
 using Infrastructure.Services.Auth;
 using Infrastructure.Services.Email;
 using Infrastructure.Services.Identity;
+using Infrastructure.Services.Profile;
 using Infrastructure.Services.Token;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -20,7 +23,7 @@ namespace Infrastructure.Settings
         {
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
-                    configuration.GetConnectionString("DefaultConnection"),
+                    configuration.GetConnectionString("SawsanDefaulConnection"),
                         sqlOptions => sqlOptions.EnableRetryOnFailure()
 ));
 
@@ -64,6 +67,9 @@ namespace Infrastructure.Settings
             services.AddScoped<IRefreshTokenService, RefreshTokenService>();
             services.AddScoped<IGoogleAuthService, GoogleAuthService>();
             services.AddScoped<IEmailService, EmailService>();
+            services.AddScoped<IProfileInitializerService, ProfileInitializerService>();
+            services.AddScoped<IProfileRepository<TourGuideProfileDto, UpdateTourGuideProfileDto>, TourGuideProfileRepository>();
+            services.AddScoped<IProfileRepository<TouristProfileDto, UpdateTouristProfileDto>, TouristProfileRepository>();
 
             return services;
         }

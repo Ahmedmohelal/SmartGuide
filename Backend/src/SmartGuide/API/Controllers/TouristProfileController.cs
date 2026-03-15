@@ -1,0 +1,35 @@
+using Application.DTOs;
+using Application.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace API.Controllers
+{
+    [Route("api/tourists")]
+    [ApiController]
+    [Authorize]
+    public class TouristProfileController : ProfileControllerBase<TouristProfileDto, UpdateTouristProfileDto>
+    {
+        private readonly ITouristProfileService _touristProfileService;
+
+        public TouristProfileController(ITouristProfileService touristProfileService)
+        {
+            _touristProfileService = touristProfileService;
+        }
+
+        protected override IProfileService<TouristProfileDto, UpdateTouristProfileDto> ProfileService => _touristProfileService;
+        protected override string ProfileName => "Tourist";
+
+        [HttpGet("{id}/profile")]
+        public Task<ActionResult<TouristProfileDto>> GetProfileByIdAsync(string id)
+        {
+            return GetProfileAsync(id);
+        }
+
+        [HttpPut("{id}/profile")]
+        public Task<ActionResult<TouristProfileDto>> UpdateProfileByIdAsync(string id, [FromBody] UpdateTouristProfileDto model)
+        {
+            return UpdateProfileAsync(id, model);
+        }
+    }
+}

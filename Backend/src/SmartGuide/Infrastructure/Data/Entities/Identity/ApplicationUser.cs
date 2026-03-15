@@ -13,7 +13,7 @@ namespace Infrastructure.Data.Entities.Identity
         public string FirstName { get; set; } = null!;
         [Required]
         public string LastName { get; set; } = null!;
-        public string Country { get; set; }
+        public string Country { get; set; } = string.Empty;
         public string? WhatsAppNumber { get; set; }
         [Required]
         public string Role { get; set; } = null!;

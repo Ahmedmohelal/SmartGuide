@@ -1,8 +1,9 @@
-﻿using Infrastructure.Data.Configurations;
+using Infrastructure.Data.Configurations;
 using Infrastructure.Data.Configurations.TourGuide;
 using Infrastructure.Data.Entities;
 using Infrastructure.Data.Entities.Identity;
 using Infrastructure.Data.Entities.Profiles.TourGuide;
+using Infrastructure.Data.Entities.Profiles.Tourist;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,6 +17,7 @@ namespace Infrastructure.Data
 
         public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
         public DbSet<TourGuideProfile> TourGuideProfiles { get; set; }
+        public DbSet<TouristProfile> TouristProfiles { get; set; }
         public DbSet<TourGuideCity> TourGuideCities { get; set; }
         public DbSet<TourGuideLanguage> TourGuideLanguages { get; set; }
         public DbSet<TourGuideGallery> TourGuideGallery { get; set; }

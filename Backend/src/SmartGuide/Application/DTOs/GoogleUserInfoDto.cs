@@ -4,5 +4,8 @@ namespace Application.DTOs
         string GoogleUserId,
         string Email,
         string? Name,
-        bool EmailVerified);
+        bool EmailVerified,
+        string country     
+
+        );
 }

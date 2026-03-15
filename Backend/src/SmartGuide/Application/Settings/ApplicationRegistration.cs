@@ -1,4 +1,4 @@
-﻿using Application.Services.Interfaces;
+using Application.Services.Interfaces;
 using Application.Services.UseCases;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,6 +13,8 @@ namespace Application.Settings
         public static IServiceCollection  ApplicationConfiguration(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<ITourGuideProfileService, TourGuideProfileService>();
+            services.AddScoped<ITouristProfileService, TouristProfileService>();
             services.AddScoped<IAttachmentService, AttachmentService>();
             return services;
         }

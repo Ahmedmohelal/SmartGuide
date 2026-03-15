@@ -1,4 +1,5 @@
 using Application.DTOs;
+using Application.Helper;
 using Application.Services.Interfaces;
 using Infrastructure.Data.Entities.Identity;
 using Microsoft.AspNetCore.Identity;
@@ -88,10 +89,10 @@ namespace Infrastructure.Services.Identity
                 FirstName = user.FirstName ?? string.Empty,
                 LastName = user.LastName ?? string.Empty,
                 Email = user.Email,
-                Country = user.Country,
+                Country = string.Empty,   
+                Role = Roles.Tourist,
                 UserName = user.UserName,
                 EmailConfirmed = true,
-                Role = user.Role,
                 GuideLicenseImage = user.GuideLicenseImage,
                 NationalIdImage = user.NationalIdImage,
                 WhatsAppNumber = user.WhatsAppNumber
