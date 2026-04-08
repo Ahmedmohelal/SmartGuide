@@ -6,7 +6,7 @@ using Infrastructure.Data;
 using Infrastructure.Data.Entities.Profiles.Tourist;
 using Microsoft.EntityFrameworkCore;
 
-namespace Infrastructure.Services.Profile
+namespace Infrastructure.Repository.Profile
 {
     public class TouristProfileRepository : IProfileRepository<TouristProfileDto, UpdateTouristProfileDto>
     {
