@@ -21,6 +21,16 @@ namespace Infrastructure.Repository.Profile
             _imageUrlService = imageUrlService;
         }
 
+        public async Task<IReadOnlyList<TouristProfileDto>> GetAllAsync()
+        {
+            var profiles = await _context.Set<TouristProfile>()
+                .AsNoTracking()
+                .Include(x => x.User)
+                .ToListAsync();
+
+            return profiles.Select(MapToDto).ToList();
+        }
+
         public async Task<TouristProfileDto?> GetByIdAsync(string userId)
         {
             var profile = await _context.Set<TouristProfile>()

@@ -1,6 +1,5 @@
 using Application.DTOs.ProfileDTOs;
 using Application.Services.Interfaces;
-using Application.Services.UseCases;
 using Domain.Interfaces;
 using Infrastructure.Data;
 using Infrastructure.Data.Entities.Profiles.TourGuide;
@@ -19,6 +18,19 @@ namespace Infrastructure.Repository.Profile
             _context = context;
             attachmentService = _attachmentService;
             _imageUrlService = imageUrlService;
+        }
+
+        public async Task<IReadOnlyList<TourGuideProfileDto>> GetAllAsync()
+        {
+            var profiles = await _context.TourGuideProfiles
+                .AsNoTracking()
+                .Include(x => x.User)
+                .Include(x => x.Cities)
+                .Include(x => x.Languages)
+                .Include(x => x.Gallery)
+                .ToListAsync();
+
+            return profiles.Select(MapToDto).ToList();
         }
 
         public async Task<TourGuideProfileDto?> GetByIdAsync(string userId)
@@ -74,18 +86,19 @@ namespace Infrastructure.Repository.Profile
                 profile.User!.ProfileImage = Picture;
             }
 
+            // Cities
             if (model.Cities is not null)
             {
-                profile?.Cities?.Clear();
+                profile.Cities ??= new List<TourGuideCity>();
+                profile.Cities.Clear();
 
                 var existingCities = _context.TourGuideCities
-                                             .Where(x => x.TourGuideProfileId == profile.UserId);
+                    .Where(x => x.TourGuideProfileId == profile.UserId);
                 _context.TourGuideCities.RemoveRange(existingCities);
-
 
                 foreach (var city in model.Cities.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct())
                 {
-                    profile?.Cities?.Add(new TourGuideCity
+                    profile.Cities.Add(new TourGuideCity
                     {
                         CityName = city,
                         TourGuideProfileId = profile.UserId
@@ -93,18 +106,19 @@ namespace Infrastructure.Repository.Profile
                 }
             }
 
+            // Languages
             if (model.Languages is not null)
             {
-                profile?.Languages?.Clear();
+                profile.Languages ??= new List<TourGuideLanguage>();
+                profile.Languages.Clear();
 
                 var existingLanguages = _context.TourGuideLanguages
-                                             .Where(x => x.TourGuideProfileId == profile.UserId);
+                    .Where(x => x.TourGuideProfileId == profile.UserId);
                 _context.TourGuideLanguages.RemoveRange(existingLanguages);
-
 
                 foreach (var language in model.Languages.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct())
                 {
-                    profile?.Languages?.Add(new TourGuideLanguage
+                    profile.Languages.Add(new TourGuideLanguage
                     {
                         Language = language,
                         TourGuideProfileId = profile.UserId
@@ -112,17 +126,22 @@ namespace Infrastructure.Repository.Profile
                 }
             }
 
+            // Gallery
             if (model.Gallery != null && model.Gallery.Any())
             {
-                profile?.Gallery?.Clear();
+                profile.Gallery ??= new List<TourGuideGallery>();
+
                 var existingGallery = _context.TourGuideGallery
-                                             .Where(x => x.TourGuideProfileId == profile.UserId);
-                _context.TourGuideGallery.RemoveRange(existingGallery);
-                foreach (var gallery in existingGallery)
+                    .Where(x => x.TourGuideProfileId == profile.UserId)
+                    .ToList();
+
+                foreach (var item in existingGallery)
                 {
-                    await attachmentService.Delete(gallery.ImageUrl, "TourGuidesGallery");
+                    await attachmentService.Delete(item.ImageUrl, "TourGuidesGallery");
                 }
 
+                _context.TourGuideGallery.RemoveRange(existingGallery);
+                profile.Gallery.Clear();
 
                 foreach (var file in model.Gallery)
                 {
@@ -131,7 +150,7 @@ namespace Infrastructure.Repository.Profile
                     var galleryImage = new TourGuideGallery
                     {
                         ImageUrl = fileName,
-                        TourGuideProfileId = profile?.UserId!
+                        TourGuideProfileId = profile.UserId
                     };
 
                     _context.TourGuideGallery.Add(galleryImage);
@@ -141,12 +160,11 @@ namespace Infrastructure.Repository.Profile
             }
 
             await _context.SaveChangesAsync();
-            return MapToDto(profile!);
+            return MapToDto(profile);
         }
 
         private TourGuideProfileDto MapToDto(TourGuideProfile profile)
         {
-            // Prefer the profile-specific picture if it exists; fallback to user's profile image.
             var storedProfileImage = profile.ProfilePicture ?? profile.User?.ProfileImage;
 
             return new TourGuideProfileDto
@@ -161,12 +179,17 @@ namespace Infrastructure.Repository.Profile
                 Bio = profile.Bio,
                 PricePerDay = profile.PricePerDay,
                 Rating = profile.Rating,
+
                 ProfilePicture = _imageUrlService.ToPublicImageUrl(
                     storedProfileImage,
                     "profileImages"),
-                Cities = profile?.Cities?.Select(x => x.CityName).ToList(),
-                Languages = profile?.Languages?.Select(x => x.Language).ToList(),
-                Gallery = profile?.Gallery?.Select(x => _imageUrlService.ToPublicImageUrl(x.ImageUrl, "TourGuidesGallery")).ToList()
+
+                Cities = profile.Cities?.Select(x => x.CityName).ToList() ?? new List<string>(),
+                Languages = profile.Languages?.Select(x => x.Language).ToList() ?? new List<string>(),
+
+                Gallery = profile.Gallery?
+                    .Select(x => _imageUrlService.ToPublicImageUrl(x.ImageUrl, "TourGuidesGallery"))
+                    .ToList() ?? new List<string>()
             };
         }
     }

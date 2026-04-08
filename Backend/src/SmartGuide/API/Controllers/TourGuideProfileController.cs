@@ -20,6 +20,13 @@ namespace API.Controllers
         protected override IProfileService<TourGuideProfileDto, UpdateTourGuideProfileDto> ProfileService => _tourGuideProfileService;
         protected override string ProfileName => "Tour guide";
 
+        [HttpGet]
+        public async Task<ActionResult<List<TourGuideProfileDto>>> GetAllAsync()
+        {
+            var result = await _tourGuideProfileService.GetAllProfilesAsync();
+            return Ok(result.ToList());
+        }
+
         [HttpGet("{id}/profile")]
         public Task<ActionResult<TourGuideProfileDto>> GetProfileByIdAsync(string id)
         {

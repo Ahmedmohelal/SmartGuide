@@ -8,6 +8,12 @@ namespace API.Controllers
         protected abstract IProfileService<TProfileDto, TUpdateDto> ProfileService { get; }
         protected abstract string ProfileName { get; }
 
+        protected async Task<ActionResult<IReadOnlyList<TProfileDto>>> GetAllProfilesAsync()
+        {
+            var profiles = await ProfileService.GetAllProfilesAsync();
+            return Ok(profiles);
+        }
+
         protected async Task<ActionResult<TProfileDto>> GetProfileAsync(string id)
         {
             var profile = await ProfileService.GetProfileByIdAsync(id);

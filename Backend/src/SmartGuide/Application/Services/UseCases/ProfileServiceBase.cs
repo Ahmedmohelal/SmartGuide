@@ -12,6 +12,11 @@ namespace Application.Services.UseCases
             _repository = repository;
         }
 
+        public Task<IReadOnlyList<TProfileDto>> GetAllProfilesAsync()
+        {
+            return _repository.GetAllAsync();
+        }
+
         public Task<TProfileDto?> GetProfileByIdAsync(string userId)
         {
             return _repository.GetByIdAsync(userId);
