@@ -1,6 +1,7 @@
+using Microsoft.AspNetCore.Http;
 using System.ComponentModel.DataAnnotations;
 
-namespace Application.DTOs
+namespace Application.DTOs.ProfileDTOs
 {
     public class UpdateTouristProfileDto
     {
@@ -16,5 +17,8 @@ namespace Application.DTOs
         [MaxLength(20)]
         [RegularExpression(@"^\+?[0-9\s\-()]{10,20}$", ErrorMessage = "Invalid WhatsApp number format. Use digits, optional + prefix, spaces, hyphens, or parentheses.")]
         public string? WhatsAppNumber { get; set; }
+
+        [Display(Name = "Tourist Image")]
+        public IFormFile? TouristImage { get; set; }
     }
 }

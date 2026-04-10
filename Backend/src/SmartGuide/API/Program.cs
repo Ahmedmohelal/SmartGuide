@@ -1,3 +1,4 @@
+using API.Extentions;
 using Application.Services.Interfaces;
 using Application.Settings;
 using Infrastructure.Data;
@@ -37,6 +38,12 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
+
+
+await app.MigrateDataBaseAsync();
+
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

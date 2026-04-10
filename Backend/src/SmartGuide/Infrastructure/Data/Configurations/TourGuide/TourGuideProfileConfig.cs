@@ -17,12 +17,10 @@ namespace Infrastructure.Data.Configurations.TourGuide
             builder.Property(e => e.PricePerDay).HasColumnType("decimal(18,2)");
             builder.Property(e => e.Rating).HasColumnType("decimal(3,2)").HasDefaultValue(0);
             builder.HasCheckConstraint("CK_TourGuideProfile_Rating", "[Rating] >= 0 AND [Rating] <= 5");
-            builder.Property(e => e.ProfilePictureUrl).HasMaxLength(500);
             builder.HasOne(e => e.User)
                 .WithOne(u => u.TourGuideProfile)
                 .HasForeignKey<TourGuideProfile>(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
-
         }
     }
 }

@@ -1,4 +1,5 @@
 using Application.DTOs;
+using Application.DTOs.AuthenticationDTOs;
 using Application.Services.Interfaces;
 using Google.Apis.Auth;
 using Infrastructure.Settings;

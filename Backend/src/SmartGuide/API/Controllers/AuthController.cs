@@ -1,4 +1,4 @@
-using Application.DTOs;
+using Application.DTOs.AuthenticationDTOs;
 using Application.Services.Interfaces;
 using Application.Services.UseCases;
 using Microsoft.AspNetCore.Authorization;
@@ -27,6 +27,9 @@ namespace API.Controllers
                 return BadRequest(ModelState);
 
             var result = await _authService.RegisterAsync(model);
+
+            Console.WriteLine($"RT => {result.RefreshToken}");
+            Console.WriteLine($"RTT => {result.RefreshTokenExpiresOn}");
 
             if (!result.IsAuthanticated)
                 return BadRequest(result.Message);

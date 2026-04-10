@@ -1,4 +1,4 @@
-namespace Application.DTOs
+namespace Application.DTOs.ProfileDTOs
 {
     public class TourGuideProfileDto
     {
@@ -12,7 +12,7 @@ namespace Application.DTOs
         public string? Bio { get; set; } = string.Empty;
         public double? PricePerDay { get; set; }
         public double? Rating { get; set; }
-        public string? ProfilePictureUrl { get; set; } = string.Empty;
+        public string? ProfilePicture { get; set; } = string.Empty;
         public List<string>? Cities { get; set; } = new();
         public List<string>? Languages { get; set; } = new();
         public List<string>? Gallery { get; set; } = new();

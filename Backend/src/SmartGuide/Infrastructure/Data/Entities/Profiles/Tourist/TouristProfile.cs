@@ -10,6 +10,7 @@ namespace Infrastructure.Data.Entities.Profiles.Tourist
     {
         public Guid Id { get; set; }
 
+        public string?  TouristImage { get; set; }
         public string UserId { get; set; }
         [ForeignKey("UserId")]
         public virtual ApplicationUser User { get; set; }

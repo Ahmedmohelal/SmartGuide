@@ -1,6 +1,7 @@
+using Microsoft.AspNetCore.Http;
 using System.ComponentModel.DataAnnotations;
 
-namespace Application.DTOs
+namespace Application.DTOs.ProfileDTOs
 {
     public class UpdateTourGuideProfileDto
     {
@@ -10,8 +11,7 @@ namespace Application.DTOs
         [Range(0, double.MaxValue)]
         public double? PricePerDay { get; set; }
 
-        [MaxLength(500)]
-        public string? ProfilePictureUrl { get; set; }
+        public IFormFile? ProfilePicture { get; set; }
 
         public List<string>? Cities { get; set; }
         public List<string>? Languages { get; set; }

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
 
-namespace Application.DTOs
+namespace Application.DTOs.AuthenticationDTOs
 {
     public class RegisterDto
     {
@@ -38,6 +38,9 @@ namespace Application.DTOs
 
         [Required(ErrorMessage = "Role is required.")]
         public string Role { get; set; }
+
+        [Display(Name = "Profile Image")]
+        public IFormFile? ProfileImage { get; set; }
 
         [Display(Name = "Guide License Image")]
         public IFormFile? GuideLicenseImage { get; set; }

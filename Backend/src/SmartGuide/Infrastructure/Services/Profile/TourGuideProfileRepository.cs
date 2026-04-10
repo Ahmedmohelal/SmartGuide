@@ -1,4 +1,5 @@
-using Application.DTOs;
+using Application.DTOs.ProfileDTOs;
+using Application.Services.Interfaces;
 using Domain.Interfaces;
 using Infrastructure.Data;
 using Infrastructure.Data.Entities.Profiles.TourGuide;
@@ -9,10 +10,12 @@ namespace Infrastructure.Services.Profile
     public class TourGuideProfileRepository : IProfileRepository<TourGuideProfileDto, UpdateTourGuideProfileDto>
     {
         private readonly ApplicationDbContext _context;
+        private readonly IAttachmentService attachmentService;
 
-        public TourGuideProfileRepository(ApplicationDbContext context)
+        public TourGuideProfileRepository(ApplicationDbContext context, IAttachmentService _attachmentService)
         {
             _context = context;
+            attachmentService = _attachmentService;
         }
 
         public async Task<TourGuideProfileDto?> GetByIdAsync(string userId)
@@ -46,15 +49,28 @@ namespace Infrastructure.Services.Profile
             if (model.PricePerDay.HasValue)
                 profile.PricePerDay = model.PricePerDay.Value;
 
-            if (model.ProfilePictureUrl is not null)
-                profile.ProfilePictureUrl = model.ProfilePictureUrl;
+            string? Picture = null;
+            try
+            {
+                if (model.ProfilePicture != null)
+                    Picture = await attachmentService.Upload("TourGuides", model.ProfilePicture);
+            }
+            catch (Exception)
+            {
+                if(Picture is not null)
+                    await attachmentService.Delete(Picture, "TourGuides");
+            }
+
+
+            if (Picture is not null)
+                profile.ProfilePicture = Picture;
 
             if (model.Cities is not null)
             {
-                profile.Cities.Clear();
+                profile?.Cities?.Clear();
                 foreach (var city in model.Cities.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct())
                 {
-                    profile.Cities.Add(new TourGuideCity
+                    profile?.Cities?.Add(new TourGuideCity
                     {
                         CityName = city,
                         TourGuideProfileId = profile.UserId
@@ -64,10 +80,10 @@ namespace Infrastructure.Services.Profile
 
             if (model.Languages is not null)
             {
-                profile.Languages.Clear();
+                profile?.Languages?.Clear();
                 foreach (var language in model.Languages.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct())
                 {
-                    profile.Languages.Add(new TourGuideLanguage
+                    profile?.Languages?.Add(new TourGuideLanguage
                     {
                         Language = language,
                         TourGuideProfileId = profile.UserId
@@ -77,10 +93,10 @@ namespace Infrastructure.Services.Profile
 
             if (model.Gallery is not null)
             {
-                profile.Gallery.Clear();
+                profile?.Gallery?.Clear();
                 foreach (var image in model.Gallery.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct())
                 {
-                    profile.Gallery.Add(new TourGuideGallery
+                    profile?.Gallery?.Add(new TourGuideGallery
                     {
                         ImageUrl = image,
                         TourGuideProfileId = profile.UserId
@@ -89,7 +105,7 @@ namespace Infrastructure.Services.Profile
             }
 
             await _context.SaveChangesAsync();
-            return MapToDto(profile);
+            return MapToDto(profile!);
         }
 
         private static TourGuideProfileDto MapToDto(TourGuideProfile profile)
@@ -106,10 +122,10 @@ namespace Infrastructure.Services.Profile
                 Bio = profile.Bio,
                 PricePerDay = profile.PricePerDay,
                 Rating = profile.Rating,
-                ProfilePictureUrl = profile.ProfilePictureUrl,
-                Cities = profile.Cities.Select(x => x.CityName).ToList(),
-                Languages = profile.Languages.Select(x => x.Language).ToList(),
-                Gallery = profile.Gallery.Select(x => x.ImageUrl).ToList()
+                ProfilePicture = profile?.User?.ProfileImage,
+                Cities = profile?.Cities?.Select(x => x.CityName).ToList(),
+                Languages = profile?.Languages?.Select(x => x.Language).ToList(),
+                Gallery = profile?.Gallery?.Select(x => x.ImageUrl).ToList()
             };
         }
     }

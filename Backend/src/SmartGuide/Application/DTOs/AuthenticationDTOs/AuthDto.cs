@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Application.DTOs
+namespace Application.DTOs.AuthenticationDTOs
 {
     public class AuthDto
     {

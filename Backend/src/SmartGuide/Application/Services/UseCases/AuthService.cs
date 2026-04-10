@@ -6,6 +6,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.ComponentModel;
 using System.Net;
+using Application.DTOs.AuthenticationDTOs;
 
 namespace Application.Services.UseCases
 {
@@ -47,8 +48,8 @@ namespace Application.Services.UseCases
 
             if (await _userService.FindByUserNameAsync(model.UserName) is not null)
                 return new AuthDto { Message = ErrorMessages.UserNameAlreadyExists };
-          
 
+            string? ProfileImage = null;
             string? licenseImage = null;
             string? nationalIdImage = null;
             if (model.Role.Trim().Equals(Roles.TourGuide.ToString(), StringComparison.OrdinalIgnoreCase))
@@ -67,11 +68,23 @@ namespace Application.Services.UseCases
                 catch
                 {
 
-                    await DeleteGuideImages(licenseImage, nationalIdImage);
+                    await DeleteGuideImages(licenseImage, nationalIdImage, ProfileImage);
                     return new AuthDto { Message = ErrorMessages.UploadFailed };
 
                 }
-
+            }
+            if (model.ProfileImage != null)
+            {
+                try
+                {
+                    ProfileImage = await _attachmentService.Upload($"profileImages", model.ProfileImage);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to upload profile image for {Email}.", model.Email);
+                    await DeleteGuideImages(licenseImage, nationalIdImage, ProfileImage);
+                    return new AuthDto { Message = ErrorMessages.UploadFailed };
+                }
             }
             var newUser = new User
             {
@@ -83,6 +96,7 @@ namespace Application.Services.UseCases
                 Role = model.Role.Trim(),
                 GuideLicenseImage = licenseImage,
                 NationalIdImage = nationalIdImage,
+                ProfileImage = ProfileImage,
                 WhatsAppNumber = model.WhatsAppNumber
             };
 
@@ -91,14 +105,14 @@ namespace Application.Services.UseCases
 
             if (!string.IsNullOrEmpty(errors))
             {
-                await DeleteGuideImages(licenseImage, nationalIdImage);
+                await DeleteGuideImages(licenseImage, nationalIdImage, ProfileImage);
                 return new AuthDto { Message = errors };
             }
             var roleErrors = await _userService.AddToRoleAsync(appUser, model.Role);
 
             if (!string.IsNullOrEmpty(roleErrors))
             {
-                await DeleteGuideImages(licenseImage, nationalIdImage);
+                await DeleteGuideImages(licenseImage, nationalIdImage, ProfileImage);
                 return new AuthDto { Message = roleErrors };
             }
 
@@ -127,13 +141,15 @@ namespace Application.Services.UseCases
 
         }
 
-        private async Task DeleteGuideImages(string? licenseImage, string? nationalIdImage)
+        private async Task DeleteGuideImages(string? licenseImage, string? nationalIdImage, string? profileImage)
         {
             if (licenseImage != null)
                 await _attachmentService.Delete(licenseImage, "licenses");
 
             if (nationalIdImage != null)
                 await _attachmentService.Delete(nationalIdImage, "nationalIds");
+            if (profileImage != null)
+                await _attachmentService.Delete(profileImage, "profileImages");
         }
         public async Task<AuthDto> GetTokenAsync(TokenRequestDto model)
         {
@@ -151,7 +167,7 @@ namespace Application.Services.UseCases
 
                 Message = "Login successful",
                 IsAuthanticated = true,
-                Id= user.Id,
+                Id = user.Id,
                 Email = user.Email,
                 UserName = user.UserName,
                 Country = user.Country,
@@ -290,7 +306,7 @@ namespace Application.Services.UseCases
 
         public async Task<OperationResultDto> ForgotPasswordAsync(ForgotPasswordDto model)
         {
-           
+
             var user = await _userService.FindByEmailAsync(model.Email);
             if (user is not null)
             {

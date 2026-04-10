@@ -1,5 +1,4 @@
 using Application.Services.Interfaces;
-using Application.DTOs;
 using Domain.Interfaces;
 using Infrastructure.Data;
 using Infrastructure.Data.Entities.Identity;
@@ -14,6 +13,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using Application.DTOs.ProfileDTOs;
 
 namespace Infrastructure.Settings
 {
@@ -23,7 +23,7 @@ namespace Infrastructure.Settings
         {
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
-                    configuration.GetConnectionString("SawsanDefaulConnection"),
+                    configuration.GetConnectionString("AhmedDefaultConnection"),
                         sqlOptions => sqlOptions.EnableRetryOnFailure()
 ));
 

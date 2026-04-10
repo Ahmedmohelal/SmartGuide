@@ -1,12 +1,11 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace Application.DTOs
+namespace Application.DTOs.AuthenticationDTOs
 {
-    public class SendResetOtpDto
+    public class ForgotPasswordDto
     {
         [Required]
         [EmailAddress]
         public string Email { get; set; } = string.Empty;
     }
 }
-

@@ -1,4 +1,4 @@
-namespace Application.DTOs
+namespace Application.DTOs.ProfileDTOs
 {
     public class TouristProfileDto
     {
@@ -10,5 +10,6 @@ namespace Application.DTOs
         public string Email { get; set; } = string.Empty;
         public string Country { get; set; } = string.Empty;
         public string? WhatsAppNumber { get; set; }
+        public string? TouristImage { get; set; }
     }
 }

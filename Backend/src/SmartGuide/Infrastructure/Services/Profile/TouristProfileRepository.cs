@@ -1,4 +1,6 @@
-using Application.DTOs;
+using Application.DTOs.ProfileDTOs;
+using Application.Services.Interfaces;
+using Application.Services.UseCases;
 using Domain.Interfaces;
 using Infrastructure.Data;
 using Infrastructure.Data.Entities.Profiles.Tourist;
@@ -9,10 +11,12 @@ namespace Infrastructure.Services.Profile
     public class TouristProfileRepository : IProfileRepository<TouristProfileDto, UpdateTouristProfileDto>
     {
         private readonly ApplicationDbContext _context;
+        private readonly IAttachmentService attachmentService;
 
-        public TouristProfileRepository(ApplicationDbContext context)
+        public TouristProfileRepository(ApplicationDbContext context , IAttachmentService _attachmentService)
         {
             _context = context;
+            attachmentService = _attachmentService;
         }
 
         public async Task<TouristProfileDto?> GetByIdAsync(string userId)
@@ -46,6 +50,20 @@ namespace Infrastructure.Services.Profile
             if (model.WhatsAppNumber is not null)
                 profile.User.WhatsAppNumber = model.WhatsAppNumber;
 
+            string? TouristImage = null;
+            try
+            {
+                if(model.TouristImage != null)
+                TouristImage = await attachmentService.Upload("Tourists", model.TouristImage);
+            }
+            catch (Exception)
+            {
+                if (TouristImage != null)
+                    await attachmentService.Delete(TouristImage, "Tourists");
+            }
+            if(TouristImage != null)
+                profile.User.ProfileImage = TouristImage;
+
             await _context.SaveChangesAsync();
             return MapToDto(profile);
         }
@@ -61,7 +79,8 @@ namespace Infrastructure.Services.Profile
                 UserName = profile.User?.UserName ?? string.Empty,
                 Email = profile.User?.Email ?? string.Empty,
                 Country = profile.User?.Country ?? string.Empty,
-                WhatsAppNumber = profile.User?.WhatsAppNumber
+                WhatsAppNumber = profile.User?.WhatsAppNumber,
+                TouristImage = profile.User?.ProfileImage
             };
         }
     }

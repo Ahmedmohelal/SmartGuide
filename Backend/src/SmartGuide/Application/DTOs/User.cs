@@ -23,6 +23,7 @@ namespace Application.DTOs
 
         public string? NationalIdImage { get; set; }
 
+        public string? ProfileImage { get; set; }
         /// <summary>
         /// Optional WhatsApp number for contact (e.g. E.164 format).
         /// </summary>

@@ -1,4 +1,4 @@
-using Application.DTOs;
+using Application.DTOs.ProfileDTOs;
 using Application.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -27,7 +27,7 @@ namespace API.Controllers
         }
 
         [HttpPut("{id}/profile")]
-        public Task<ActionResult<TouristProfileDto>> UpdateProfileByIdAsync(string id, [FromBody] UpdateTouristProfileDto model)
+        public Task<ActionResult<TouristProfileDto>> UpdateProfileByIdAsync(string id, [FromForm] UpdateTouristProfileDto model)
         {
             return UpdateProfileAsync(id, model);
         }

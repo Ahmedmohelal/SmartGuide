@@ -3,7 +3,9 @@ using Application.Services.Interfaces;
 using Infrastructure.Data;
 using Infrastructure.Data.Entities;
 using Infrastructure.Settings;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
 using System.Security.Cryptography;
 
@@ -74,6 +76,9 @@ namespace Infrastructure.Services.Token
             if (user == null)
                 return RefreshTokenValidationResult.Failure("UserNotFound", "User no longer exists.");
 
+
+
+
             storedToken.RevokedAt = DateTime.UtcNow;
             var (newPlainToken, newExpiresAt) = await CreateAsync(storedToken.UserId, cancellationToken);
 
@@ -92,7 +97,7 @@ namespace Infrastructure.Services.Token
         private static string GenerateSecureToken()
         {
             var bytes = RandomNumberGenerator.GetBytes(TokenByteLength);
-            return Convert.ToBase64String(bytes);
+            return WebEncoders.Base64UrlEncode(bytes);
         }
 
         private static string HashToken(string plainToken)

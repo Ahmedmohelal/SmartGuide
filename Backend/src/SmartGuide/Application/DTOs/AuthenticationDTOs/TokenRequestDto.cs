@@ -3,13 +3,13 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
 
-namespace Application.DTOs
+namespace Application.DTOs.AuthenticationDTOs
 {
-    public class AddRoleDto
+    public class TokenRequestDto
     {
         [Required]
         public string Email { get; set; }
         [Required]
-        public string Role { get; set; }
+        public string Password { get; set; }
     }
 }

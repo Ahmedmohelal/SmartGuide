@@ -1,4 +1,4 @@
-using Application.DTOs;
+using Application.DTOs.ProfileDTOs;
 using Application.Services.Interfaces;
 using Domain.Interfaces;
 

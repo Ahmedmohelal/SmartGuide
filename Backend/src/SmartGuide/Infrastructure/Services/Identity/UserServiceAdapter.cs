@@ -56,6 +56,7 @@ namespace Infrastructure.Services.Identity
                 Role = user.Role,
                 GuideLicenseImage = user.GuideLicenseImage,
                 NationalIdImage = user.NationalIdImage,
+                ProfileImage = user.ProfileImage,
                 WhatsAppNumber = user.WhatsAppNumber
             };
 
@@ -77,6 +78,7 @@ namespace Infrastructure.Services.Identity
                 Role = applicationUser.Role,
                 GuideLicenseImage = applicationUser.GuideLicenseImage,
                 NationalIdImage = applicationUser.NationalIdImage,
+                ProfileImage = applicationUser.ProfileImage,
                 WhatsAppNumber = applicationUser.WhatsAppNumber
             };
             return (user, null);
@@ -95,6 +97,7 @@ namespace Infrastructure.Services.Identity
                 EmailConfirmed = true,
                 GuideLicenseImage = user.GuideLicenseImage,
                 NationalIdImage = user.NationalIdImage,
+                ProfileImage = user.ProfileImage,
                 WhatsAppNumber = user.WhatsAppNumber
             };
 
@@ -117,6 +120,7 @@ namespace Infrastructure.Services.Identity
                 UserName = applicationUser.UserName!,
                 Role = applicationUser.Role,
                 GuideLicenseImage = applicationUser.GuideLicenseImage,
+                ProfileImage = applicationUser.ProfileImage,
                 NationalIdImage = applicationUser.NationalIdImage,
                 WhatsAppNumber = applicationUser.WhatsAppNumber
             };
@@ -139,6 +143,7 @@ namespace Infrastructure.Services.Identity
                 Role = applicationUser.Role,
                 GuideLicenseImage = applicationUser.GuideLicenseImage,
                 NationalIdImage = applicationUser.NationalIdImage,
+                ProfileImage = applicationUser.ProfileImage,
                 WhatsAppNumber = applicationUser.WhatsAppNumber
             };
         }
@@ -159,6 +164,7 @@ namespace Infrastructure.Services.Identity
                 Role = applicationUser.Role,
                 GuideLicenseImage = applicationUser.GuideLicenseImage,
                 NationalIdImage = applicationUser.NationalIdImage,
+                ProfileImage = applicationUser.ProfileImage,
                 WhatsAppNumber = applicationUser.WhatsAppNumber
             };
         }
@@ -179,6 +185,7 @@ namespace Infrastructure.Services.Identity
                 Role = applicationUser.Role,
                 GuideLicenseImage = applicationUser.GuideLicenseImage,
                 NationalIdImage = applicationUser.NationalIdImage,
+                ProfileImage = applicationUser.ProfileImage,
                 WhatsAppNumber = applicationUser.WhatsAppNumber
             };
         }

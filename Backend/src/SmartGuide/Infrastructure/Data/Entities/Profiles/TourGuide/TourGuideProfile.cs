@@ -17,7 +17,7 @@ namespace Infrastructure.Data.Entities.Profiles.TourGuide
         public double? PricePerDay { get; set; } 
         public double Rating { get; set; }
 
-        public string? ProfilePictureUrl { get; set; }
+        public string? ProfilePicture { get; set; }
 
         public ICollection<TourGuideCity>? Cities { get; set; }=new List<TourGuideCity>();
 
