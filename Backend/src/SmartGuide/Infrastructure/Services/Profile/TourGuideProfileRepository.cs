@@ -1,5 +1,6 @@
 using Application.DTOs.ProfileDTOs;
 using Application.Services.Interfaces;
+using Application.Services.UseCases;
 using Domain.Interfaces;
 using Infrastructure.Data;
 using Infrastructure.Data.Entities.Profiles.TourGuide;
@@ -13,7 +14,7 @@ namespace Infrastructure.Services.Profile
         private readonly IAttachmentService attachmentService;
         private readonly IImageUrlService _imageUrlService;
 
-        public TourGuideProfileRepository(ApplicationDbContext context, IAttachmentService _attachmentService , IImageUrlService imageUrlService)
+        public TourGuideProfileRepository(ApplicationDbContext context, IAttachmentService _attachmentService, IImageUrlService imageUrlService)
         {
             _context = context;
             attachmentService = _attachmentService;
@@ -52,24 +53,36 @@ namespace Infrastructure.Services.Profile
                 profile.PricePerDay = model.PricePerDay.Value;
 
             string? Picture = null;
+
             try
             {
                 if (model.ProfilePicture != null)
-                    Picture = await attachmentService.Upload("TourGuides", model.ProfilePicture);
+                {
+                    await attachmentService.Delete(profile.User.ProfileImage, "profileImages");
+                    Picture = await attachmentService.Upload("profileImages", model.ProfilePicture);
+                }
             }
             catch (Exception)
             {
-                if(Picture is not null)
-                    await attachmentService.Delete(Picture, "TourGuides");
+                if (Picture is not null)
+                    await attachmentService.Delete(Picture, "profileImages");
             }
 
-
             if (Picture is not null)
+            {
                 profile.ProfilePicture = Picture;
+                profile.User!.ProfileImage = Picture;
+            }
 
             if (model.Cities is not null)
             {
                 profile?.Cities?.Clear();
+
+                var existingCities = _context.TourGuideCities
+                                             .Where(x => x.TourGuideProfileId == profile.UserId);
+                _context.TourGuideCities.RemoveRange(existingCities);
+
+
                 foreach (var city in model.Cities.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct())
                 {
                     profile?.Cities?.Add(new TourGuideCity
@@ -83,6 +96,12 @@ namespace Infrastructure.Services.Profile
             if (model.Languages is not null)
             {
                 profile?.Languages?.Clear();
+
+                var existingLanguages = _context.TourGuideLanguages
+                                             .Where(x => x.TourGuideProfileId == profile.UserId);
+                _context.TourGuideLanguages.RemoveRange(existingLanguages);
+
+
                 foreach (var language in model.Languages.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct())
                 {
                     profile?.Languages?.Add(new TourGuideLanguage
@@ -93,17 +112,32 @@ namespace Infrastructure.Services.Profile
                 }
             }
 
-            if (model.Gallery is not null)
+            if (model.Gallery != null && model.Gallery.Any())
             {
                 profile?.Gallery?.Clear();
-                foreach (var image in model.Gallery.Where(x => !string.IsNullOrWhiteSpace(x)).Distinct())
+                var existingGallery = _context.TourGuideGallery
+                                             .Where(x => x.TourGuideProfileId == profile.UserId);
+                _context.TourGuideGallery.RemoveRange(existingGallery);
+                foreach (var gallery in existingGallery)
                 {
-                    profile?.Gallery?.Add(new TourGuideGallery
-                    {
-                        ImageUrl = image,
-                        TourGuideProfileId = profile.UserId
-                    });
+                    await attachmentService.Delete(gallery.ImageUrl, "TourGuidesGallery");
                 }
+
+
+                foreach (var file in model.Gallery)
+                {
+                    var fileName = await attachmentService.Upload("TourGuidesGallery", file);
+
+                    var galleryImage = new TourGuideGallery
+                    {
+                        ImageUrl = fileName,
+                        TourGuideProfileId = profile?.UserId!
+                    };
+
+                    _context.TourGuideGallery.Add(galleryImage);
+                }
+
+                await _context.SaveChangesAsync();
             }
 
             await _context.SaveChangesAsync();
@@ -132,7 +166,7 @@ namespace Infrastructure.Services.Profile
                     "profileImages"),
                 Cities = profile?.Cities?.Select(x => x.CityName).ToList(),
                 Languages = profile?.Languages?.Select(x => x.Language).ToList(),
-                Gallery = profile?.Gallery?.Select(x => x.ImageUrl).ToList()
+                Gallery = profile?.Gallery?.Select(x => _imageUrlService.ToPublicImageUrl(x.ImageUrl, "TourGuidesGallery")).ToList()
             };
         }
     }

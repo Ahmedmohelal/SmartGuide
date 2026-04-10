@@ -15,6 +15,6 @@ namespace Application.DTOs.ProfileDTOs
 
         public List<string>? Cities { get; set; }
         public List<string>? Languages { get; set; }
-        public List<string>? Gallery { get; set; }
+        public List<IFormFile>? Gallery { get; set; }
     }
 }
