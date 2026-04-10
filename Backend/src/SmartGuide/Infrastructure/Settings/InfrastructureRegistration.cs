@@ -1,9 +1,11 @@
+using Application.DTOs.ProfileDTOs;
 using Application.Services.Interfaces;
 using Domain.Interfaces;
 using Infrastructure.Data;
 using Infrastructure.Data.Entities.Identity;
 using Infrastructure.Services.Auth;
 using Infrastructure.Services.Email;
+using Infrastructure.Services.Files;
 using Infrastructure.Services.Identity;
 using Infrastructure.Services.Profile;
 using Infrastructure.Services.Token;
@@ -13,7 +15,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
-using Application.DTOs.ProfileDTOs;
 
 namespace Infrastructure.Settings
 {
@@ -61,6 +62,10 @@ namespace Infrastructure.Settings
 
             services.Configure<GoogleAuthOptions>(configuration.GetSection(GoogleAuthOptions.SectionName));
             services.Configure<EmailSettings>(configuration.GetSection(EmailSettings.SectionName));
+
+            services.AddHttpContextAccessor();
+            services.AddScoped<IImageUrlService, ImageUrlService>();
+
 
             services.AddScoped<IUserService, UserServiceAdapter>();
             services.AddScoped<ITokenService, TokenService>();

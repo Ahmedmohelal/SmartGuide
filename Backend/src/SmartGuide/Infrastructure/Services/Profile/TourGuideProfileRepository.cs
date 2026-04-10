@@ -11,11 +11,13 @@ namespace Infrastructure.Services.Profile
     {
         private readonly ApplicationDbContext _context;
         private readonly IAttachmentService attachmentService;
+        private readonly IImageUrlService _imageUrlService;
 
-        public TourGuideProfileRepository(ApplicationDbContext context, IAttachmentService _attachmentService)
+        public TourGuideProfileRepository(ApplicationDbContext context, IAttachmentService _attachmentService , IImageUrlService imageUrlService)
         {
             _context = context;
             attachmentService = _attachmentService;
+            _imageUrlService = imageUrlService;
         }
 
         public async Task<TourGuideProfileDto?> GetByIdAsync(string userId)
@@ -108,8 +110,11 @@ namespace Infrastructure.Services.Profile
             return MapToDto(profile!);
         }
 
-        private static TourGuideProfileDto MapToDto(TourGuideProfile profile)
+        private TourGuideProfileDto MapToDto(TourGuideProfile profile)
         {
+            // Prefer the profile-specific picture if it exists; fallback to user's profile image.
+            var storedProfileImage = profile.ProfilePicture ?? profile.User?.ProfileImage;
+
             return new TourGuideProfileDto
             {
                 UserId = profile.UserId,
@@ -122,7 +127,9 @@ namespace Infrastructure.Services.Profile
                 Bio = profile.Bio,
                 PricePerDay = profile.PricePerDay,
                 Rating = profile.Rating,
-                ProfilePicture = profile?.User?.ProfileImage,
+                ProfilePicture = _imageUrlService.ToPublicImageUrl(
+                    storedProfileImage,
+                    "profileImages"),
                 Cities = profile?.Cities?.Select(x => x.CityName).ToList(),
                 Languages = profile?.Languages?.Select(x => x.Language).ToList(),
                 Gallery = profile?.Gallery?.Select(x => x.ImageUrl).ToList()

@@ -12,11 +12,13 @@ namespace Infrastructure.Services.Profile
     {
         private readonly ApplicationDbContext _context;
         private readonly IAttachmentService attachmentService;
+        private readonly IImageUrlService _imageUrlService;
 
-        public TouristProfileRepository(ApplicationDbContext context , IAttachmentService _attachmentService)
+        public TouristProfileRepository(ApplicationDbContext context , IAttachmentService _attachmentService,IImageUrlService imageUrlService)
         {
             _context = context;
             attachmentService = _attachmentService;
+            _imageUrlService = imageUrlService;
         }
 
         public async Task<TouristProfileDto?> GetByIdAsync(string userId)
@@ -68,7 +70,7 @@ namespace Infrastructure.Services.Profile
             return MapToDto(profile);
         }
 
-        private static TouristProfileDto MapToDto(TouristProfile profile)
+        private TouristProfileDto MapToDto(TouristProfile profile)
         {
             return new TouristProfileDto
             {
@@ -80,7 +82,9 @@ namespace Infrastructure.Services.Profile
                 Email = profile.User?.Email ?? string.Empty,
                 Country = profile.User?.Country ?? string.Empty,
                 WhatsAppNumber = profile.User?.WhatsAppNumber,
-                TouristImage = profile.User?.ProfileImage
+                TouristImage = _imageUrlService.ToPublicImageUrl(
+                    profile.User?.ProfileImage,
+                    "profileImages")
             };
         }
     }
