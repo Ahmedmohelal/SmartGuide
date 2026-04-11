@@ -1,1 +1,14 @@
+@import url("https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap");
 @import "tailwindcss";
+
+html {
+  scroll-behavior: smooth;
+}
+
+@theme {
+  --font-sans: "Cairo", ui-sans-serif, system-ui, sans-serif;
+  --color-egypt-teal: #004d40;
+  --color-egypt-teal-dark: #00352c;
+  --color-egypt-gold: #c9a227;
+  --color-footer-navy: #0a1628;
+}

@@ -29,7 +29,11 @@ export default function Register() {
   };
 
   return (
-    <div className="h-screen flex items-center justify-center bg-gray-100 p-4 overflow-hidden">
+    <div
+      dir="ltr"
+      lang="en"
+      className="flex h-screen items-center justify-center overflow-hidden bg-gray-100 p-4"
+    >
       <div className="w-full max-w-5xl h-[85vh] bg-white rounded-3xl shadow-2xl grid md:grid-cols-2 overflow-hidden min-h-0">
         {/* ========= LEFT IMAGE SECTION ========= */}
         <div className="hidden md:block relative min-h-0 overflow-hidden">
@@ -157,10 +161,15 @@ export default function Register() {
               </button>
             </form>
 
-            <p className="text-sm text-center mt-4">
+            <p className="mt-4 text-center text-sm">
               Already have an account?{" "}
-              <Link to="/" className="text-teal-700 font-medium">
+              <Link to="/login" className="font-medium text-teal-700">
                 Sign in
+              </Link>
+            </p>
+            <p className="mt-3 text-center text-sm text-gray-500">
+              <Link to="/" className="text-teal-800 hover:underline">
+                ← Back to home
               </Link>
             </p>
           </div>
