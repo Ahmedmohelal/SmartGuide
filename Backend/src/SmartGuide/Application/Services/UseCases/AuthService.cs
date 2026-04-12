@@ -73,6 +73,11 @@ namespace Application.Services.UseCases
 
                 }
             }
+            else
+            {
+                return new AuthDto { Message = "The specified role is not supported." };
+            }
+
             if (model.ProfileImage != null)
             {
                 try
