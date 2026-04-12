@@ -65,3 +65,14 @@
     linear-gradient(150deg, transparent 87%, rgb(255 255 255 / 0.04) 87.5%);
   background-size: 48px 84px;
 }
+
+/* تمرير الأقسام مع شريط تنقل ثابت */
+/* ارتفاع تقريبي للناف الثابت فوق الصفحة */
+#hero,
+#about,
+#featured,
+#news,
+#faq,
+#footer {
+  scroll-margin-top: 5.75rem;
+}

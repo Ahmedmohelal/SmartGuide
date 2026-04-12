@@ -10,9 +10,10 @@ const [newsImg1, newsImg2, newsImg3, newsImg4] = homeImages.news;
 export const navLinks = [
   { label: "الرئيسية", href: "#hero" },
   { label: "من نحن", href: "#about" },
-  { label: "الوجهات", href: "#featured" },
-  { label: "المدونة", href: "#news" },
-  { label: "اتصل بنا", href: "#footer" },
+  { label: "الأماكن السياحية", href: "#featured" },
+  { label: "آخر الأخبار", href: "#news" },
+  { label: "الأسئلة الشائعة", href: "#faq" },
+  { label: "التواصل", href: "#footer" },
 ];
 
 export const hero = {
