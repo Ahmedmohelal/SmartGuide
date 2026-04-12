@@ -57,3 +57,5 @@ nunit-*.xml
 bin/
 obj/
 *.user
+node_modules/
+.env
