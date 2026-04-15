@@ -49,48 +49,52 @@ namespace Application.Services.UseCases
             if (await _userService.FindByUserNameAsync(model.UserName) is not null)
                 return new AuthDto { Message = ErrorMessages.UserNameAlreadyExists };
 
-            string? ProfileImage = null;
+            var normalizedRole = model.Role.Trim();
+
+            bool isTourGuide = normalizedRole.Equals(
+                Roles.TourGuide.ToString(), StringComparison.OrdinalIgnoreCase);
+            bool isTourist = normalizedRole.Equals(
+                Roles.Tourist.ToString(), StringComparison.OrdinalIgnoreCase);
+
+            if (!isTourGuide && !isTourist)
+                return new AuthDto { Message = "The specified role is not supported." };
+
+            string? profileImage = null;   
             string? licenseImage = null;
             string? nationalIdImage = null;
-            if (model.Role.Trim().Equals(Roles.TourGuide.ToString(), StringComparison.OrdinalIgnoreCase))
+
+            if (isTourGuide)
             {
+                if (model.GuideLicenseImage is null || model.NationalIdImage is null)
+                    return new AuthDto { Message = "Guide images required" };
+
                 try
                 {
-
-                    if (model.GuideLicenseImage == null || model.NationalIdImage == null)
-                        return new AuthDto { Message = "Guide images required" };
-
                     licenseImage = await _attachmentService.Upload("licenses", model.GuideLicenseImage);
-
                     nationalIdImage = await _attachmentService.Upload("nationalIds", model.NationalIdImage);
-
                 }
-                catch
+                catch (Exception ex)
                 {
-
-                    await DeleteGuideImages(licenseImage, nationalIdImage, ProfileImage);
+                    _logger.LogError(ex, "Failed to upload guide images for {Email}.", model.Email);
+                    await DeleteGuideImages(licenseImage, nationalIdImage, profileImage);
                     return new AuthDto { Message = ErrorMessages.UploadFailed };
-
                 }
             }
-            else
-            {
-                return new AuthDto { Message = "The specified role is not supported." };
-            }
 
-            if (model.ProfileImage != null)
+            if (model.ProfileImage is not null)
             {
                 try
                 {
-                    ProfileImage = await _attachmentService.Upload($"profileImages", model.ProfileImage);
+                    profileImage = await _attachmentService.Upload("profileImages", model.ProfileImage);
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Failed to upload profile image for {Email}.", model.Email);
-                    await DeleteGuideImages(licenseImage, nationalIdImage, ProfileImage);
+                    await DeleteGuideImages(licenseImage, nationalIdImage, profileImage);
                     return new AuthDto { Message = ErrorMessages.UploadFailed };
                 }
             }
+
             var newUser = new User
             {
                 FirstName = model.FirstName,
@@ -98,37 +102,36 @@ namespace Application.Services.UseCases
                 UserName = model.UserName,
                 Email = model.Email,
                 Country = model.Country,
-                Role = model.Role.Trim(),
+                Role = normalizedRole,  
                 GuideLicenseImage = licenseImage,
                 NationalIdImage = nationalIdImage,
-                ProfileImage = ProfileImage,
+                ProfileImage = profileImage,
                 WhatsAppNumber = model.WhatsAppNumber
             };
 
             var (appUser, errors) = await _userService.CreateAsync(newUser, model.Password);
 
-
             if (!string.IsNullOrEmpty(errors))
             {
-                await DeleteGuideImages(licenseImage, nationalIdImage, ProfileImage);
+                await DeleteGuideImages(licenseImage, nationalIdImage, profileImage);
                 return new AuthDto { Message = errors };
             }
-            var roleErrors = await _userService.AddToRoleAsync(appUser, model.Role);
+
+            var roleErrors = await _userService.AddToRoleAsync(appUser, normalizedRole);
 
             if (!string.IsNullOrEmpty(roleErrors))
             {
-                await DeleteGuideImages(licenseImage, nationalIdImage, ProfileImage);
+                await DeleteGuideImages(licenseImage, nationalIdImage, profileImage);
                 return new AuthDto { Message = roleErrors };
             }
 
-            await _profileInitializerService.EnsureProfileExistsAsync(appUser.Id, model.Role.Trim());
+            await _profileInitializerService.EnsureProfileExistsAsync(appUser.Id, normalizedRole);
 
             var (token, expires) = await _tokenService.CreateTokenAsync(appUser);
             var (refreshToken, refreshExpires) = await _refreshTokenService.CreateAsync(appUser.Id);
 
             return new AuthDto
             {
-
                 Message = "User Registered Successfully",
                 IsAuthanticated = true,
                 Id = appUser.Id,
@@ -143,7 +146,6 @@ namespace Application.Services.UseCases
                 Roles = await _userService.GetRolesAsync(appUser),
                 IsGuideVerified = false
             };
-
         }
 
         private async Task DeleteGuideImages(string? licenseImage, string? nationalIdImage, string? profileImage)
