@@ -11,7 +11,10 @@ export default function ProfileHeader({ onEditClick }) {
   const badgeLabel = role === "tourguide" ? "Active Guide" : "Active Tourist";
   
   // صورة افتراضية لو الـ API مرجعش صورة
-  const avatarUrl = user?.touristImage || `https://ui-avatars.com/api/?name=${fullName}&background=0D9488&color=fff`;
+  const avatarUrl =
+    user?.touristImage ||
+    user?.profilePicture ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName || "User")}&background=0D9488&color=fff`;
 
   return (
     <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden mb-8">
