@@ -8,6 +8,7 @@ export default function Profile() {
   
   // بنجيب الـ Role من الـ Storage عشان نضمن الدقة
   const storedRole = localStorage.getItem("userRole");
+  const normalizedRole = storedRole?.toLowerCase();
 
   if (loading) return <div className="p-20 text-center">جاري التحميل...</div>;
 
@@ -18,7 +19,7 @@ export default function Profile() {
     <div className="min-h-screen bg-gray-50 pt-20">
       <div className="container mx-auto">
         {/* الشرط المعدل: بنقارن بالكلمة اللي إنت مخزنها بالظبط */}
-        {storedRole === "Tourist" ? (
+        {normalizedRole === "tourist" ? (
           <TouristProfile user={user} />
         ) : (
           <GuideProfile user={user} />

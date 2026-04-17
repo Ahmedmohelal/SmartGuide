@@ -10,6 +10,63 @@ import axios from "axios";
 const ProfileContext = createContext();
 const BASE_URL = "http://smartguide.runasp.net/api";
 
+const isTouristRole = (role) => role?.toLowerCase() === "tourist";
+const pickFirst = (...values) =>
+  values.find((value) => value !== undefined && value !== null && value !== "");
+
+const normalizeProfileData = (rawUser = {}, fallbackUser = {}) => {
+  const userName =
+    pickFirst(
+      rawUser.userName,
+      rawUser.username,
+      rawUser.UserName,
+      fallbackUser.userName,
+      fallbackUser.username
+    ) || "";
+
+  const firstName =
+    pickFirst(
+      rawUser.firstName,
+      rawUser.firstname,
+      rawUser.FirstName,
+      fallbackUser.firstName,
+      fallbackUser.firstname
+    ) || "";
+
+  const lastName =
+    pickFirst(
+      rawUser.lastName,
+      rawUser.lastname,
+      rawUser.LastName,
+      fallbackUser.lastName,
+      fallbackUser.lastname
+    ) || "";
+
+  const normalizedFirstName =
+    firstName || (userName ? userName.split(" ")[0] : "");
+  const normalizedLastName =
+    lastName || (userName && userName.includes(" ") ? userName.split(" ").slice(1).join(" ") : "");
+
+  return {
+    ...fallbackUser,
+    ...rawUser,
+    id: pickFirst(rawUser.id, rawUser.Id, fallbackUser.id),
+    userId: pickFirst(rawUser.userId, rawUser.UserId, fallbackUser.userId, fallbackUser.id),
+    userName,
+    firstName: normalizedFirstName,
+    lastName: normalizedLastName,
+    email: pickFirst(rawUser.email, rawUser.Email, fallbackUser.email),
+    country: pickFirst(rawUser.country, rawUser.Country, fallbackUser.country),
+    whatsAppNumber: pickFirst(
+      rawUser.whatsAppNumber,
+      rawUser.whatsappNumber,
+      rawUser.WhatsAppNumber,
+      fallbackUser.whatsAppNumber
+    ),
+    touristImage: pickFirst(rawUser.touristImage, rawUser.profileImage, fallbackUser.touristImage, ""),
+  };
+};
+
 export const ProfileProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -28,7 +85,7 @@ export const ProfileProvider = ({ children }) => {
       }
 
       const endpoint =
-        role === "Tourist"
+        isTouristRole(role)
           ? `${BASE_URL}/tourists/${userId}/profile`
           : `${BASE_URL}/tour-guides/${userId}/profile`;
 
@@ -36,7 +93,7 @@ export const ProfileProvider = ({ children }) => {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      setUser({ ...response.data });
+      setUser((prev) => normalizeProfileData(response.data, prev || {}));
       setError(null);
     } catch (err) {
       console.error("Error fetching profile:", err);
@@ -47,51 +104,63 @@ export const ProfileProvider = ({ children }) => {
   }, []);
 
   // 2. دالة تحديث بيانات البروفايل (PUT)
-const updateProfileData = async (updatedData) => {
-  try {
-    const token = localStorage.getItem("token");
-    const role = localStorage.getItem("userRole");
+  const updateProfileData = async (updatedData) => {
+    try {
+      const token = localStorage.getItem("token");
+      const role = localStorage.getItem("userRole");
+      const storedUserId = localStorage.getItem("userId");
+      const profileUserId = user?.userId ?? user?.id ?? storedUserId;
 
-    // تأكد إننا بنبعت الأوبجيكت صح مش الرقم اللي ظهرلك ده
-    const payload = {
-      id: user?.id,               
-      userId: user?.userId,       
-      firstName: String(updatedData.firstName), // التأكد إنه نص
-      lastName: String(updatedData.lastName),   // التأكد إنه نص
-      userName: user?.userName,   
-      email: user?.email,         
-      country: updatedData.country || user?.country,
-      whatsAppNumber: String(updatedData.whatsAppNumber || user?.whatsAppNumber),
-      touristImage: user?.touristImage || ""
-    };
+      const payload = {
+        id: user?.id ?? profileUserId,
+        userId: profileUserId,
+        firstName: String(updatedData.firstName ?? user?.firstName ?? "").trim(),
+        lastName: String(updatedData.lastName ?? user?.lastName ?? "").trim(),
+        userName: user?.userName,
+        email: user?.email,
+        country: updatedData.country ?? user?.country,
+        whatsAppNumber: String(
+          updatedData.whatsAppNumber ?? user?.whatsAppNumber ?? ""
+        ).trim(),
+        touristImage: user?.touristImage || "",
+      };
 
-    console.log("الـ Payload اللي رايح للسيرفر دلوقتي:", payload);
+      const endpoint = isTouristRole(role)
+        ? `${BASE_URL}/tourists/${profileUserId}/profile`
+        : `${BASE_URL}/tour-guides/${profileUserId}/profile`;
 
-    const endpoint = role === "Tourist" 
-      ? `${BASE_URL}/tourists/${user?.userId}/profile`
-      : `${BASE_URL}/tour-guides/${user?.userId}/profile`;
+      const response = await axios.put(endpoint, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
 
-    const response = await axios.put(endpoint, payload, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
+      if (response.status === 200 || response.status === 204) {
+        const serverUser =
+          response.data && typeof response.data === "object" ? response.data : {};
 
-    if (response.status === 200 || response.status === 204) {
-      // تحديث محلي فوري بالقيم النصية
-      setUser(prev => ({ ...prev, ...payload }));
-      
-      // ندي السيرفر وقته يثبت الداتا
-      setTimeout(() => getProfileData(), 1500);
-      
-      return { success: true };
+        setUser((prev) =>
+          normalizeProfileData(
+            {
+              ...serverUser,
+              ...payload,
+              firstName: payload.firstName,
+              lastName: payload.lastName,
+            },
+            prev || {}
+          )
+        );
+
+        return { success: true };
+      }
+
+      return { success: false, error: "تعذر حفظ التعديلات، حاولي مرة أخرى" };
+    } catch (err) {
+      console.error("Error updating profile:", err.response?.data || err.message);
+      return { success: false, error: "تأكد من إدخال بيانات صحيحة" };
     }
-  } catch (err) {
-    console.error("خطأ الـ Payload:", err.response?.data);
-    return { success: false, error: "تأكد من إدخال بيانات صحيحة" };
-  }
-};
+  };
 
   const logout = () => {
     localStorage.clear();

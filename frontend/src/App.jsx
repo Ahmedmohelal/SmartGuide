@@ -12,6 +12,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import SelectRole from "./pages/SelectRole";
 import Home from "./pages/Home";
+import Support from "./pages/Support";
 import Layout from "./Layout/Layout";
 
 function App() {
@@ -33,6 +34,7 @@ function App() {
         {/* صفحات جوه الـ Layout (التي تحتوي على Navbar و Footer) */}
         <Route element={<Layout />}>
           <Route path="/home" element={<Home />} />
+          <Route path="/support" element={<Support />} />
           
           {/* 3. إضافة مسار البروفايل هنا */}
           <Route path="/profile" element={<Profile />} />

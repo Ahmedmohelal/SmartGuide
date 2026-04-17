@@ -21,9 +21,6 @@ const handleSubmit = (e) => {
   onSave(formData); 
 };
 
-// وتأكد إن الزرار نوعه submit جوه الفورم
-<button type="submit">حفظ</button>
-
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 text-right" dir="rtl">
       <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl">

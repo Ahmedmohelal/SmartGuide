@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { navLinks } from "../data/homeContent";
 import { Menu, X, CircleUserRound, User, Settings, Headphones, LogOut } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
+import { useProfile } from "../context/ProfileContext";
 
 import { HashLink } from "react-router-hash-link";
 
@@ -10,6 +11,11 @@ export default function Navbar() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
+  const { logout } = useProfile();
+  const isLightBackgroundPage =
+    location.pathname === "/profile" || location.pathname === "/support";
+  const navTextClass =
+    !isScrolled && isLightBackgroundPage ? "text-gray-800" : "text-white";
 
   useEffect(() => {
     const handleScroll = () => {
@@ -23,6 +29,10 @@ export default function Navbar() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    setIsProfileOpen(false);
+  }, [location.pathname, location.hash]);
 
   return (
     <header className="fixed inset-x-0 top-2 z-50 w-full px-4" dir="rtl">
@@ -39,7 +49,7 @@ export default function Navbar() {
         <div className="flex items-center gap-4">
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden text-white focus:outline-none transition-transform duration-200"
+            className={`md:hidden focus:outline-none transition-transform duration-200 ${navTextClass}`}
           >
             {isMobileMenuOpen ? <X className="w-8 h-8" /> : <Menu className="w-8 h-8" />}
           </button>
@@ -50,7 +60,7 @@ export default function Navbar() {
               className={`flex items-center justify-center p-1 rounded-full transition-all duration-300 ease-in-out hover:scale-105 focus:outline-none ${
                 isProfileOpen
                   ? "bg-white/20 text-white ring-2 ring-white/50"
-                  : "text-white hover:bg-white/10 hover:text-egypt-teal"
+                  : `${navTextClass} hover:bg-white/10 hover:text-egypt-teal`
               }`}
             >
               <CircleUserRound className="w-9 h-9" strokeWidth={1.5} />
@@ -59,11 +69,19 @@ export default function Navbar() {
             {isProfileOpen && (
               <div className="absolute right-0 mt-3 w-56 rounded-xl bg-white/90 shadow-lg ring-1 ring-black ring-opacity-5 overflow-hidden transition-all">
                 <div className="py-2">
-                  <Link to="/profile" className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition"><User className="w-5 h-5" /> حسابي</Link>
-                  <Link to="/settings" className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition"><Settings className="w-5 h-5" /> الإعدادات</Link>
-                  <Link to="/support" className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition"><Headphones className="w-5 h-5" /> الدعم والمساعدة</Link>
+                  <Link onClick={() => setIsProfileOpen(false)} to="/profile" className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition"><User className="w-5 h-5" /> حسابي</Link>
+                  <Link onClick={() => setIsProfileOpen(false)} to="/settings" className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition"><Settings className="w-5 h-5" /> الإعدادات</Link>
+                  <Link onClick={() => setIsProfileOpen(false)} to="/support" className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition"><Headphones className="w-5 h-5" /> الدعم والمساعدة</Link>
                   <hr className="my-1 border-gray-200" />
-                  <button className="flex w-full items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition font-bold"><LogOut className="w-5 h-5" /> تسجيل الخروج</button>
+                  <button
+                    onClick={() => {
+                      setIsProfileOpen(false);
+                      logout();
+                    }}
+                    className="flex w-full items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition font-bold"
+                  >
+                    <LogOut className="w-5 h-5" /> تسجيل الخروج
+                  </button>
                 </div>
               </div>
             )}
@@ -73,7 +91,7 @@ export default function Navbar() {
         {/* ========================================== */}
         {/* 2. المنتصف: لينكات الموقع (تم التعديل هنا) */}
         {/* ========================================== */}
-        <ul className="hidden flex-1 items-center justify-center gap-6 text-sm font-semibold text-white md:flex">
+        <ul className={`hidden flex-1 items-center justify-center gap-6 text-sm font-semibold md:flex ${navTextClass}`}>
           {navLinks.map((item) => {
             // 💡 التريكة هنا: بنزود "/" قبل اللينك عشان لو إنت في صفحة تانية يرجعك الرئيسية الأول
             // يعني "#about" هتبقى "/#about"
@@ -139,7 +157,17 @@ export default function Navbar() {
             <li className="w-full text-center"><Link to="/profile" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-center gap-2 py-3 hover:text-white transition"><User className="w-5 h-5" /> حسابي</Link></li>
             <li className="w-full text-center"><Link to="/settings" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-center gap-2 py-3 hover:text-white transition"><Settings className="w-5 h-5" /> الإعدادات</Link></li>
             <li className="w-full text-center"><Link to="/support" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-center gap-2 py-3 hover:text-white transition"><Headphones className="w-5 h-5" /> الدعم والمساعدة</Link></li>
-            <li className="w-full text-center mt-2"><button onClick={() => setIsMobileMenuOpen(false)} className="flex w-full items-center justify-center gap-2 py-3 text-red-500 hover:text-red-400 font-bold transition bg-red-500/10 rounded-lg"><LogOut className="w-5 h-5" /> تسجيل الخروج</button></li>
+            <li className="w-full text-center mt-2">
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  logout();
+                }}
+                className="flex w-full items-center justify-center gap-2 py-3 text-red-500 hover:text-red-400 font-bold transition bg-red-500/10 rounded-lg"
+              >
+                <LogOut className="w-5 h-5" /> تسجيل الخروج
+              </button>
+            </li>
           </ul>
         </div>
       )}
