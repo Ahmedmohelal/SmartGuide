@@ -1,4 +1,4 @@
-export { default as HomeNavbar } from "./HomeNavbar";
+
 export { default as HeroSection } from "./HeroSection";
 export { default as ServicesSection } from "./ServicesSection";
 export { default as FeaturedPlacesSection } from "./FeaturedPlacesSection";
@@ -9,4 +9,4 @@ export { default as NewsSection } from "./NewsSection";
 export { default as FaqSection } from "./FaqSection";
 export { default as AppDownloadSection } from "./AppDownloadSection";
 export { default as NileCtaSection } from "./NileCtaSection";
-export { default as HomeFooter } from "./HomeFooter";
+

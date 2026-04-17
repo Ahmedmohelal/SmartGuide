@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'https://smartguide.runasp.net/api/Auth';
+const BASE_URL = 'http://smartguide.runasp.net/api/Auth';
 
 const authService = {
   login: async (userData) => {
@@ -36,15 +36,18 @@ const authService = {
   },
 
   googleLogin: async (googleToken) => {
-    try {
-      const response = await axios.post(`${BASE_URL}/google-login`, { 
-        idToken: googleToken 
-      });
-      return response.data;
-    } catch (error) {
-      throw error.response ? error.response.data : new Error("Google Login Failed");
-    }
+  try {
+    const response = await axios.post(`${BASE_URL}/google-login`, {
+      idToken: googleToken,
+    });
+
+    return response.data;
+  } catch (error) {
+    console.log("Google Login Error:", error.response); // 👈 مهم في الديبج
+
+    throw error.response?.data?.message || "Google Login Failed";
   }
+}
 };
 
 export default authService;

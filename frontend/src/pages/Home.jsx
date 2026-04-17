@@ -1,6 +1,5 @@
 import "../styles/home.css";
-import {
-  HomeNavbar,
+import {  
   HeroSection,
   ServicesSection,
   FeaturedPlacesSection,
@@ -11,7 +10,6 @@ import {
   FaqSection,
   AppDownloadSection,
   NileCtaSection,
-  HomeFooter,
 } from "../components/home";
 
 export default function Home() {
@@ -21,7 +19,7 @@ export default function Home() {
       lang="ar"
       className="min-h-screen bg-white font-sans antialiased"
     >
-      <HomeNavbar />
+      
       <HeroSection />
       <ServicesSection />
       <FeaturedPlacesSection />
@@ -32,7 +30,6 @@ export default function Home() {
       <FaqSection />
       <AppDownloadSection />
       <NileCtaSection />
-      <HomeFooter />
     </div>
   );
 }

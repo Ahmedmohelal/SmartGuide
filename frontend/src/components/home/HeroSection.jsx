@@ -1,3 +1,4 @@
+
 import { hero } from "../../data/homeContent";
 
 /** مسار موجة عضوي (شبه فرشاة/ورق) — يتناسب مع عرض الشاشة */
@@ -39,6 +40,7 @@ export default function HeroSection() {
           fetchPriority="high"
           className="h-full w-full object-cover object-[center_22%] sm:object-[center_28%] lg:object-center"
         />
+        
       </div>
 
       <div
@@ -48,7 +50,10 @@ export default function HeroSection() {
 
       <div className="home-hero-bottom-fade" aria-hidden />
 
-      <div className="relative z-[3] mx-auto flex min-h-[90vh] max-w-4xl flex-col items-center justify-center px-4 pb-36 pt-24 text-center sm:px-6 sm:pb-40 sm:pt-28">
+
+
+      <div className="relative z-[3] mx-auto flex min-h-[90vh] max-w-4xl flex-col items-center justify-center px-4 pb-36 pt-28 text-center sm:px-6 sm:pb-40">
+
         <h1 className="text-4xl font-extrabold leading-tight text-white drop-shadow-md sm:text-5xl md:text-6xl">
           {hero.title}
         </h1>

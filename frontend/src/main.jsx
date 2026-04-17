@@ -3,6 +3,8 @@ import { BrowserRouter } from 'react-router-dom'
 import { GoogleOAuthProvider } from '@react-oauth/google' // 1. استيراد المكتبة
 import App from './App'
 import './index.css'
+import "sonner/dist/styles.css";
+
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   // 2. تغليف التطبيق بالـ Provider وإضافة الـ Client ID
@@ -12,3 +14,4 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     </BrowserRouter>
   </GoogleOAuthProvider>
 )
+

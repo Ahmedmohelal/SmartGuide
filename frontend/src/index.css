@@ -2,7 +2,7 @@
 @import "tailwindcss";
 
 html {
-  scroll-behavior: smooth;
+  scroll-behavior: smooth !important;
 }
 
 @theme {
@@ -12,3 +12,8 @@ html {
   --color-egypt-gold: #c9a227;
   --color-footer-navy: #0a1628;
 }
+input, select, textarea {
+  outline: none;
+}
+
+

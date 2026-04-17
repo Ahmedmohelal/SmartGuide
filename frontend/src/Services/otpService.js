@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'https://smartguide.runasp.net/api/Auth';
+const BASE_URL = 'http://smartguide.runasp.net/api/Auth';
 
 const otpService = {
   // 1. إرسال كود الاسترجاع للإيميل
@@ -9,7 +9,7 @@ const otpService = {
       const response = await axios.post(`${BASE_URL}/send-reset-otp`, { email });
       return response.data;
     } catch (error) {
-      throw error.response ? error.response.data : new Error("Network Error");
+      throw new Error(error.response?.data?.message || "Network Error");
     }
   },
 
