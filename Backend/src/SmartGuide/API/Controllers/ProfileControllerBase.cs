@@ -23,7 +23,7 @@ namespace API.Controllers
             return Ok(profile);
         }
 
-        protected async Task<ActionResult<TProfileDto>> UpdateProfileAsync(string id, TUpdateDto model)
+        protected async Task<ActionResult<TProfileDto>> UpdateProfileAsync(string id, [FromForm] TUpdateDto model)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);

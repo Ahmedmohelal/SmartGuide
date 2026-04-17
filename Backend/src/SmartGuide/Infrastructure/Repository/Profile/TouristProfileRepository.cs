@@ -62,19 +62,21 @@ namespace Infrastructure.Repository.Profile
             if (model.WhatsAppNumber is not null)
                 profile.User.WhatsAppNumber = model.WhatsAppNumber;
 
-            string? TouristImage = null;
-            try
+            if (model.TouristImage != null)
             {
-                if(model.TouristImage != null)
-                TouristImage = await attachmentService.Upload("Tourists", model.TouristImage);
+                string? newImage = null;
+                try
+                {
+                    await attachmentService.Delete(profile.User.ProfileImage, "Tourists");
+                    newImage = await attachmentService.Upload("Tourists", model.TouristImage);
+                    profile.User.ProfileImage = newImage;
+                }
+                catch (Exception)
+                {
+                    if (newImage != null)
+                        await attachmentService.Delete(newImage, "Tourists");
+                }
             }
-            catch (Exception)
-            {
-                if (TouristImage != null)
-                    await attachmentService.Delete(TouristImage, "Tourists");
-            }
-            if(TouristImage != null)
-                profile.User.ProfileImage = TouristImage;
 
             await _context.SaveChangesAsync();
             return MapToDto(profile);
@@ -94,7 +96,7 @@ namespace Infrastructure.Repository.Profile
                 WhatsAppNumber = profile.User?.WhatsAppNumber,
                 TouristImage = _imageUrlService.ToPublicImageUrl(
                     profile.User?.ProfileImage,
-                    "profileImages")
+                    "Tourists") 
             };
         }
     }

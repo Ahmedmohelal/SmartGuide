@@ -64,13 +64,25 @@ namespace Infrastructure.Repository.Profile
             if (model.PricePerDay.HasValue)
                 profile.PricePerDay = model.PricePerDay.Value;
 
+            if (model.FirstName is not null)
+                profile.User!.FirstName = model.FirstName;
+
+            if (model.LastName is not null)
+                profile.User!.LastName = model.LastName;
+
+            if (model.Country is not null)
+                profile.User!.Country = model.Country;
+
+            if (model.WhatsAppNumber is not null)
+                profile.User!.WhatsAppNumber = model.WhatsAppNumber;
+
             string? Picture = null;
 
             try
             {
                 if (model.ProfilePicture != null)
                 {
-                    await attachmentService.Delete(profile.User.ProfileImage, "profileImages");
+                    await attachmentService.Delete(profile.User!.ProfileImage, "profileImages");
                     Picture = await attachmentService.Upload("profileImages", model.ProfilePicture);
                 }
             }
@@ -155,8 +167,6 @@ namespace Infrastructure.Repository.Profile
 
                     _context.TourGuideGallery.Add(galleryImage);
                 }
-
-                await _context.SaveChangesAsync();
             }
 
             await _context.SaveChangesAsync();
