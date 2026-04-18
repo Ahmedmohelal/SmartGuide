@@ -1,3 +1,4 @@
+using Domain.Entities;
 using Infrastructure.Data.Configurations;
 using Infrastructure.Data.Configurations.TourGuide;
 using Infrastructure.Data.Entities;
@@ -21,6 +22,7 @@ namespace Infrastructure.Data
         public DbSet<TourGuideCity> TourGuideCities { get; set; }
         public DbSet<TourGuideLanguage> TourGuideLanguages { get; set; }
         public DbSet<TourGuideGallery> TourGuideGallery { get; set; }
+        public DbSet<SavedTourGuide> SavedTourGuides { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

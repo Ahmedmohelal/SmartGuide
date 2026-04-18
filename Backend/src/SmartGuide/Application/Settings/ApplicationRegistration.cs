@@ -16,6 +16,8 @@ namespace Application.Settings
             services.AddScoped<ITourGuideProfileService, TourGuideProfileService>();
             services.AddScoped<ITouristProfileService, TouristProfileService>();
             services.AddScoped<IAttachmentService, AttachmentService>();
+            services.AddScoped<ITouristFavoritesService, TouristFavoritesService>();
+
             return services;
         }
 
