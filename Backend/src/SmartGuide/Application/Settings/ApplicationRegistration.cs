@@ -1,5 +1,7 @@
 using Application.Services.Interfaces;
+using Application.Services.Interfaces.Tour;
 using Application.Services.UseCases;
+using Application.Services.UseCases.Tours;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -18,7 +20,9 @@ namespace Application.Settings
             services.AddScoped<IAttachmentService, AttachmentService>();
             services.AddScoped<ITouristFavoritesService, TouristFavoritesService>();
 
+            services.AddScoped<ITourService, TourService>();
             return services;
+
         }
 
     }

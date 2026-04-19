@@ -1,6 +1,6 @@
 using Domain.Entities;
+using Domain.Entities.Tours;
 using Infrastructure.Data.Configurations;
-using Infrastructure.Data.Configurations.TourGuide;
 using Infrastructure.Data.Entities;
 using Infrastructure.Data.Entities.Identity;
 using Infrastructure.Data.Entities.Profiles.TourGuide;
@@ -24,16 +24,17 @@ namespace Infrastructure.Data
         public DbSet<TourGuideGallery> TourGuideGallery { get; set; }
         public DbSet<SavedTourGuide> SavedTourGuides { get; set; }
 
+        public DbSet<Tour> Tours { get; set; }
+        public DbSet<TourStops> TourStops { get; set; }
+        public DbSet<TourInclusion> TourInclusions { get; set; }
+        public DbSet<TourImage> TourImages { get; set; }
+        public DbSet<TourAddOn> TourAddOns { get; set; }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
 
             builder.ApplyConfigurationsFromAssembly(typeof(RefreshTokenConfig).Assembly);
-            builder.ApplyConfigurationsFromAssembly(typeof(TourGuideProfileConfig).Assembly);
-            builder.ApplyConfigurationsFromAssembly(typeof(TourGuideCityConfig).Assembly);
-            builder.ApplyConfigurationsFromAssembly(typeof(TourGuideGalleryConfig).Assembly);
-            builder.ApplyConfigurationsFromAssembly(typeof(TourGuideLanguageConfig).Assembly);
-            
         }
     }
 }
