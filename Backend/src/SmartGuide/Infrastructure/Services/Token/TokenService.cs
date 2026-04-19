@@ -34,8 +34,8 @@ namespace Infrastructure.Services.Token
 
             var Claims = new List<Claim>
             {
-                new Claim(JwtRegisteredClaimNames.Sub, applicationUser.Id), // 👈 ID هنا
-                new Claim(ClaimTypes.NameIdentifier, applicationUser.Id),   // 👈 وده كمان
+                new Claim(JwtRegisteredClaimNames.Sub, applicationUser.Id), 
+                new Claim(ClaimTypes.NameIdentifier, applicationUser.Id),   
                 new Claim(ClaimTypes.Name, applicationUser.UserName!),
                 new Claim(JwtRegisteredClaimNames.Email, applicationUser.Email!),
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())

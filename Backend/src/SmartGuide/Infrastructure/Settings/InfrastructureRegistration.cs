@@ -62,6 +62,7 @@ namespace Infrastructure.Settings
                            System.Text.Encoding.UTF8.GetBytes(JWT["Key"]!)),
                        ClockSkew = TimeSpan.Zero
                    });
+        
 
             services.Configure<GoogleAuthOptions>(configuration.GetSection(GoogleAuthOptions.SectionName));
             services.Configure<EmailSettings>(configuration.GetSection(EmailSettings.SectionName));
@@ -77,9 +78,10 @@ namespace Infrastructure.Settings
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<IProfileInitializerService, ProfileInitializerService>();
             services.AddScoped<IProfileRepository<TourGuideProfileDto, UpdateTourGuideProfileDto>, TourGuideProfileRepository>();
-            services.AddScoped<IProfileRepository<TouristProfileDto, UpdateTouristProfileDto>, TouristProfileRepository>();
-]           services.AddScoped<ITouristFavoritesRepository<SavedTourGuideDto>, TouristFavoritesRepository>();
 
+            services.AddScoped<IProfileRepository<TouristProfileDto, UpdateTouristProfileDto>, TouristProfileRepository>();
+
+           services.AddScoped<ITouristFavoritesRepository<SavedTourGuideDto>, TouristFavoritesRepository>();
 
             services.AddScoped<ITourRepository, TourRepository>();
             return services;
