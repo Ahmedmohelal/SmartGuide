@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 namespace Application.DTOs.Tour
@@ -16,9 +17,18 @@ namespace Application.DTOs.Tour
         [Required]
         public int MaxGroupSize { get; set; }
 
-        public List<CreateTourStopDto> Stops { get; set; } = new();
-        public List<CreateTourInclusionDto> Inclusions { get; set; } = new();
-        public List<CreateTourImageDto> Images { get; set; } = new();
-        public List<CreateTourAddOnDto> AddOns { get; set; } = new();
+        //public List<CreateTourStopDto> Stops { get; set; } = new();
+        //public List<CreateTourInclusionDto> Inclusions { get; set; } = new();
+        //public List<CreateTourImageDto> Images { get; set; } = new();
+        //public List<CreateTourAddOnDto> AddOns { get; set; } = new();
+
+        // JSON Strings
+        public string StopsJson { get; set; }
+        public string InclusionsJson { get; set; }
+        public string AddOnsJson { get; set; }
+
+        // Files
+        public List<IFormFile> Images { get; set; } = new();
+
     }
 }

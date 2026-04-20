@@ -21,7 +21,7 @@ namespace Infrastructure.Repository.Tours
             await _context.SaveChangesAsync();
         }
 
-        
+
         public async Task<List<Tour>> GetGuideToursAsync(string guideId)
         {
             return await _context.Tours
@@ -30,22 +30,56 @@ namespace Infrastructure.Repository.Tours
                 .ToListAsync();
         }
 
-       
+
         public async Task<Tour?> GetByIdAsync(Guid tourId)
         {
             return await _context.Tours
-                .Include(t => t.TourImages)
-                .Include(t => t.TourStops)
-                .Include(t => t.TourInclusions)
-                .Include(t => t.TourAddOns)
-                .FirstOrDefaultAsync(t => t.Id == tourId);
+                                 .Include(t => t.TourImages)
+                                 .Include(t => t.TourStops)
+                                 .Include(t => t.TourInclusions)
+                                 .Include(t => t.TourAddOns)
+                                 .FirstOrDefaultAsync(t => t.Id == tourId && t.IsActive);
         }
 
-     
+
+        public Task ReplaceTourRelationsAsync(
+    Tour tour,
+    List<TourStops> stops,
+    List<TourInclusion> inclusions,
+    List<TourAddOn> addons)
+        {
+            // remove old
+            //_context.TourStops.RemoveRange(tour.TourStops);
+            //_context.TourInclusions.RemoveRange(tour.TourInclusions);
+            //_context.TourAddOns.RemoveRange(tour.TourAddOns);
+            tour.TourStops.Clear();
+            tour.TourInclusions.Clear();
+            tour.TourAddOns.Clear();
+
+            // 🔥 add new بشكل safe
+            foreach (var s in stops)
+                tour.TourStops.Add(s);
+
+            foreach (var i in inclusions)
+                tour.TourInclusions.Add(i);
+
+            foreach (var a in addons)
+                tour.TourAddOns.Add(a);
+
+            return Task.CompletedTask;
+        }
+        public Task RemoveTourImagesAsync(Tour tour)
+        {
+            _context.TourImages.RemoveRange(tour.TourImages);
+            //await _context.SaveChangesAsync();
+            return Task.CompletedTask;
+        }
+
         public async Task UpdateAsync(Tour tour)
         {
-            _context.Tours.Update(tour);
+            //_context.Update(tour);
             await _context.SaveChangesAsync();
+
         }
 
 
@@ -54,7 +88,7 @@ namespace Infrastructure.Repository.Tours
             var tour = await _context.Tours.FindAsync(tourId);
 
             if (tour == null)
-                throw new Exception("Tour not found");
+                return;
 
             tour.IsActive = false;
 
@@ -62,10 +96,12 @@ namespace Infrastructure.Repository.Tours
             await _context.SaveChangesAsync();
         }
 
-       
+
         public async Task<bool> ExistsAsync(Guid tourId)
         {
             return await _context.Tours.AnyAsync(t => t.Id == tourId);
         }
+
+        
     }
 }

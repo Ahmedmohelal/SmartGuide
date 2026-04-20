@@ -1,9 +1,11 @@
-﻿using Application.DTOs.Tour;
+﻿using Application.DTOs.AuthenticationDTOs;
+using Application.DTOs.Tour;
 using Application.Services.Interfaces;
 using Application.Services.Interfaces.Tour;
 using Domain.Entities.Tours;
 using Domain.Entities.Tours.Enums;
 using Domain.Interfaces;
+using System.Text.Json;
 
 namespace Application.Services.UseCases.Tours
 {
@@ -23,7 +25,7 @@ namespace Application.Services.UseCases.Tours
             _attachmentService = attachmentService;
         }
 
-        
+
         public async Task<List<TourListItemDto>> GetGuideToursAsync(string guideId)
         {
             var tours = await _tourRepository.GetGuideToursAsync(guideId);
@@ -36,220 +38,356 @@ namespace Application.Services.UseCases.Tours
                 Price = t.Price,
                 PrimaryImage = _imageUrlService.ToPublicImageUrl(
                     t.TourImages.FirstOrDefault(i => i.IsPrimary)?.ImageUrl,
-                    "ToursImages"
+                    $"ToursImages/{t.Id}"
                 ) ?? string.Empty
             }).ToList();
         }
 
-        public async Task<TourListItemDto?> GetTourByIdAsync(Guid tourId)
+        public async Task<TourDetailsDto?> GetTourByIdAsync(Guid tourId)
         {
             var tour = await _tourRepository.GetByIdAsync(tourId);
-            if (tour == null || !tour.IsActive)
-            {
-                return null;
-            }
 
-            return new TourListItemDto
+            if (tour == null || !tour.IsActive)
+                return null;
+
+            return new TourDetailsDto
             {
                 Id = tour.Id,
                 Title = tour.Title,
+                Description = tour.Description,
                 DurationHours = tour.DurationHours,
                 Price = tour.Price,
-                PrimaryImage = _imageUrlService.ToPublicImageUrl(
-                    tour.TourImages.FirstOrDefault(i => i.IsPrimary)?.ImageUrl,
-                    "ToursImages"
-                ) ?? string.Empty
+
+                Images = tour.TourImages
+                    .OrderBy(i => i.OrderIndex)
+                    .Select(i => _imageUrlService.ToPublicImageUrl(
+                        i.ImageUrl,
+                        $"ToursImages/{tour.Id}"
+                    ))
+                    .ToList(),
+
+                Stops = tour.TourStops.Select(s => new CreateTourStopDto
+                {
+                    Title = s.Title,
+                    Description = s.Description,
+                    OrderIndex = s.OrderIndex
+                }).ToList(),
+
+                Inclusions = tour.TourInclusions.Select(i => new CreateTourInclusionDto
+                {
+                    Description = i.Description,
+                    Type = i.Type.ToString()
+                }).ToList(),
+
+                AddOns = tour.TourAddOns.Select(a => new CreateTourAddOnDto
+                {
+                    Title = a.Title,
+                    Price = a.Price
+                }).ToList()
             };
         }
 
-      
+
         public async Task<CreateTourResponseDTO> CreateTourAsync(
             CreateTourRequestDTO request,
             string guideId)
         {
-            if (string.IsNullOrWhiteSpace(guideId))
+            try
             {
-                return new CreateTourResponseDTO
-                {
-                    IsSucceded = false,
-                    message = "Guide user is required"
-                };
-            }
+                var stops = string.IsNullOrWhiteSpace(request.StopsJson)
+                    ? new List<CreateTourStopDto>()
+                    : JsonSerializer.Deserialize<List<CreateTourStopDto>>(request.StopsJson);
 
-            if (string.IsNullOrWhiteSpace(request.Title))
-            {
-                return new CreateTourResponseDTO
-                {
-                    IsSucceded = false,
-                    message = "Title is required"
-                };
-            }
-            if (request.Price < 0)
-            {
-                return new CreateTourResponseDTO
-                {
-                    IsSucceded = false,
-                    message = "Price cannot be negative"
-                };
-            }
+                var inclusions = string.IsNullOrWhiteSpace(request.InclusionsJson)
+                    ? new List<CreateTourInclusionDto>()
+                    : JsonSerializer.Deserialize<List<CreateTourInclusionDto>>(request.InclusionsJson);
 
-            if (request.MaxGroupSize <= 0)
-            {
-                return new CreateTourResponseDTO
-                {
-                    IsSucceded = false,
-                    message = "Max group size must be greater than zero"
-                };
-            }
+                var addons = string.IsNullOrWhiteSpace(request.AddOnsJson)
+                    ? new List<CreateTourAddOnDto>()
+                    : JsonSerializer.Deserialize<List<CreateTourAddOnDto>>(request.AddOnsJson);
 
-            if (request.Images.Any(i => i.Image == null))
-            {
-                return new CreateTourResponseDTO
+                // ✅ Create Tour
+                var tour = new Tour
                 {
-                    IsSucceded = false,
-                    message = "Each image item must include a file"
+                    Id = Guid.NewGuid(),
+                    GuideId = guideId,
+                    Title = request.Title,
+                    Description = request.Description,
+                    DurationHours = request.DurationHours,
+                    Price = request.Price,
+                    MaxGroupSize = request.MaxGroupSize,
+                    IsActive = true
                 };
-            }
 
-            if (request.Images.Any())
-            {
-                var primaryCount = request.Images.Count(i => i.IsPrimary);
-                if (primaryCount > 1)
-                    return new CreateTourResponseDTO
+                // Stops
+                if (stops.Any())
+                {
+                    tour.TourStops = stops.Select(s => new TourStops(
+                        tour.Id,
+                        s.OrderIndex,
+                        s.Title,
+                        s.Description
+                    )).ToList();
+                }
+
+                // Inclusions
+                if (inclusions.Any())
+                {
+                    tour.TourInclusions = inclusions.Select(i => new TourInclusion
                     {
-                        IsSucceded = false,
-                        message = "Only one primary image is allowed"
-                    };
-            }
+                        Id = Guid.NewGuid(),
+                        TourId = tour.Id,
+                        Description = i.Description,
+                        Type = Enum.Parse<InclusionType>(i.Type, true)
+                    }).ToList();
+                }
 
-            if (request.Stops.Any())
-            {
-                var hasDuplicateOrder = request.Stops
-                    .GroupBy(s => s.OrderIndex)
-                    .Any(g => g.Count() > 1);
-
-                if (hasDuplicateOrder)
-                    return new CreateTourResponseDTO
-                    {
-                        IsSucceded = false,
-                        message = "Duplicate order index found in stops"
-                    };
-            }
-
-            if (request.Inclusions.Any(i => !Enum.TryParse<InclusionType>(i.Type, true, out _)))
-            {
-                return new CreateTourResponseDTO
+                // AddOns
+                if (addons.Any())
                 {
-                    IsSucceded = false,
-                    message = "Invalid inclusion type. Allowed values are Included or Excluded"
-                };
-            }
+                    tour.TourAddOns = addons.Select(a => new TourAddOn
+                    {
+                        Id = Guid.NewGuid(),
+                        TourId = tour.Id,
+                        Title = a.Title,
+                        Price = a.Price,
+                        IsActive = true
+                    }).ToList();
+                }
 
-            var tour = new Tour
-            {
-                Id = Guid.NewGuid(),
-                GuideId = guideId,
-                Title = request.Title,
-                Description = request.Description,
-                DurationHours = request.DurationHours,
-                Price = request.Price,
-                MaxGroupSize = request.MaxGroupSize,
-                IsActive = true
-            };
-
-            if (request.Stops.Any())
-            {
-                tour.TourStops = request.Stops.Select(s => new TourStops(
-                    tour.Id,
-                    s.OrderIndex,
-                    s.Title,
-                    s.Description
-                )).ToList();
-            }
-
-            if (request.Images.Any())
-            {
-                var uploadedFileNames = new List<string>();
+                // ✅ Upload Images
+                var uploadedFiles = new List<string>();
                 var folderName = $"ToursImages/{tour.Id}";
-                try
+
+                if (request.Images.Any())
                 {
-                    foreach (var i in request.Images)
+                    try
                     {
-                        var uploadedFileName = await _attachmentService.Upload(folderName, i.Image!);
-                        if (string.IsNullOrWhiteSpace(uploadedFileName))
+                        foreach (var image in request.Images)
                         {
-                            throw new InvalidOperationException("Image upload failed");
+                            var fileName = await _attachmentService.Upload(folderName, image);
+
+                            if (string.IsNullOrWhiteSpace(fileName))
+                                throw new Exception("Upload failed");
+
+                            uploadedFiles.Add(fileName);
+                        }
+                    }
+                    catch
+                    {
+                        // rollback images
+                        foreach (var file in uploadedFiles)
+                        {
+                            try
+                            {
+                                await _attachmentService.Delete(file, folderName);
+                            }
+                            catch { }
                         }
 
-                        uploadedFileNames.Add(uploadedFileName);
+                        return new CreateTourResponseDTO
+                        {
+                            IsSucceded = false,
+                            message = "Image upload failed"
+                        };
+                    }
+
+                    tour.TourImages = uploadedFiles.Select((file, index) => new TourImage
+                    {
+                        Id = Guid.NewGuid(),
+                        TourId = tour.Id,
+                        ImageUrl = file,
+                        IsPrimary = index == 0,
+                        OrderIndex = index + 1
+                    }).ToList();
+                }
+
+                // ✅ Save
+                await _tourRepository.AddAsync(tour);
+
+                return new CreateTourResponseDTO
+                {
+                    IsSucceded = true,
+                    Id = tour.Id,
+                    Title = tour.Title,
+                    Price = tour.Price
+                };
+            }
+            catch (Exception ex)
+            {
+                return new CreateTourResponseDTO
+                {
+                    IsSucceded = false,
+                    message = ex.Message
+                };
+            }
+        }
+
+        public async Task<OperationResultDto> UpdateTourAsync(
+                                                            Guid id,
+                                                            CreateTourRequestDTO request,
+                                                            string guideId)
+        {
+            var tour = await _tourRepository.GetByIdAsync(id);
+
+            if (tour == null || !tour.IsActive)
+            {
+                return new OperationResultDto
+                {
+                    IsSuccess = false,
+                    Message = "Tour not found"
+                };
+            }
+
+            if (tour.GuideId != guideId)
+            {
+                return new OperationResultDto
+                {
+                    IsSuccess = false,
+                    Message = "Unauthorized"
+                };
+            }
+
+
+            var stops = string.IsNullOrWhiteSpace(request.StopsJson)
+                ? new List<CreateTourStopDto>()
+                : JsonSerializer.Deserialize<List<CreateTourStopDto>>(request.StopsJson) ?? new();
+
+            var inclusions = string.IsNullOrWhiteSpace(request.InclusionsJson)
+                ? new List<CreateTourInclusionDto>()
+                : JsonSerializer.Deserialize<List<CreateTourInclusionDto>>(request.InclusionsJson) ?? new();
+
+            var addons = string.IsNullOrWhiteSpace(request.AddOnsJson)
+                ? new List<CreateTourAddOnDto>()
+                : JsonSerializer.Deserialize<List<CreateTourAddOnDto>>(request.AddOnsJson) ?? new();
+
+            tour.Title = request.Title;
+            tour.Description = request.Description;
+            tour.DurationHours = request.DurationHours;
+            tour.Price = request.Price;
+            tour.MaxGroupSize = request.MaxGroupSize;
+
+            var stopsEntities = stops.Select(s => new TourStops(
+                tour.Id,
+                s.OrderIndex,
+                s.Title,
+                s.Description
+            )).ToList();
+
+            var inclusionEntities = inclusions.Select(i => new TourInclusion
+            {
+                Id = Guid.NewGuid(),
+                TourId = tour.Id,
+                Description = i.Description,
+                Type = Enum.Parse<InclusionType>(i.Type, true)
+            }).ToList();
+
+            var addonEntities = addons.Select(a => new TourAddOn
+            {
+                Id = Guid.NewGuid(),
+                TourId = tour.Id,
+                Title = a.Title,
+                Price = a.Price,
+                IsActive = true
+            }).ToList();
+
+            await _tourRepository.ReplaceTourRelationsAsync(tour, stopsEntities, inclusionEntities, addonEntities);
+
+            if (request.Images != null && request.Images.Any())
+            {
+                var folderName = $"ToursImages/{tour.Id}";
+
+                foreach (var img in tour.TourImages)
+                {
+                    try
+                    {
+                        await _attachmentService.Delete(img.ImageUrl, folderName);
+                    }
+                    catch { }
+                }
+
+                await _tourRepository.RemoveTourImagesAsync(tour);
+
+                var uploadedFiles = new List<string>();
+                try
+                {
+                    foreach (var image in request.Images)
+                    {
+                        var fileName = await _attachmentService.Upload(folderName, image);
+
+                        if (string.IsNullOrWhiteSpace(fileName))
+                            throw new Exception("Upload failed");
+
+                        uploadedFiles.Add(fileName);
                     }
                 }
                 catch
                 {
-                    foreach (var fileName in uploadedFileNames)
+                    foreach (var file in uploadedFiles)
                     {
-                        await _attachmentService.Delete(fileName, folderName);
+                        try
+                        {
+                            await _attachmentService.Delete(file, folderName);
+                        }
+                        catch { }
                     }
 
-                    return new CreateTourResponseDTO
+                    return new OperationResultDto
                     {
-                        IsSucceded = false,
-                        message = "Failed to upload one or more images"
+                        IsSuccess = false,
+                        Message = "Image upload failed"
                     };
                 }
 
-                tour.TourImages = request.Images.Select((i, index) => new TourImage
+
+
+                tour.TourImages = uploadedFiles.Select((file, index) => new TourImage
                 {
                     Id = Guid.NewGuid(),
                     TourId = tour.Id,
-                    ImageUrl = uploadedFileNames[index],
-                    IsPrimary = i.IsPrimary,
-                    OrderIndex = i.OrderIndex
-                }).ToList();
-
-                if (!tour.TourImages.Any(i => i.IsPrimary))
-                {
-                    tour.TourImages.First().IsPrimary = true;
-                }
-            }
-
-         
-            if (request.Inclusions.Any())
-            {
-                tour.TourInclusions = request.Inclusions.Select(i => new TourInclusion
-                {
-                    Id = Guid.NewGuid(),
-                    TourId = tour.Id,
-                    Description = i.Description,
-                    Type = Enum.TryParse<InclusionType>(i.Type, true, out var inclusionType)
-                        ? inclusionType
-                        : InclusionType.Included
+                    ImageUrl = file,
+                    IsPrimary = index == 0,
+                    OrderIndex = index + 1
                 }).ToList();
             }
 
-           
-            if (request.AddOns.Any())
+            await _tourRepository.UpdateAsync(tour);
+
+            return new OperationResultDto
             {
-                tour.TourAddOns = request.AddOns.Select(a => new TourAddOn
+                IsSuccess = true,
+                Message = "Tour updated successfully"
+            };
+        }
+
+        public async Task<OperationResultDto> DeleteTourAsync(Guid id, string guideId)
+        {
+            var tour = await _tourRepository.GetByIdAsync(id);
+
+            if (tour == null || !tour.IsActive)
+            {
+                return new OperationResultDto
                 {
-                    Id = Guid.NewGuid(),
-                    TourId = tour.Id,
-                    Title = a.Title,
-                    Price = a.Price,
-                    IsActive = true
-                }).ToList();
+                    IsSuccess = false,
+                    Message = "Tour not found"
+                };
             }
 
-          
-            await _tourRepository.AddAsync(tour);
-
-          
-            return new CreateTourResponseDTO
+            if (tour.GuideId != guideId)
             {
-                IsSucceded = true,
-                Id = tour.Id,
-                Title = tour.Title,
-                Price = tour.Price
+                return new OperationResultDto
+                {
+                    IsSuccess = false,
+                    Message = "Unauthorized"
+                };
+            }
+
+            await _tourRepository.DeleteAsync(id);
+
+            return new OperationResultDto
+            {
+                IsSuccess = true,
+                Message = "Tour deleted successfully"
             };
         }
     }
