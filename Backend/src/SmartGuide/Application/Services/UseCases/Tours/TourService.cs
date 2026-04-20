@@ -15,10 +15,7 @@ namespace Application.Services.UseCases.Tours
         private readonly IImageUrlService _imageUrlService;
         private readonly IAttachmentService _attachmentService;
 
-        public TourService(
-            ITourRepository tourRepository,
-            IImageUrlService imageUrlService,
-            IAttachmentService attachmentService)
+        public TourService(ITourRepository tourRepository,IImageUrlService imageUrlService,IAttachmentService attachmentService)
         {
             _tourRepository = tourRepository;
             _imageUrlService = imageUrlService;
@@ -64,7 +61,7 @@ namespace Application.Services.UseCases.Tours
                         i.ImageUrl,
                         $"ToursImages/{tour.Id}"
                     ))
-                    .ToList(),
+                    .ToList()!,
 
                 Stops = tour.TourStops.Select(s => new CreateTourStopDto
                 {
@@ -88,9 +85,7 @@ namespace Application.Services.UseCases.Tours
         }
 
 
-        public async Task<CreateTourResponseDTO> CreateTourAsync(
-            CreateTourRequestDTO request,
-            string guideId)
+        public async Task<CreateTourResponseDTO> CreateTourAsync(CreateTourRequestDTO request,string guideId)
         {
             try
             {
@@ -106,7 +101,6 @@ namespace Application.Services.UseCases.Tours
                     ? new List<CreateTourAddOnDto>()
                     : JsonSerializer.Deserialize<List<CreateTourAddOnDto>>(request.AddOnsJson);
 
-                // ✅ Create Tour
                 var tour = new Tour
                 {
                     Id = Guid.NewGuid(),
@@ -119,8 +113,7 @@ namespace Application.Services.UseCases.Tours
                     IsActive = true
                 };
 
-                // Stops
-                if (stops.Any())
+                if (stops != null && stops.Any())
                 {
                     tour.TourStops = stops.Select(s => new TourStops(
                         tour.Id,
@@ -130,8 +123,7 @@ namespace Application.Services.UseCases.Tours
                     )).ToList();
                 }
 
-                // Inclusions
-                if (inclusions.Any())
+                if (inclusions != null && inclusions.Any())
                 {
                     tour.TourInclusions = inclusions.Select(i => new TourInclusion
                     {
@@ -142,8 +134,7 @@ namespace Application.Services.UseCases.Tours
                     }).ToList();
                 }
 
-                // AddOns
-                if (addons.Any())
+                if (addons != null && addons.Any())
                 {
                     tour.TourAddOns = addons.Select(a => new TourAddOn
                     {
@@ -155,11 +146,10 @@ namespace Application.Services.UseCases.Tours
                     }).ToList();
                 }
 
-                // ✅ Upload Images
                 var uploadedFiles = new List<string>();
                 var folderName = $"ToursImages/{tour.Id}";
 
-                if (request.Images.Any())
+                if (request.Images != null && request.Images.Any())
                 {
                     try
                     {
@@ -175,7 +165,6 @@ namespace Application.Services.UseCases.Tours
                     }
                     catch
                     {
-                        // rollback images
                         foreach (var file in uploadedFiles)
                         {
                             try
@@ -202,7 +191,6 @@ namespace Application.Services.UseCases.Tours
                     }).ToList();
                 }
 
-                // ✅ Save
                 await _tourRepository.AddAsync(tour);
 
                 return new CreateTourResponseDTO
@@ -223,10 +211,7 @@ namespace Application.Services.UseCases.Tours
             }
         }
 
-        public async Task<OperationResultDto> UpdateTourAsync(
-                                                            Guid id,
-                                                            CreateTourRequestDTO request,
-                                                            string guideId)
+        public async Task<OperationResultDto> UpdateTourAsync(Guid id, CreateTourRequestDTO request, string guideId)
         {
             var tour = await _tourRepository.GetByIdAsync(id);
 
@@ -293,20 +278,14 @@ namespace Application.Services.UseCases.Tours
 
             await _tourRepository.ReplaceTourRelationsAsync(tour, stopsEntities, inclusionEntities, addonEntities);
 
+
+            List<string>? oldImageUrlsToDelete = null;
+
             if (request.Images != null && request.Images.Any())
             {
                 var folderName = $"ToursImages/{tour.Id}";
 
-                foreach (var img in tour.TourImages)
-                {
-                    try
-                    {
-                        await _attachmentService.Delete(img.ImageUrl, folderName);
-                    }
-                    catch { }
-                }
-
-                await _tourRepository.RemoveTourImagesAsync(tour);
+                oldImageUrlsToDelete = tour.TourImages.Select(i => i.ImageUrl).ToList();
 
                 var uploadedFiles = new List<string>();
                 try
@@ -341,7 +320,7 @@ namespace Application.Services.UseCases.Tours
 
 
 
-                tour.TourImages = uploadedFiles.Select((file, index) => new TourImage
+                var imageEntities = uploadedFiles.Select((file, index) => new TourImage
                 {
                     Id = Guid.NewGuid(),
                     TourId = tour.Id,
@@ -349,9 +328,25 @@ namespace Application.Services.UseCases.Tours
                     IsPrimary = index == 0,
                     OrderIndex = index + 1
                 }).ToList();
+
+                await _tourRepository.ReplaceTourImagesAsync(tour, imageEntities);
+            }
+            await _tourRepository.UpdateAsync(tour);
+
+            if (oldImageUrlsToDelete != null)
+            {
+                var folderName = $"ToursImages/{tour.Id}";
+                foreach (var url in oldImageUrlsToDelete)
+                {
+                    try
+                    {
+                        await _attachmentService.Delete(url, folderName);
+                    }
+                    catch { }
+                }
             }
 
-            await _tourRepository.UpdateAsync(tour);
+
 
             return new OperationResultDto
             {
@@ -359,6 +354,8 @@ namespace Application.Services.UseCases.Tours
                 Message = "Tour updated successfully"
             };
         }
+
+
 
         public async Task<OperationResultDto> DeleteTourAsync(Guid id, string guideId)
         {

@@ -16,7 +16,6 @@ namespace Infrastructure.Repository.Tours
 
         public async Task AddAsync(Tour tour)
         {
-            // EF Core saves the full aggregate graph through navigation properties.
             await _context.Tours.AddAsync(tour);
             await _context.SaveChangesAsync();
         }
@@ -56,7 +55,6 @@ namespace Infrastructure.Repository.Tours
             tour.TourInclusions.Clear();
             tour.TourAddOns.Clear();
 
-            // 🔥 add new بشكل safe
             foreach (var s in stops)
                 tour.TourStops.Add(s);
 
@@ -68,16 +66,16 @@ namespace Infrastructure.Repository.Tours
 
             return Task.CompletedTask;
         }
-        public Task RemoveTourImagesAsync(Tour tour)
+        public Task ReplaceTourImagesAsync(Tour tour, List<TourImage> images)
         {
-            _context.TourImages.RemoveRange(tour.TourImages);
-            //await _context.SaveChangesAsync();
+            tour.TourImages.Clear();
+            foreach (var img in images)
+                tour.TourImages.Add(img);
             return Task.CompletedTask;
         }
 
         public async Task UpdateAsync(Tour tour)
         {
-            //_context.Update(tour);
             await _context.SaveChangesAsync();
 
         }
