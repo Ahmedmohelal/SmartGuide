@@ -1,6 +1,6 @@
 ﻿using Application.DTOs;
 using Application.Services.Interfaces;
-using Infrastructure.Identity;
+using Infrastructure.Data.Entities.Identity;
 using Infrastructure.Settings;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
@@ -26,18 +26,19 @@ namespace Infrastructure.Services.Token
 
         public async Task<(string token, DateTime expires)> CreateTokenAsync(User user)
         {
-            
+
             var applicationUser = await _userManager.FindByEmailAsync(user.Email);
 
             var userClaims = await _userManager.GetClaimsAsync(applicationUser);
             var roles = await _userManager.GetRolesAsync(applicationUser);
 
-            var Claims= new List<Claim>
+            var Claims = new List<Claim>
             {
-                new Claim(JwtRegisteredClaimNames.Sub,applicationUser.UserName!),
-                new Claim(JwtRegisteredClaimNames.Email,applicationUser.Email!),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim(ClaimTypes.NameIdentifier, applicationUser.Id)
+                new Claim(JwtRegisteredClaimNames.Sub, applicationUser.Id), 
+                new Claim(ClaimTypes.NameIdentifier, applicationUser.Id),   
+                new Claim(ClaimTypes.Name, applicationUser.UserName!),
+                new Claim(JwtRegisteredClaimNames.Email, applicationUser.Email!),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
             };
 
             foreach (var userClaim in userClaims)
@@ -53,8 +54,8 @@ namespace Infrastructure.Services.Token
             var Description = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(Claims),
-                Issuer= _JWT.Issuer,
-                Audience= _JWT.Audience,
+                Issuer = _JWT.Issuer,
+                Audience = _JWT.Audience,
                 NotBefore = DateTime.UtcNow,
                 Expires = DateTime.UtcNow.AddMinutes(_JWT.ExpirationTimeInMin),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_JWT.Key!)), SecurityAlgorithms.HmacSha256)

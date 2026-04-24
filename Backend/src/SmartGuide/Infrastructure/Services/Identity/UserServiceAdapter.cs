@@ -1,10 +1,9 @@
-﻿using Application.DTOs;
+using Application.DTOs;
+using Application.Helper;
 using Application.Services.Interfaces;
-using Infrastructure.Identity;
+using Infrastructure.Data.Entities.Identity;
 using Microsoft.AspNetCore.Identity;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using Microsoft.Extensions.Logging;
 
 namespace Infrastructure.Services.Identity
 {
@@ -12,16 +11,26 @@ namespace Infrastructure.Services.Identity
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly ILogger<UserServiceAdapter> _logger;
 
-        public UserServiceAdapter(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
+        public UserServiceAdapter(
+            UserManager<ApplicationUser> userManager,
+            RoleManager<IdentityRole> roleManager,
+            ILogger<UserServiceAdapter> logger)
         {
             _userManager = userManager;
             _roleManager = roleManager;
+            _logger = logger;
+        }
+
+        private Task<ApplicationUser?> FindApplicationUserAsync(User user)
+        {
+            return _userManager.FindByNameAsync(user.UserName);
         }
 
         public async Task<string> AddToRoleAsync(User user, string role)
         {
-            var applicationUser = await _userManager.FindByNameAsync(user.UserName);
+            var applicationUser = await FindApplicationUserAsync(user);
             if (applicationUser == null)
                 return "User not found.";
 
@@ -42,14 +51,20 @@ namespace Infrastructure.Services.Identity
                 FirstName = user.FirstName,
                 LastName = user.LastName,
                 Email = user.Email,
-                UserName = user.UserName
+                UserName = user.UserName,
+                Country = user.Country,
+                Role = user.Role,
+                GuideLicenseImage = user.GuideLicenseImage,
+                NationalIdImage = user.NationalIdImage,
+                ProfileImage = user.ProfileImage,
+                WhatsAppNumber = user.WhatsAppNumber
             };
 
             var result = await _userManager.CreateAsync(applicationUser, password);
             if (!result.Succeeded)
             {
                 var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-                return (null, errors);
+                return (null, errors)!;
             }
 
             user = new User
@@ -58,16 +73,61 @@ namespace Infrastructure.Services.Identity
                 FirstName = applicationUser.FirstName,
                 LastName = applicationUser.LastName,
                 Email = applicationUser.Email,
-                UserName = applicationUser.UserName
+                UserName = applicationUser.UserName,
+                Country = applicationUser.Country,
+                Role = applicationUser.Role,
+                GuideLicenseImage = applicationUser.GuideLicenseImage,
+                NationalIdImage = applicationUser.NationalIdImage,
+                ProfileImage = applicationUser.ProfileImage,
+                WhatsAppNumber = applicationUser.WhatsAppNumber
             };
-
-
-
             return (user, null);
         }
 
+        public async Task<(User? user, string? errors)> CreateExternalUserAsync(User user)
+        {
+            var applicationUser = new ApplicationUser
+            {
+                FirstName = user.FirstName ?? string.Empty,
+                LastName = user.LastName ?? string.Empty,
+                Email = user.Email,
+                Country = string.Empty,   
+                Role = Roles.Tourist,
+                UserName = user.UserName,
+                EmailConfirmed = true,
+                GuideLicenseImage = user.GuideLicenseImage,
+                NationalIdImage = user.NationalIdImage,
+                ProfileImage = user.ProfileImage,
+                WhatsAppNumber = user.WhatsAppNumber
+            };
 
-        public async Task<User> FindByEmailAsync(string email)
+            var password = Convert.ToBase64String(Guid.NewGuid().ToByteArray()) + "Aa1!";
+            var result = await _userManager.CreateAsync(applicationUser, password);
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                _logger.LogWarning("External user creation failed for {Email}: {Errors}", user.Email, errors);
+                return (null, errors);
+            }
+
+            var createdUser = new User
+            {
+                Id = applicationUser.Id,
+                FirstName = applicationUser.FirstName,
+                Country = applicationUser.Country,
+                LastName = applicationUser.LastName,
+                Email = applicationUser.Email!,
+                UserName = applicationUser.UserName!,
+                Role = applicationUser.Role,
+                GuideLicenseImage = applicationUser.GuideLicenseImage,
+                ProfileImage = applicationUser.ProfileImage,
+                NationalIdImage = applicationUser.NationalIdImage,
+                WhatsAppNumber = applicationUser.WhatsAppNumber
+            };
+            return (createdUser, null);
+        }
+
+        public async Task<User?> FindByEmailAsync(string email)
         {
             var applicationUser = await _userManager.FindByEmailAsync(email);
             if (applicationUser == null) return null;
@@ -77,14 +137,39 @@ namespace Infrastructure.Services.Identity
                 Id = applicationUser.Id,
                 FirstName = applicationUser.FirstName,
                 LastName = applicationUser.LastName,
-                Email = applicationUser.Email,
-                UserName = applicationUser.UserName           
-                
+                Email = applicationUser.Email!,
+                UserName = applicationUser.UserName!,
+                Country = applicationUser.Country,
+                Role = applicationUser.Role,
+                GuideLicenseImage = applicationUser.GuideLicenseImage,
+                NationalIdImage = applicationUser.NationalIdImage,
+                ProfileImage = applicationUser.ProfileImage,
+                WhatsAppNumber = applicationUser.WhatsAppNumber
             };
-
         }
 
-        public async Task<User> FindByUserNameAsync(string userName)
+        public async Task<User?> FindByIdAsync(string userId)
+        {
+            var applicationUser = await _userManager.FindByIdAsync(userId);
+            if (applicationUser == null) return null;
+
+            return new User
+            {
+                Id = applicationUser.Id,
+                FirstName = applicationUser.FirstName,
+                LastName = applicationUser.LastName,
+                Email = applicationUser.Email!,
+                Country = applicationUser.Country,
+                UserName = applicationUser.UserName!,
+                Role = applicationUser.Role,
+                GuideLicenseImage = applicationUser.GuideLicenseImage,
+                NationalIdImage = applicationUser.NationalIdImage,
+                ProfileImage = applicationUser.ProfileImage,
+                WhatsAppNumber = applicationUser.WhatsAppNumber
+            };
+        }
+
+        public async Task<User?> FindByUserNameAsync(string userName)
         {
             var applicationUser = await _userManager.FindByNameAsync(userName);
             if (applicationUser == null) return null;
@@ -94,22 +179,27 @@ namespace Infrastructure.Services.Identity
                 Id = applicationUser.Id,
                 FirstName = applicationUser.FirstName,
                 LastName = applicationUser.LastName,
-                Email = applicationUser.Email,
-                UserName = applicationUser.UserName
-
+                Country = applicationUser.Country,
+                Email = applicationUser.Email!,
+                UserName = applicationUser.UserName!,
+                Role = applicationUser.Role,
+                GuideLicenseImage = applicationUser.GuideLicenseImage,
+                NationalIdImage = applicationUser.NationalIdImage,
+                ProfileImage = applicationUser.ProfileImage,
+                WhatsAppNumber = applicationUser.WhatsAppNumber
             };
         }
 
         public async Task<bool> CheckPasswordAsync(User user, string password)
         {
-            var applicationUser = await _userManager.FindByNameAsync(user.UserName);
+            var applicationUser = await FindApplicationUserAsync(user);
             if (applicationUser == null) return false;
             return await _userManager.CheckPasswordAsync(applicationUser, password);
         }
 
         public async Task<List<string>> GetRolesAsync(User user)
         {
-            var applicationUser = await _userManager.FindByNameAsync(user.UserName);
+            var applicationUser = await FindApplicationUserAsync(user);
             if (applicationUser == null) return new List<string>();
             var roles = await _userManager.GetRolesAsync(applicationUser);
             return roles.ToList();
@@ -123,9 +213,80 @@ namespace Infrastructure.Services.Identity
 
         public async Task<bool> IsInRoleAsync(User user, string role)
         {
-            var applicationUser = await _userManager.FindByNameAsync(user.UserName);
+            var applicationUser = await FindApplicationUserAsync(user);
             if (applicationUser == null) return false;
             return await _userManager.IsInRoleAsync(applicationUser, role);
+        }
+
+        public async Task<string?> GeneratePasswordResetTokenAsync(User user)
+        {
+            var applicationUser = await FindApplicationUserAsync(user);
+            if (applicationUser == null) return null;
+
+            return await _userManager.GeneratePasswordResetTokenAsync(applicationUser);
+        }
+
+        public async Task<string> ResetPasswordAsync(User user, string token, string newPassword)
+        {
+            var applicationUser = await FindApplicationUserAsync(user);
+            if (applicationUser == null) return "User not found.";
+
+            var result = await _userManager.ResetPasswordAsync(applicationUser, token, newPassword);
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                return errors;
+            }
+
+            return string.Empty;
+        }
+
+        public async Task<bool> SetResetPasswordOtpAsync(User user, string otp, DateTime expiresAtUtc)
+        {
+            var applicationUser = await FindApplicationUserAsync(user);
+            if (applicationUser == null) return false;
+
+            applicationUser.ResetPasswordOtp = otp;
+            applicationUser.ResetPasswordOtpExpiry = expiresAtUtc;
+
+            var result = await _userManager.UpdateAsync(applicationUser);
+            if (!result.Succeeded)
+            {
+                _logger.LogWarning("Failed to set reset password OTP for {Email}: {Errors}",
+                    applicationUser.Email,
+                    string.Join(", ", result.Errors.Select(e => e.Description)));
+                return false;
+            }
+
+            return true;
+        }
+
+        public async Task<(string? otp, DateTime? expiresAtUtc)> GetResetPasswordOtpAsync(User user)
+        {
+            var applicationUser = await FindApplicationUserAsync(user);
+            if (applicationUser == null) return (null, null);
+
+            return (applicationUser.ResetPasswordOtp, applicationUser.ResetPasswordOtpExpiry);
+        }
+
+        public async Task<bool> ClearResetPasswordOtpAsync(User user)
+        {
+            var applicationUser = await FindApplicationUserAsync(user);
+            if (applicationUser == null) return false;
+
+            applicationUser.ResetPasswordOtp = null;
+            applicationUser.ResetPasswordOtpExpiry = null;
+
+            var result = await _userManager.UpdateAsync(applicationUser);
+            if (!result.Succeeded)
+            {
+                _logger.LogWarning("Failed to clear reset password OTP for {Email}: {Errors}",
+                    applicationUser.Email,
+                    string.Join(", ", result.Errors.Select(e => e.Description)));
+                return false;
+            }
+
+            return true;
         }
     }
 }
