@@ -1,0 +1,78 @@
+/* موجة الهيرو — طبقتان للعمق + ظل خفيف */
+.home-hero-wave {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 4;
+  width: 100%;
+  line-height: 0;
+  pointer-events: none;
+}
+
+.home-hero-wave__shadow {
+  color: rgb(0 0 0 / 0.06);
+  margin-bottom: -2px;
+}
+
+.home-hero-wave__shadow svg {
+  display: block;
+  width: 100%;
+  height: clamp(52px, 11vw, 110px);
+  transform: translateY(5px);
+}
+
+.home-hero-wave__main {
+  position: relative;
+  color: #ffffff;
+  filter: drop-shadow(0 -6px 14px rgb(0 0 0 / 0.07));
+}
+
+.home-hero-wave__main svg {
+  display: block;
+  width: 100%;
+  height: clamp(48px, 10vw, 100px);
+}
+
+/* دمج ناعم بين الصورة والموجة */
+.home-hero-bottom-fade {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 2;
+  height: clamp(100px, 18vh, 200px);
+  background: linear-gradient(
+    to top,
+    rgb(255 255 255 / 0.92) 0%,
+    rgb(255 255 255 / 0.45) 35%,
+    rgb(255 255 255 / 0) 100%
+  );
+  pointer-events: none;
+}
+
+.home-scallop-frame {
+  border-radius: 45% 55% 48% 52% / 42% 48% 52% 58%;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+}
+
+.home-app-pattern {
+  background-color: #004d40;
+  background-image:
+    linear-gradient(30deg, rgb(255 255 255 / 0.06) 12%, transparent 12.5%),
+    linear-gradient(150deg, rgb(255 255 255 / 0.06) 12%, transparent 12.5%),
+    linear-gradient(30deg, transparent 87%, rgb(255 255 255 / 0.04) 87.5%),
+    linear-gradient(150deg, transparent 87%, rgb(255 255 255 / 0.04) 87.5%);
+  background-size: 48px 84px;
+}
+
+/* تمرير الأقسام مع شريط تنقل ثابت */
+/* ارتفاع تقريبي للناف الثابت فوق الصفحة */
+#hero,
+#about,
+#featured,
+#news,
+#faq,
+#footer {
+  scroll-margin-top: 5.75rem;
+}
