@@ -18,8 +18,8 @@ namespace Application.DTOs.ProfileDTOs
         [MaxLength(1000)]
         public string? Bio { get; set; }
 
-        [Range(0, double.MaxValue)]
-        public double? PricePerDay { get; set; }
+        [Range(typeof(decimal), "0", "79228162514264337593543950335")]
+        public decimal? PricePerDay { get; set; }
 
         public IFormFile? ProfilePicture { get; set; }
 

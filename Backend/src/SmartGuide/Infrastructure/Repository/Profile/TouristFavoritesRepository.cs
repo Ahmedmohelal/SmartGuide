@@ -1,9 +1,10 @@
 ﻿using Application.DTOs.Saved;
 using Application.Services.Interfaces;
 using Domain.Entities;
+using Domain.Entities.Profiles.TourGuide;
 using Domain.Interfaces;
 using Infrastructure.Data;
-using Infrastructure.Data.Entities.Profiles.TourGuide;
+using Infrastructure.Data.Entities.Identity;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -42,34 +43,25 @@ namespace Infrastructure.Repository.Profile
 
         public async Task<IReadOnlyList<SavedTourGuideDto>> GetFavoritesAsync(string touristUserId, CancellationToken cancellationToken = default)
         {
-            var guideIds = await _context.SavedTourGuides
+            var favorites = await _context.SavedTourGuides
                 .AsNoTracking()
                 .Where(x => x.TouristUserId == touristUserId)
                 .OrderByDescending(x => x.CreatedAtUtc)
-                .Select(x => x.TourGuideUserId)
+                .Join(
+                    _context.TourGuideProfiles.AsNoTracking(),
+                    saved => saved.TourGuideUserId,
+                    profile => profile.UserId,
+                    (saved, profile) => new { profile, saved.TourGuideUserId }
+                )
+                .Join(
+                    _context.Users.AsNoTracking(),
+                    result => result.TourGuideUserId,
+                    user => user.Id,
+                    (result, user) => new { result.profile, user }
+                )
                 .ToListAsync(cancellationToken);
 
-            if (guideIds.Count == 0)
-                return Array.Empty<SavedTourGuideDto>();
-
-            var profiles = await _context.TourGuideProfiles
-                .AsNoTracking()
-                .Include(x => x.User)
-                .Where(x => guideIds.Contains(x.UserId))
-                .ToListAsync(cancellationToken);
-
-            var mapped = profiles.Select(MapToDto).ToList();
-
-            // Keep results ordered according to favorites list order.
-            var byId = mapped.ToDictionary(x => x.GuideId, StringComparer.Ordinal);
-            var ordered = new List<SavedTourGuideDto>(mapped.Count);
-            foreach (var id in guideIds)
-            {
-                if (byId.TryGetValue(id, out var dto))
-                    ordered.Add(dto);
-            }
-
-            return ordered;
+            return favorites.Select(x => MapToDto(x.profile, x.user)).ToList();
         }
 
         public async Task<bool> RemoveFavoriteAsync(string touristUserId, string tourGuideUserId, CancellationToken cancellationToken = default)
@@ -98,15 +90,15 @@ namespace Infrastructure.Repository.Profile
                 .AsNoTracking()
                 .AnyAsync(x => x.UserId == tourGuideUserId, cancellationToken);
         }
-        private SavedTourGuideDto MapToDto(TourGuideProfile profile)
+        private SavedTourGuideDto MapToDto(TourGuideProfile profile, ApplicationUser? user)
         {
-            var storedProfileImage = profile.ProfilePicture ?? profile.User?.ProfileImage;
+            var storedProfileImage = profile.ProfilePicture ?? user?.ProfileImage;
 
             return new SavedTourGuideDto
             {
                 GuideId = profile.UserId,
-                Name = $"{profile.User?.FirstName ?? string.Empty} {profile.User?.LastName ?? string.Empty}".Trim(),
-                Location = profile.User?.Country ?? string.Empty,
+                Name = $"{user?.FirstName ?? string.Empty} {user?.LastName ?? string.Empty}".Trim(),
+                Location = user?.Country ?? string.Empty,
                 ProfilePictureUrl = _imageUrlService.ToPublicImageUrl(storedProfileImage, "profileImages")
             };
         }

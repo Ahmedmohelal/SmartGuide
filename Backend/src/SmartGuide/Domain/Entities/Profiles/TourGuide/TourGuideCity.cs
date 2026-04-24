@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Infrastructure.Data.Entities.Profiles.TourGuide
+namespace Domain.Entities.Profiles.TourGuide
 {
     public class TourGuideCity
     {

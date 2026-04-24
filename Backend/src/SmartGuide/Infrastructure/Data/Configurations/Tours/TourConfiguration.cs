@@ -1,5 +1,5 @@
 using Domain.Entities.Tours;
-using Infrastructure.Data.Entities.Profiles.TourGuide;
+using Domain.Entities.Profiles.TourGuide;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

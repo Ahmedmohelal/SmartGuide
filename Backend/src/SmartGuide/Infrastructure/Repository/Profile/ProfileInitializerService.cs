@@ -1,8 +1,8 @@
 using Application.Helper;
 using Application.Services.Interfaces;
+using Domain.Entities.Profiles.TourGuide;
+using Domain.Entities.Profiles.Tourist;
 using Infrastructure.Data;
-using Infrastructure.Data.Entities.Profiles.TourGuide;
-using Infrastructure.Data.Entities.Profiles.Tourist;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Repository.Profile
