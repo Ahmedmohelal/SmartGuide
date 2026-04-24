@@ -18,7 +18,8 @@ namespace API.Controllers
             _tourService = tourService;
         }
 
-        //[Authorize(Roles = "TourGuide")]
+        // Get All Tours For TourGide For Him 
+        [Authorize(Roles = "TourGuide")]
         [HttpGet("my-tours")]
         public async Task<IActionResult> GetMyTours()
         {
@@ -33,7 +34,16 @@ namespace API.Controllers
             return Ok(tours);
         }
 
-        //[Authorize(Roles = "Tourist,TourGuide")]
+        // Get All Tours For TourGide To The Tourist To See The Tours To Choose One
+        [Authorize(Roles ="Tourist")]
+        [HttpGet("guide/{guideId}")]
+        public async Task<IActionResult> GetGuideTours(string guideId)
+        {
+            var tours = await _tourService.GetGuideToursAsync(guideId);
+            return Ok(tours);
+        }
+
+        [Authorize(Roles = "Tourist,TourGuide")]
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetTourById(Guid id)
         {
@@ -45,7 +55,7 @@ namespace API.Controllers
             return Ok(tour);
         }
 
-        //[Authorize(Roles = "TourGuide")]
+        [Authorize(Roles = "TourGuide")]
         [HttpPost("create")]
         public async Task<IActionResult> CreateTourWithImages(
         [FromForm] CreateTourRequestDTO request)
@@ -64,7 +74,7 @@ namespace API.Controllers
             return Ok(res);
         }
 
-        //[Authorize(Roles = "TourGuide")]
+        [Authorize(Roles = "TourGuide")]
         [HttpPut("{id:guid}")]
         public async Task<IActionResult> UpdateTour(
                                                      Guid id,
@@ -83,7 +93,7 @@ namespace API.Controllers
 
             return Ok(res);
         }
-        //[Authorize(Roles = "TourGuide")]
+        [Authorize(Roles = "TourGuide")]
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> DeleteTour(Guid id)
         {
