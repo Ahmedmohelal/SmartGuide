@@ -1,8 +1,9 @@
 using Application.DTOs.ProfileDTOs;
 using Application.Services.Interfaces;
+using Domain.Entities.Profiles.TourGuide;
 using Domain.Interfaces;
 using Infrastructure.Data;
-using Infrastructure.Data.Entities.Profiles.TourGuide;
+using Infrastructure.Data.Entities.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Repository.Profile
@@ -24,38 +25,50 @@ namespace Infrastructure.Repository.Profile
         {
             var profiles = await _context.TourGuideProfiles
                 .AsNoTracking()
-                .Include(x => x.User)
                 .Include(x => x.Cities)
                 .Include(x => x.Languages)
                 .Include(x => x.Gallery)
                 .ToListAsync();
 
-            return profiles.Select(MapToDto).ToList();
+            var users = await _context.Users
+                .AsNoTracking()
+                .Where(x => profiles.Select(p => p.UserId).Contains(x.Id))
+                .ToDictionaryAsync(x => x.Id);
+
+            return profiles.Select(profile =>
+            {
+                users.TryGetValue(profile.UserId, out var user);
+                return MapToDto(profile, user);
+            }).ToList();
         }
 
         public async Task<TourGuideProfileDto?> GetByIdAsync(string userId)
         {
             var profile = await _context.TourGuideProfiles
                 .AsNoTracking()
-                .Include(x => x.User)
-                .Include(x => x.Cities)
-                .Include(x => x.Languages)
-                .Include(x => x.Gallery)
-                .FirstOrDefaultAsync(x => x.UserId == userId);
-
-            return profile is null ? null : MapToDto(profile);
-        }
-
-        public async Task<TourGuideProfileDto?> UpdateAsync(string userId, UpdateTourGuideProfileDto model)
-        {
-            var profile = await _context.TourGuideProfiles
-                .Include(x => x.User)
                 .Include(x => x.Cities)
                 .Include(x => x.Languages)
                 .Include(x => x.Gallery)
                 .FirstOrDefaultAsync(x => x.UserId == userId);
 
             if (profile is null)
+                return null;
+
+            var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Id == userId);
+            return MapToDto(profile, user);
+        }
+
+        public async Task<TourGuideProfileDto?> UpdateAsync(string userId, UpdateTourGuideProfileDto model)
+        {
+            var profile = await _context.TourGuideProfiles
+                .Include(x => x.Cities)
+                .Include(x => x.Languages)
+                .Include(x => x.Gallery)
+                .FirstOrDefaultAsync(x => x.UserId == userId);
+
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.Id == userId);
+
+            if (profile is null || user is null)
                 return null;
 
             if (model.Bio is not null)
@@ -65,16 +78,16 @@ namespace Infrastructure.Repository.Profile
                 profile.PricePerDay = model.PricePerDay.Value;
 
             if (model.FirstName is not null)
-                profile.User!.FirstName = model.FirstName;
+                user.FirstName = model.FirstName;
 
             if (model.LastName is not null)
-                profile.User!.LastName = model.LastName;
+                user.LastName = model.LastName;
 
             if (model.Country is not null)
-                profile.User!.Country = model.Country;
+                user.Country = model.Country;
 
             if (model.WhatsAppNumber is not null)
-                profile.User!.WhatsAppNumber = model.WhatsAppNumber;
+                user.WhatsAppNumber = model.WhatsAppNumber;
 
             string? Picture = null;
 
@@ -82,7 +95,7 @@ namespace Infrastructure.Repository.Profile
             {
                 if (model.ProfilePicture != null)
                 {
-                    await attachmentService.Delete(profile.User!.ProfileImage, "profileImages");
+                    await attachmentService.Delete(user.ProfileImage, "profileImages");
                     Picture = await attachmentService.Upload("profileImages", model.ProfilePicture);
                 }
             }
@@ -95,7 +108,7 @@ namespace Infrastructure.Repository.Profile
             if (Picture is not null)
             {
                 profile.ProfilePicture = Picture;
-                profile.User!.ProfileImage = Picture;
+                user.ProfileImage = Picture;
             }
 
             // Cities
@@ -170,22 +183,22 @@ namespace Infrastructure.Repository.Profile
             }
 
             await _context.SaveChangesAsync();
-            return MapToDto(profile);
+            return MapToDto(profile, user);
         }
 
-        private TourGuideProfileDto MapToDto(TourGuideProfile profile)
+        private TourGuideProfileDto MapToDto(TourGuideProfile profile, ApplicationUser? user)
         {
-            var storedProfileImage = profile.ProfilePicture ?? profile.User?.ProfileImage;
+            var storedProfileImage = profile.ProfilePicture ?? user?.ProfileImage;
 
             return new TourGuideProfileDto
             {
                 UserId = profile.UserId,
-                FirstName = profile.User?.FirstName ?? string.Empty,
-                LastName = profile.User?.LastName ?? string.Empty,
-                UserName = profile.User?.UserName ?? string.Empty,
-                Email = profile.User?.Email ?? string.Empty,
-                Country = profile.User?.Country ?? string.Empty,
-                WhatsAppNumber = profile.User?.WhatsAppNumber,
+                FirstName = user?.FirstName ?? string.Empty,
+                LastName = user?.LastName ?? string.Empty,
+                UserName = user?.UserName ?? string.Empty,
+                Email = user?.Email ?? string.Empty,
+                Country = user?.Country ?? string.Empty,
+                WhatsAppNumber = user?.WhatsAppNumber,
                 Bio = profile.Bio,
                 PricePerDay = profile.PricePerDay,
                 Rating = profile.Rating,

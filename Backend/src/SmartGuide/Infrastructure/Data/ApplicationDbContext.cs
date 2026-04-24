@@ -3,8 +3,8 @@ using Domain.Entities.Tours;
 using Infrastructure.Data.Configurations;
 using Infrastructure.Data.Entities;
 using Infrastructure.Data.Entities.Identity;
-using Infrastructure.Data.Entities.Profiles.TourGuide;
-using Infrastructure.Data.Entities.Profiles.Tourist;
+using Domain.Entities.Profiles.TourGuide;
+using Domain.Entities.Profiles.Tourist;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 

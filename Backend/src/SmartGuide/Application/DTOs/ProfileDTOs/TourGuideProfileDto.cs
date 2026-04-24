@@ -10,8 +10,8 @@ namespace Application.DTOs.ProfileDTOs
         public string Country { get; set; } = string.Empty;
         public string? WhatsAppNumber { get; set; }
         public string? Bio { get; set; } = string.Empty;
-        public double? PricePerDay { get; set; }
-        public double? Rating { get; set; }
+        public decimal? PricePerDay { get; set; }
+        public decimal? Rating { get; set; }
         public string? ProfilePicture { get; set; } = string.Empty;
         public List<string>? Cities { get; set; } = new();
         public List<string>? Languages { get; set; } = new();

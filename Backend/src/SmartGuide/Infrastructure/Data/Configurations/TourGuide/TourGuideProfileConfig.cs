@@ -1,4 +1,5 @@
-﻿using Infrastructure.Data.Entities.Profiles.TourGuide;
+﻿using Domain.Entities.Profiles.TourGuide;
+using Infrastructure.Data.Entities.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
@@ -17,7 +18,7 @@ namespace Infrastructure.Data.Configurations.TourGuide
             builder.Property(e => e.PricePerDay).HasColumnType("decimal(18,2)");
             builder.Property(e => e.Rating).HasColumnType("decimal(3,2)").HasDefaultValue(0);
             builder.HasCheckConstraint("CK_TourGuideProfile_Rating", "[Rating] >= 0 AND [Rating] <= 5");
-            builder.HasOne(e => e.User)
+            builder.HasOne<ApplicationUser>()
                 .WithOne(u => u.TourGuideProfile)
                 .HasForeignKey<TourGuideProfile>(e => e.UserId)
                 .OnDelete(DeleteBehavior.Cascade);

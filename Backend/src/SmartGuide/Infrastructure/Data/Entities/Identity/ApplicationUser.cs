@@ -1,6 +1,6 @@
 using Infrastructure.Data.Entities.Enums;
-using Infrastructure.Data.Entities.Profiles.TourGuide;
-using Infrastructure.Data.Entities.Profiles.Tourist;
+using Domain.Entities.Profiles.TourGuide;
+using Domain.Entities.Profiles.Tourist;
 using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
 

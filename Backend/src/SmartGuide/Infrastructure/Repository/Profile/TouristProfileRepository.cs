@@ -1,9 +1,10 @@
 using Application.DTOs.ProfileDTOs;
 using Application.Services.Interfaces;
 using Application.Services.UseCases;
+using Domain.Entities.Profiles.Tourist;
 using Domain.Interfaces;
 using Infrastructure.Data;
-using Infrastructure.Data.Entities.Profiles.Tourist;
+using Infrastructure.Data.Entities.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Repository.Profile
@@ -25,51 +26,63 @@ namespace Infrastructure.Repository.Profile
         {
             var profiles = await _context.Set<TouristProfile>()
                 .AsNoTracking()
-                .Include(x => x.User)
                 .ToListAsync();
 
-            return profiles.Select(MapToDto).ToList();
+            var users = await _context.Users
+                .AsNoTracking()
+                .Where(x => profiles.Select(p => p.UserId).Contains(x.Id))
+                .ToDictionaryAsync(x => x.Id);
+
+            return profiles.Select(profile =>
+            {
+                users.TryGetValue(profile.UserId, out var user);
+                return MapToDto(profile, user);
+            }).ToList();
         }
 
         public async Task<TouristProfileDto?> GetByIdAsync(string userId)
         {
             var profile = await _context.Set<TouristProfile>()
                 .AsNoTracking()
-                .Include(x => x.User)
                 .FirstOrDefaultAsync(x => x.UserId == userId);
 
-            return profile is null ? null : MapToDto(profile);
+            if (profile is null)
+                return null;
+
+            var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Id == userId);
+            return MapToDto(profile, user);
         }
 
         public async Task<TouristProfileDto?> UpdateAsync(string userId, UpdateTouristProfileDto model)
         {
             var profile = await _context.Set<TouristProfile>()
-                .Include(x => x.User)
                 .FirstOrDefaultAsync(x => x.UserId == userId);
 
-            if (profile is null || profile.User is null)
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.Id == userId);
+
+            if (profile is null || user is null)
                 return null;
 
             if (model.FirstName is not null)
-                profile.User.FirstName = model.FirstName;
+                user.FirstName = model.FirstName;
 
             if (model.LastName is not null)
-                profile.User.LastName = model.LastName;
+                user.LastName = model.LastName;
 
             if (model.Country is not null)
-                profile.User.Country = model.Country;
+                user.Country = model.Country;
 
             if (model.WhatsAppNumber is not null)
-                profile.User.WhatsAppNumber = model.WhatsAppNumber;
+                user.WhatsAppNumber = model.WhatsAppNumber;
 
             if (model.TouristImage != null)
             {
                 string? newImage = null;
                 try
                 {
-                    await attachmentService.Delete(profile.User.ProfileImage, "Tourists");
+                    await attachmentService.Delete(user.ProfileImage, "Tourists");
                     newImage = await attachmentService.Upload("Tourists", model.TouristImage);
-                    profile.User.ProfileImage = newImage;
+                    user.ProfileImage = newImage;
                 }
                 catch (Exception)
                 {
@@ -79,23 +92,23 @@ namespace Infrastructure.Repository.Profile
             }
 
             await _context.SaveChangesAsync();
-            return MapToDto(profile);
+            return MapToDto(profile, user);
         }
 
-        private TouristProfileDto MapToDto(TouristProfile profile)
+        private TouristProfileDto MapToDto(TouristProfile profile, ApplicationUser? user)
         {
             return new TouristProfileDto
             {
                 Id = profile.Id,
                 UserId = profile.UserId,
-                FirstName = profile.User?.FirstName ?? string.Empty,
-                LastName = profile.User?.LastName ?? string.Empty,
-                UserName = profile.User?.UserName ?? string.Empty,
-                Email = profile.User?.Email ?? string.Empty,
-                Country = profile.User?.Country ?? string.Empty,
-                WhatsAppNumber = profile.User?.WhatsAppNumber,
+                FirstName = user?.FirstName ?? string.Empty,
+                LastName = user?.LastName ?? string.Empty,
+                UserName = user?.UserName ?? string.Empty,
+                Email = user?.Email ?? string.Empty,
+                Country = user?.Country ?? string.Empty,
+                WhatsAppNumber = user?.WhatsAppNumber,
                 TouristImage = _imageUrlService.ToPublicImageUrl(
-                    profile.User?.ProfileImage,
+                    user?.ProfileImage,
                     "Tourists") 
             };
         }

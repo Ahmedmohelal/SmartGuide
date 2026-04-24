@@ -54,11 +54,13 @@ namespace Infrastructure.Repository.Tours
             await _context.TourStops.AddRangeAsync(stops);
             await _context.TourInclusions.AddRangeAsync(inclusions);
             await _context.TourAddOns.AddRangeAsync(addons);
+            await _context.SaveChangesAsync();
         }
         public async Task ReplaceTourImagesAsync(Tour tour, List<TourImage> images)
         {
             _context.TourImages.RemoveRange(tour.TourImages);
             await _context.TourImages.AddRangeAsync(images);
+            await _context.SaveChangesAsync();
 
         }
 
