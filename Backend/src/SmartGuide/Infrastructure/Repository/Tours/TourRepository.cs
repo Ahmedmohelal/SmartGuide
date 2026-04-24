@@ -41,44 +41,24 @@ namespace Infrastructure.Repository.Tours
         }
 
 
-        public Task ReplaceTourRelationsAsync(
+        public async Task ReplaceTourRelationsAsync(
     Tour tour,
     List<TourStops> stops,
     List<TourInclusion> inclusions,
     List<TourAddOn> addons)
         {
-            // remove old
-            //_context.TourStops.RemoveRange(tour.TourStops);
-            //_context.TourInclusions.RemoveRange(tour.TourInclusions);
-            //_context.TourAddOns.RemoveRange(tour.TourAddOns);
-            //tour.TourStops.Clear();
-            //tour.TourInclusions.Clear();
-            //tour.TourAddOns.Clear();
+            _context.TourStops.RemoveRange(tour.TourStops);
+            _context.TourInclusions.RemoveRange(tour.TourInclusions);
+            _context.TourAddOns.RemoveRange(tour.TourAddOns);
 
-            tour.TourStops = stops;
-            tour.TourInclusions = inclusions;
-            tour.TourAddOns = addons;
-
-            //foreach (var s in stops)
-            //    tour.TourStops.Add(s);
-
-            //foreach (var i in inclusions)
-            //    tour.TourInclusions.Add(i);
-
-            //foreach (var a in addons)
-            //    tour.TourAddOns.Add(a);
-
-            return Task.CompletedTask;
+            await _context.TourStops.AddRangeAsync(stops);
+            await _context.TourInclusions.AddRangeAsync(inclusions);
+            await _context.TourAddOns.AddRangeAsync(addons);
         }
-        public Task ReplaceTourImagesAsync(Tour tour, List<TourImage> images)
+        public async Task ReplaceTourImagesAsync(Tour tour, List<TourImage> images)
         {
-            //tour.TourImages.Clear();
-            //foreach (var img in images)
-            //    tour.TourImages.Add(img);
-            
-                tour.TourImages = images;
-
-            return Task.CompletedTask;
+            _context.TourImages.RemoveRange(tour.TourImages);
+            await _context.TourImages.AddRangeAsync(images);
 
         }
 
