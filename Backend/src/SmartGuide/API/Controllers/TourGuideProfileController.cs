@@ -34,6 +34,7 @@ namespace API.Controllers
         }
 
         [HttpPut("{id}/profile")]
+        [Authorize(Roles = "TourGuide")]
         public Task<ActionResult<TourGuideProfileDto>> UpdateProfileByIdAsync(string id, [FromForm] UpdateTourGuideProfileDto model)
         {
             return UpdateProfileAsync(id, model);
