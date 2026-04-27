@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260419145032_AddTourTables")]
-    partial class AddTourTables
+    [Migration("20260427005143_AddBookingTables")]
+    partial class AddBookingTables
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,6 +24,232 @@ namespace Infrastructure.Data.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.Entity("Domain.Entities.Book.Booking", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly>("BookingDate")
+                        .HasColumnType("date");
+
+                    b.Property<string>("GuideId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<TimeOnly>("StartTime")
+                        .HasColumnType("time");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<decimal>("TotalPrice")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<Guid>("TourId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("TouristId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TouristId")
+                        .HasDatabaseName("IX_Bookings_TouristId");
+
+                    b.HasIndex("GuideId", "BookingDate", "StartTime")
+                        .HasDatabaseName("IX_Bookings_GuideId_Date_Time");
+
+                    b.HasIndex("TourId", "BookingDate", "StartTime")
+                        .HasDatabaseName("IX_Bookings_TourId_Date_Time");
+
+                    b.ToTable("Bookings", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.Book.GuideAvailability", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<TimeOnly>("EndTime")
+                        .HasColumnType("time");
+
+                    b.Property<string>("GuideId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
+                    b.Property<TimeOnly>("StartTime")
+                        .HasColumnType("time");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GuideId", "Date")
+                        .HasDatabaseName("IX_GuideAvailabilities_GuideId_Date");
+
+                    b.ToTable("GuideAvailabilities", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_GuideAvailability_Times", "[EndTime] > [StartTime]");
+                        });
+                });
+
+            modelBuilder.Entity("Domain.Entities.Profiles.TourGuide.TourGuideCity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("CityName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("TourGuideProfileId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TourGuideProfileId");
+
+                    b.ToTable("TourGuideCities", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.Profiles.TourGuide.TourGuideGallery", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("TourGuideProfileId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TourGuideProfileId");
+
+                    b.ToTable("TourGuideGalleries", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.Profiles.TourGuide.TourGuideLanguage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Language")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("TourGuideProfileId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TourGuideProfileId");
+
+                    b.ToTable("TourGuideLanguages", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.Profiles.TourGuide.TourGuideProfile", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Bio")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<decimal?>("PricePerDay")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("ProfilePicture")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("Rating")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("decimal(3,2)")
+                        .HasDefaultValue(0m);
+
+                    b.HasKey("UserId");
+
+                    b.ToTable("TourGuideProfiles", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_TourGuideProfile_Rating", "[Rating] >= 0 AND [Rating] <= 5");
+                        });
+                });
+
+            modelBuilder.Entity("Domain.Entities.Profiles.Tourist.TouristProfile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("TouristImage")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("TouristProfiles", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.SavedTourGuide", b =>
+                {
+                    b.Property<string>("TouristUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("TourGuideUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("TouristUserId", "TourGuideUserId");
+
+                    b.HasIndex("TouristUserId", "CreatedAtUtc");
+
+                    b.ToTable("FavoriteTourGuides", (string)null);
+                });
 
             modelBuilder.Entity("Domain.Entities.Tours.Tour", b =>
                 {
@@ -279,127 +505,6 @@ namespace Infrastructure.Data.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("Infrastructure.Data.Entities.Profiles.TourGuide.TourGuideCity", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("CityName")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<string>("TourGuideProfileId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TourGuideProfileId");
-
-                    b.ToTable("TourGuideCities", (string)null);
-                });
-
-            modelBuilder.Entity("Infrastructure.Data.Entities.Profiles.TourGuide.TourGuideGallery", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ImageUrl")
-                        .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)");
-
-                    b.Property<string>("TourGuideProfileId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TourGuideProfileId");
-
-                    b.ToTable("TourGuideGalleries", (string)null);
-                });
-
-            modelBuilder.Entity("Infrastructure.Data.Entities.Profiles.TourGuide.TourGuideLanguage", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Language")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("TourGuideProfileId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TourGuideProfileId");
-
-                    b.ToTable("TourGuideLanguages", (string)null);
-                });
-
-            modelBuilder.Entity("Infrastructure.Data.Entities.Profiles.TourGuide.TourGuideProfile", b =>
-                {
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("Bio")
-                        .HasMaxLength(1000)
-                        .HasColumnType("nvarchar(1000)");
-
-                    b.Property<decimal?>("PricePerDay")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<string>("ProfilePicture")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal>("Rating")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("decimal(3,2)")
-                        .HasDefaultValue(0m);
-
-                    b.HasKey("UserId");
-
-                    b.ToTable("TourGuideProfiles", null, t =>
-                        {
-                            t.HasCheckConstraint("CK_TourGuideProfile_Rating", "[Rating] >= 0 AND [Rating] <= 5");
-                        });
-                });
-
-            modelBuilder.Entity("Infrastructure.Data.Entities.Profiles.Tourist.TouristProfile", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<string>("TouristImage")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId")
-                        .IsUnique();
-
-                    b.ToTable("TouristProfiles");
-                });
-
             modelBuilder.Entity("Infrastructure.Data.Entities.RefreshToken", b =>
                 {
                     b.Property<string>("Id")
@@ -565,9 +670,90 @@ namespace Infrastructure.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("Domain.Entities.Book.Booking", b =>
+                {
+                    b.HasOne("Domain.Entities.Profiles.TourGuide.TourGuideProfile", null)
+                        .WithMany()
+                        .HasForeignKey("GuideId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Tours.Tour", null)
+                        .WithMany()
+                        .HasForeignKey("TourId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Infrastructure.Data.Entities.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("TouristId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Domain.Entities.Book.GuideAvailability", b =>
+                {
+                    b.HasOne("Domain.Entities.Profiles.TourGuide.TourGuideProfile", null)
+                        .WithMany()
+                        .HasForeignKey("GuideId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Domain.Entities.Profiles.TourGuide.TourGuideCity", b =>
+                {
+                    b.HasOne("Domain.Entities.Profiles.TourGuide.TourGuideProfile", "TourGuideProfile")
+                        .WithMany("Cities")
+                        .HasForeignKey("TourGuideProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("TourGuideProfile");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Profiles.TourGuide.TourGuideGallery", b =>
+                {
+                    b.HasOne("Domain.Entities.Profiles.TourGuide.TourGuideProfile", "TourGuideProfile")
+                        .WithMany("Gallery")
+                        .HasForeignKey("TourGuideProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("TourGuideProfile");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Profiles.TourGuide.TourGuideLanguage", b =>
+                {
+                    b.HasOne("Domain.Entities.Profiles.TourGuide.TourGuideProfile", "TourGuideProfile")
+                        .WithMany("Languages")
+                        .HasForeignKey("TourGuideProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("TourGuideProfile");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Profiles.TourGuide.TourGuideProfile", b =>
+                {
+                    b.HasOne("Infrastructure.Data.Entities.Identity.ApplicationUser", null)
+                        .WithOne("TourGuideProfile")
+                        .HasForeignKey("Domain.Entities.Profiles.TourGuide.TourGuideProfile", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Domain.Entities.Profiles.Tourist.TouristProfile", b =>
+                {
+                    b.HasOne("Infrastructure.Data.Entities.Identity.ApplicationUser", null)
+                        .WithOne("TouristProfile")
+                        .HasForeignKey("Domain.Entities.Profiles.Tourist.TouristProfile", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Domain.Entities.Tours.Tour", b =>
                 {
-                    b.HasOne("Infrastructure.Data.Entities.Profiles.TourGuide.TourGuideProfile", null)
+                    b.HasOne("Domain.Entities.Profiles.TourGuide.TourGuideProfile", null)
                         .WithMany()
                         .HasForeignKey("GuideId")
                         .OnDelete(DeleteBehavior.Restrict)
@@ -616,61 +802,6 @@ namespace Infrastructure.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Tour");
-                });
-
-            modelBuilder.Entity("Infrastructure.Data.Entities.Profiles.TourGuide.TourGuideCity", b =>
-                {
-                    b.HasOne("Infrastructure.Data.Entities.Profiles.TourGuide.TourGuideProfile", "TourGuideProfile")
-                        .WithMany("Cities")
-                        .HasForeignKey("TourGuideProfileId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("TourGuideProfile");
-                });
-
-            modelBuilder.Entity("Infrastructure.Data.Entities.Profiles.TourGuide.TourGuideGallery", b =>
-                {
-                    b.HasOne("Infrastructure.Data.Entities.Profiles.TourGuide.TourGuideProfile", "TourGuideProfile")
-                        .WithMany("Gallery")
-                        .HasForeignKey("TourGuideProfileId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("TourGuideProfile");
-                });
-
-            modelBuilder.Entity("Infrastructure.Data.Entities.Profiles.TourGuide.TourGuideLanguage", b =>
-                {
-                    b.HasOne("Infrastructure.Data.Entities.Profiles.TourGuide.TourGuideProfile", "TourGuideProfile")
-                        .WithMany("Languages")
-                        .HasForeignKey("TourGuideProfileId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("TourGuideProfile");
-                });
-
-            modelBuilder.Entity("Infrastructure.Data.Entities.Profiles.TourGuide.TourGuideProfile", b =>
-                {
-                    b.HasOne("Infrastructure.Data.Entities.Identity.ApplicationUser", "User")
-                        .WithOne("TourGuideProfile")
-                        .HasForeignKey("Infrastructure.Data.Entities.Profiles.TourGuide.TourGuideProfile", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Infrastructure.Data.Entities.Profiles.Tourist.TouristProfile", b =>
-                {
-                    b.HasOne("Infrastructure.Data.Entities.Identity.ApplicationUser", "User")
-                        .WithOne("TouristProfile")
-                        .HasForeignKey("Infrastructure.Data.Entities.Profiles.Tourist.TouristProfile", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Infrastructure.Data.Entities.RefreshToken", b =>
@@ -735,6 +866,15 @@ namespace Infrastructure.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Domain.Entities.Profiles.TourGuide.TourGuideProfile", b =>
+                {
+                    b.Navigation("Cities");
+
+                    b.Navigation("Gallery");
+
+                    b.Navigation("Languages");
+                });
+
             modelBuilder.Entity("Domain.Entities.Tours.Tour", b =>
                 {
                     b.Navigation("TourAddOns");
@@ -751,15 +891,6 @@ namespace Infrastructure.Data.Migrations
                     b.Navigation("TourGuideProfile");
 
                     b.Navigation("TouristProfile");
-                });
-
-            modelBuilder.Entity("Infrastructure.Data.Entities.Profiles.TourGuide.TourGuideProfile", b =>
-                {
-                    b.Navigation("Cities");
-
-                    b.Navigation("Gallery");
-
-                    b.Navigation("Languages");
                 });
 #pragma warning restore 612, 618
         }

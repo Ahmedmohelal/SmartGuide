@@ -21,10 +21,7 @@ namespace Infrastructure.Data.Configurations.Tours
             builder.Property(e => e.OrderIndex)
                    .IsRequired();
 
-            builder.HasOne(e => e.Tour) 
-                   .WithMany(t => t.TourImages)
-                   .HasForeignKey(e => e.TourId)
-                   .OnDelete(DeleteBehavior.Cascade);
+            // ✅ شيل الـ HasOne من هنا خالص
 
             builder.HasIndex(e => e.TourId)
                    .IsUnique()

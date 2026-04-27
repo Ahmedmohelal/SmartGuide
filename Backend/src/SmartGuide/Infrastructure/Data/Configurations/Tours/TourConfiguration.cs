@@ -26,6 +26,7 @@ namespace Infrastructure.Data.Configurations.Tours
             builder.Property(e => e.GuideId)
                 .IsRequired();
 
+            // العلاقة مع المرشد
             builder.HasOne<TourGuideProfile>()
                    .WithMany()
                    .HasForeignKey(e => e.GuideId)
@@ -33,6 +34,27 @@ namespace Infrastructure.Data.Configurations.Tours
                    .OnDelete(DeleteBehavior.Restrict);
 
             builder.HasIndex(e => e.GuideId);
+
+            // العلاقات مع الـ children — هنا بس مش في كل Configuration
+            builder.HasMany(e => e.TourImages)
+                   .WithOne(i => i.Tour)
+                   .HasForeignKey(i => i.TourId)
+                   .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasMany(e => e.TourStops)
+                   .WithOne(s => s.Tour)
+                   .HasForeignKey(s => s.TourId)
+                   .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasMany(e => e.TourInclusions)
+                   .WithOne(i => i.Tour)
+                   .HasForeignKey(i => i.TourId)
+                   .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasMany(e => e.TourAddOns)
+                   .WithOne(a => a.Tour)
+                   .HasForeignKey(a => a.TourId)
+                   .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

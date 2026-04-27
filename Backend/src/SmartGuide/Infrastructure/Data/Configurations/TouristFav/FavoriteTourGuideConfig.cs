@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Infrastructure.Data.Configurations
+namespace Infrastructure.Data.Configurations.TouristFav
 {
     public class SavedTourGuideConfig : IEntityTypeConfiguration<SavedTourGuide>
     {

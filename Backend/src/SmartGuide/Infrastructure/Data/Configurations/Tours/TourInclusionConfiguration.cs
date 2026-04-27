@@ -19,10 +19,10 @@ namespace Infrastructure.Data.Configurations.Tours
                 .HasMaxLength(32)
                 .IsRequired();
 
-            builder.HasOne(e => e.Tour)
-                .WithMany(t => t.TourInclusions)
-                .HasForeignKey(e => e.TourId)
-                .OnDelete(DeleteBehavior.Cascade);
+            //builder.HasOne(e => e.Tour)
+            //    .WithMany(t => t.TourInclusions)
+            //    .HasForeignKey(e => e.TourId)
+            //    .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
