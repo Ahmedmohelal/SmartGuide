@@ -1,12 +1,12 @@
 using Domain.Entities;
 using Domain.Entities.Tours;
-using Infrastructure.Data.Configurations;
 using Infrastructure.Data.Entities;
 using Infrastructure.Data.Entities.Identity;
 using Domain.Entities.Profiles.TourGuide;
 using Domain.Entities.Profiles.Tourist;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Infrastructure.Data.Configurations.RefreshToken;
 
 namespace Infrastructure.Data
 {

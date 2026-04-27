@@ -14,10 +14,12 @@ namespace Infrastructure.Data.Configurations.Tours
             builder.Property(e => e.Title).HasMaxLength(100).IsRequired();
             builder.Property(e => e.Price).HasColumnType("decimal(10,2)").IsRequired();
             builder.Property(e => e.IsActive).IsRequired();
-            builder.HasOne(e => e.Tour)
-                .WithMany(t => t.TourAddOns)
-                .HasForeignKey(e => e.TourId)
-                .OnDelete(DeleteBehavior.Cascade);
+            //builder.HasOne(e => e.Tour)
+            //    .WithMany(t => t.TourAddOns)
+            //    .HasForeignKey(e => e.TourId)
+            //    .OnDelete(DeleteBehavior.Cascade);
+
+
         }
     }
 }
