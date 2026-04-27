@@ -12,6 +12,25 @@ namespace Infrastructure.Data.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "BookingSlots",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    GuideId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Date = table.Column<DateOnly>(type: "date", nullable: false),
+                    StartTime = table.Column<TimeOnly>(type: "time", nullable: false),
+                    EndTime = table.Column<TimeOnly>(type: "time", nullable: false),
+                    Capacity = table.Column<int>(type: "int", nullable: false),
+                    BookedCount = table.Column<int>(type: "int", nullable: false, defaultValue: 0)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BookingSlots", x => x.Id);
+                    table.CheckConstraint("CK_BookingSlot_Capacity", "[BookedCount] <= [Capacity]");
+                    table.CheckConstraint("CK_BookingSlot_Time", "[EndTime] > [StartTime]");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Bookings",
                 columns: table => new
                 {
@@ -21,7 +40,9 @@ namespace Infrastructure.Data.Migrations
                     TourId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     BookingDate = table.Column<DateOnly>(type: "date", nullable: false),
                     StartTime = table.Column<TimeOnly>(type: "time", nullable: false),
+                    EndTime = table.Column<TimeOnly>(type: "time", nullable: false),
                     Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    SlotId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     TotalPrice = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
                     PaymentMethod = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false)
                 },
@@ -32,6 +53,12 @@ namespace Infrastructure.Data.Migrations
                         name: "FK_Bookings_AspNetUsers_TouristId",
                         column: x => x.TouristId,
                         principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Bookings_BookingSlots_SlotId",
+                        column: x => x.SlotId,
+                        principalTable: "BookingSlots",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
@@ -48,38 +75,20 @@ namespace Infrastructure.Data.Migrations
                         onDelete: ReferentialAction.Restrict);
                 });
 
-            migrationBuilder.CreateTable(
-                name: "GuideAvailabilities",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    GuideId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Date = table.Column<DateOnly>(type: "date", nullable: false),
-                    StartTime = table.Column<TimeOnly>(type: "time", nullable: false),
-                    EndTime = table.Column<TimeOnly>(type: "time", nullable: false),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_GuideAvailabilities", x => x.Id);
-                    table.CheckConstraint("CK_GuideAvailability_Times", "[EndTime] > [StartTime]");
-                    table.ForeignKey(
-                        name: "FK_GuideAvailabilities_TourGuideProfiles_GuideId",
-                        column: x => x.GuideId,
-                        principalTable: "TourGuideProfiles",
-                        principalColumn: "UserId",
-                        onDelete: ReferentialAction.Cascade);
-                });
+            migrationBuilder.CreateIndex(
+                name: "IX_Bookings_GuideId_Date",
+                table: "Bookings",
+                columns: new[] { "GuideId", "BookingDate" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Bookings_GuideId_Date_Time",
+                name: "IX_Bookings_SlotId",
                 table: "Bookings",
-                columns: new[] { "GuideId", "BookingDate", "StartTime" });
+                column: "SlotId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Bookings_TourId_Date_Time",
+                name: "IX_Bookings_TourId",
                 table: "Bookings",
-                columns: new[] { "TourId", "BookingDate", "StartTime" });
+                column: "TourId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Bookings_TouristId",
@@ -87,9 +96,15 @@ namespace Infrastructure.Data.Migrations
                 column: "TouristId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_GuideAvailabilities_GuideId_Date",
-                table: "GuideAvailabilities",
-                columns: new[] { "GuideId", "Date" });
+                name: "IX_BookingSlots_GuideId_Date_BookedCount",
+                table: "BookingSlots",
+                columns: new[] { "GuideId", "Date", "BookedCount" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BookingSlots_GuideId_Date_StartTime",
+                table: "BookingSlots",
+                columns: new[] { "GuideId", "Date", "StartTime" },
+                unique: true);
         }
 
         /// <inheritdoc />
@@ -99,7 +114,7 @@ namespace Infrastructure.Data.Migrations
                 name: "Bookings");
 
             migrationBuilder.DropTable(
-                name: "GuideAvailabilities");
+                name: "BookingSlots");
         }
     }
 }

@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Domain.Entities.Book
 {
-    public class GuideAvailability
+    public class BookingSlot
     {
         public Guid Id { get; set; }
 
@@ -13,10 +13,11 @@ namespace Domain.Entities.Book
         public DateOnly Date { get; set; }
 
         public TimeOnly StartTime { get; set; }
-
         public TimeOnly EndTime { get; set; }
 
-        public bool IsActive { get; set; } = true;
+        public int Capacity { get; set; }      
+        public int BookedCount { get; set; }
+      
 
     }
 }
