@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260427005143_AddBookingTables")]
+    [Migration("20260427012540_AddBookingTables")]
     partial class AddBookingTables
     {
         /// <inheritdoc />
@@ -34,6 +34,9 @@ namespace Infrastructure.Data.Migrations
                     b.Property<DateOnly>("BookingDate")
                         .HasColumnType("date");
 
+                    b.Property<TimeOnly>("EndTime")
+                        .HasColumnType("time");
+
                     b.Property<string>("GuideId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
@@ -42,6 +45,9 @@ namespace Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
+
+                    b.Property<Guid>("SlotId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<TimeOnly>("StartTime")
                         .HasColumnType("time");
@@ -63,23 +69,34 @@ namespace Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("SlotId")
+                        .HasDatabaseName("IX_Bookings_SlotId");
+
+                    b.HasIndex("TourId")
+                        .HasDatabaseName("IX_Bookings_TourId");
+
                     b.HasIndex("TouristId")
                         .HasDatabaseName("IX_Bookings_TouristId");
 
-                    b.HasIndex("GuideId", "BookingDate", "StartTime")
-                        .HasDatabaseName("IX_Bookings_GuideId_Date_Time");
-
-                    b.HasIndex("TourId", "BookingDate", "StartTime")
-                        .HasDatabaseName("IX_Bookings_TourId_Date_Time");
+                    b.HasIndex("GuideId", "BookingDate")
+                        .HasDatabaseName("IX_Bookings_GuideId_Date");
 
                     b.ToTable("Bookings", (string)null);
                 });
 
-            modelBuilder.Entity("Domain.Entities.Book.GuideAvailability", b =>
+            modelBuilder.Entity("Domain.Entities.Book.BookingSlot", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("BookedCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("Capacity")
+                        .HasColumnType("int");
 
                     b.Property<DateOnly>("Date")
                         .HasColumnType("date");
@@ -91,22 +108,21 @@ namespace Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(true);
-
                     b.Property<TimeOnly>("StartTime")
                         .HasColumnType("time");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("GuideId", "Date")
-                        .HasDatabaseName("IX_GuideAvailabilities_GuideId_Date");
+                    b.HasIndex("GuideId", "Date", "BookedCount");
 
-                    b.ToTable("GuideAvailabilities", null, t =>
+                    b.HasIndex("GuideId", "Date", "StartTime")
+                        .IsUnique();
+
+                    b.ToTable("BookingSlots", null, t =>
                         {
-                            t.HasCheckConstraint("CK_GuideAvailability_Times", "[EndTime] > [StartTime]");
+                            t.HasCheckConstraint("CK_BookingSlot_Capacity", "[BookedCount] <= [Capacity]");
+
+                            t.HasCheckConstraint("CK_BookingSlot_Time", "[EndTime] > [StartTime]");
                         });
                 });
 
@@ -678,6 +694,12 @@ namespace Infrastructure.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("Domain.Entities.Book.BookingSlot", null)
+                        .WithMany()
+                        .HasForeignKey("SlotId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("Domain.Entities.Tours.Tour", null)
                         .WithMany()
                         .HasForeignKey("TourId")
@@ -688,15 +710,6 @@ namespace Infrastructure.Data.Migrations
                         .WithMany()
                         .HasForeignKey("TouristId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("Domain.Entities.Book.GuideAvailability", b =>
-                {
-                    b.HasOne("Domain.Entities.Profiles.TourGuide.TourGuideProfile", null)
-                        .WithMany()
-                        .HasForeignKey("GuideId")
-                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 

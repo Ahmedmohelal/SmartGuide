@@ -3,16 +3,14 @@ using Domain.Entities.Profiles.TourGuide;
 using Domain.Entities.Tours;
 using Infrastructure.Data.Entities.Identity;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using Book= Domain.Entities.Book.Booking;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using Book = Domain.Entities.Book.Booking;
 
 namespace Infrastructure.Data.Configurations.Booking
 {
     public class BookingConfig : IEntityTypeConfiguration<Book>
     {
-        public void Configure(Microsoft.EntityFrameworkCore.Metadata.Builders.EntityTypeBuilder<Book> builder)
+        public void Configure(EntityTypeBuilder<Book> builder)
         {
             builder.ToTable("Bookings");
 
@@ -27,10 +25,14 @@ namespace Infrastructure.Data.Configurations.Booking
             builder.Property(e => e.TourId)
                    .IsRequired();
 
+
             builder.Property(e => e.BookingDate)
                    .IsRequired();
 
             builder.Property(e => e.StartTime)
+                   .IsRequired();
+
+            builder.Property(e => e.EndTime) 
                    .IsRequired();
 
             builder.Property(e => e.TotalPrice)
@@ -38,7 +40,7 @@ namespace Infrastructure.Data.Configurations.Booking
                    .IsRequired();
 
             builder.Property(e => e.Status)
-                   .HasConversion<string>()
+                   .HasConversion<string>() 
                    .HasMaxLength(20)
                    .IsRequired();
 
@@ -47,14 +49,17 @@ namespace Infrastructure.Data.Configurations.Booking
                    .HasMaxLength(20)
                    .IsRequired();
 
-            builder.HasIndex(e => new { e.GuideId, e.BookingDate, e.StartTime })
-           .HasDatabaseName("IX_Bookings_GuideId_Date_Time");
+          
 
-            builder.HasIndex(e => new { e.TourId, e.BookingDate, e.StartTime })
-       .HasDatabaseName("IX_Bookings_TourId_Date_Time");
+            builder.HasIndex(e => new { e.GuideId, e.BookingDate })
+                   .HasDatabaseName("IX_Bookings_GuideId_Date");
 
             builder.HasIndex(e => e.TouristId)
                    .HasDatabaseName("IX_Bookings_TouristId");
+
+            builder.HasIndex(e => e.TourId)
+                   .HasDatabaseName("IX_Bookings_TourId");
+
 
             builder.HasOne<Tour>()
                    .WithMany()
@@ -70,6 +75,17 @@ namespace Infrastructure.Data.Configurations.Booking
             builder.HasOne<ApplicationUser>()
                    .WithMany()
                    .HasForeignKey(e => e.TouristId)
+                   .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Property(e => e.SlotId)
+       .IsRequired();
+
+            builder.HasIndex(e => e.SlotId)
+                   .HasDatabaseName("IX_Bookings_SlotId");
+
+            builder.HasOne<BookingSlot>()
+                   .WithMany()
+                   .HasForeignKey(e => e.SlotId)
                    .OnDelete(DeleteBehavior.Restrict);
 
         }
