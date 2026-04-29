@@ -26,14 +26,7 @@ namespace Infrastructure.Data.Configurations.Booking
                    .IsRequired();
 
 
-            builder.Property(e => e.BookingDate)
-                   .IsRequired();
-
-            builder.Property(e => e.StartTime)
-                   .IsRequired();
-
-            builder.Property(e => e.EndTime) 
-                   .IsRequired();
+          
 
             builder.Property(e => e.TotalPrice)
                    .HasColumnType("decimal(10,2)")
@@ -51,8 +44,6 @@ namespace Infrastructure.Data.Configurations.Booking
 
           
 
-            builder.HasIndex(e => new { e.GuideId, e.BookingDate })
-                   .HasDatabaseName("IX_Bookings_GuideId_Date");
 
             builder.HasIndex(e => e.TouristId)
                    .HasDatabaseName("IX_Bookings_TouristId");
@@ -83,10 +74,10 @@ namespace Infrastructure.Data.Configurations.Booking
             builder.HasIndex(e => e.SlotId)
                    .HasDatabaseName("IX_Bookings_SlotId");
 
-            builder.HasOne<BookingSlot>()
-                   .WithMany()
-                   .HasForeignKey(e => e.SlotId)
-                   .OnDelete(DeleteBehavior.Restrict);
+            builder.HasOne(e => e.Slot)        
+         .WithMany() 
+         .HasForeignKey(e => e.SlotId)
+         .OnDelete(DeleteBehavior.Restrict);
 
         }
     }

@@ -7,6 +7,7 @@ using Domain.Entities.Profiles.Tourist;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Infrastructure.Data.Configurations.RefreshToken;
+using Domain.Entities.Book;
 
 namespace Infrastructure.Data
 {
@@ -29,6 +30,11 @@ namespace Infrastructure.Data
         public DbSet<TourInclusion> TourInclusions { get; set; }
         public DbSet<TourImage> TourImages { get; set; }
         public DbSet<TourAddOn> TourAddOns { get; set; }
+
+        public DbSet<Booking> Bookings { get; set; }
+
+        public DbSet<BookingSlot> BookingsSlot { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
