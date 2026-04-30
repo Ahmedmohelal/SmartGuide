@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260427043039_EditBookingTables")]
-    partial class EditBookingTables
+    [Migration("20260430133524_ReAddTourAndAddBooking")]
+    partial class ReAddTourAndAddBooking
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
