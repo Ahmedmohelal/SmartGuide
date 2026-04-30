@@ -9,7 +9,9 @@ using Infrastructure.Data;
 using Infrastructure.Data.DbSeeder;
 using Infrastructure.Data.Entities.Identity;
 using Infrastructure.Repository.Book;
+
 using Infrastructure.Repository.Home;
+
 using Infrastructure.Repository.Profile;
 using Infrastructure.Repository.Tours;
 using Infrastructure.Services.Auth;
