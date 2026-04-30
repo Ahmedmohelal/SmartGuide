@@ -15,7 +15,6 @@ namespace Infrastructure.Data.Migrations
     {
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
-#pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("ProductVersion", "10.0.3")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
@@ -69,6 +68,99 @@ namespace Infrastructure.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Places");
+                });
+            modelBuilder.Entity("Domain.Entities.Book.Booking", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("GuideId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<Guid>("SlotId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<decimal>("TotalPrice")
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<Guid>("TourId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("TouristId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GuideId");
+
+                    b.HasIndex("SlotId")
+                        .HasDatabaseName("IX_Bookings_SlotId");
+
+                    b.HasIndex("TourId")
+                        .HasDatabaseName("IX_Bookings_TourId");
+
+                    b.HasIndex("TouristId")
+                        .HasDatabaseName("IX_Bookings_TouristId");
+
+                    b.ToTable("Bookings", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.Book.BookingSlot", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("BookedCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("Capacity")
+                        .HasColumnType("int");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date");
+
+                    b.Property<TimeOnly>("EndTime")
+                        .HasColumnType("time");
+
+                    b.Property<string>("GuideId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<TimeOnly>("StartTime")
+                        .HasColumnType("time");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GuideId", "Date", "BookedCount");
+
+                    b.HasIndex("GuideId", "Date", "StartTime")
+                        .IsUnique();
+
+                    b.ToTable("BookingSlots", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_BookingSlot_Capacity", "[BookedCount] <= [Capacity]");
+
+                            t.HasCheckConstraint("CK_BookingSlot_Time", "[EndTime] > [StartTime]");
+                        });
                 });
 
             modelBuilder.Entity("Domain.Entities.Profiles.TourGuide.TourGuideCity", b =>
@@ -631,6 +723,36 @@ namespace Infrastructure.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+
+            modelBuilder.Entity("Domain.Entities.Book.Booking", b =>
+                {
+                    b.HasOne("Domain.Entities.Profiles.TourGuide.TourGuideProfile", null)
+                        .WithMany()
+                        .HasForeignKey("GuideId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Book.BookingSlot", "Slot")
+                        .WithMany()
+                        .HasForeignKey("SlotId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Tours.Tour", null)
+                        .WithMany()
+                        .HasForeignKey("TourId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Infrastructure.Data.Entities.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("TouristId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Slot");
+                });
+
             modelBuilder.Entity("Domain.Entities.Profiles.TourGuide.TourGuideCity", b =>
                 {
                     b.HasOne("Domain.Entities.Profiles.TourGuide.TourGuideProfile", "TourGuideProfile")
@@ -823,7 +945,7 @@ namespace Infrastructure.Data.Migrations
 
                     b.Navigation("TouristProfile");
                 });
-#pragma warning restore 612, 618
+
         }
     }
 }
