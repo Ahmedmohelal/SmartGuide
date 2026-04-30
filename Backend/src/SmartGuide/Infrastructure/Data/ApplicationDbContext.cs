@@ -1,10 +1,11 @@
 using Domain.Entities;
+using Domain.Entities.Home;
+using Domain.Entities.Profiles.TourGuide;
+using Domain.Entities.Profiles.Tourist;
 using Domain.Entities.Tours;
 using Infrastructure.Data.Configurations;
 using Infrastructure.Data.Entities;
 using Infrastructure.Data.Entities.Identity;
-using Domain.Entities.Profiles.TourGuide;
-using Domain.Entities.Profiles.Tourist;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
@@ -29,6 +30,8 @@ namespace Infrastructure.Data
         public DbSet<TourInclusion> TourInclusions { get; set; }
         public DbSet<TourImage> TourImages { get; set; }
         public DbSet<TourAddOn> TourAddOns { get; set; }
+        public DbSet<Place> Places { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

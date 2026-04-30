@@ -1,8 +1,15 @@
 using Application.DTOs.ProfileDTOs;
+using Application.DTOs.Saved;
 using Application.Services.Interfaces;
+using Application.Services.Interfaces.Tour;
+using Domain.Entities.Home;
 using Domain.Interfaces;
 using Infrastructure.Data;
+using Infrastructure.Data.DbSeeder;
 using Infrastructure.Data.Entities.Identity;
+using Infrastructure.Repository.Home;
+using Infrastructure.Repository.Profile;
+using Infrastructure.Repository.Tours;
 using Infrastructure.Services.Auth;
 using Infrastructure.Services.Email;
 using Infrastructure.Services.Files;
@@ -14,10 +21,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
-using Infrastructure.Repository.Profile;
-using Application.DTOs.Saved;
-using Infrastructure.Repository.Tours;
-using Application.Services.Interfaces.Tour;
 
 namespace Infrastructure.Settings
 {
@@ -27,7 +30,7 @@ namespace Infrastructure.Settings
         {
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
-                    configuration.GetConnectionString("SawsanDefaulConnection"),
+                    configuration.GetConnectionString("AhmedDefaultConnection"),
                         sqlOptions => sqlOptions.EnableRetryOnFailure()
 ));
 
@@ -84,6 +87,8 @@ namespace Infrastructure.Settings
            services.AddScoped<ITouristFavoritesRepository<SavedTourGuideDto>, TouristFavoritesRepository>();
 
             services.AddScoped<ITourRepository, TourRepository>();
+            services.AddScoped<IPlaceRepository<Place>, PlaceRepository<Place>>();
+            services.AddScoped<PlacesSeeder>();
             return services;
         }
 
