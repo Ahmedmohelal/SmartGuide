@@ -1,6 +1,7 @@
 ﻿using Application.DTOs.Saved;
 using Application.Services.Interfaces.PictureMaker;
 using Domain.Entities;
+using Domain.Entities.Favorites;
 using Domain.Entities.Profiles.TourGuide;
 using Domain.Interfaces;
 using Infrastructure.Data;
