@@ -1,6 +1,6 @@
 using Application.DTOs;
 using Application.DTOs.AuthenticationDTOs;
-using Application.Services.Interfaces;
+using Application.Services.Interfaces.Auth;
 using Google.Apis.Auth;
 using Infrastructure.Settings;
 using Microsoft.Extensions.Logging;

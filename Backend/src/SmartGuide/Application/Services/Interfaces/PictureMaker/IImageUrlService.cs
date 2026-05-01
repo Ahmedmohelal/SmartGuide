@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Application.Services.Interfaces
+namespace Application.Services.Interfaces.PictureMaker
 {
     public interface IImageUrlService
     {

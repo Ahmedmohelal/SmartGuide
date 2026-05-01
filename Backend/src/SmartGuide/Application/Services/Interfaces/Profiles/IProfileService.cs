@@ -1,4 +1,4 @@
-namespace Application.Services.Interfaces
+namespace Application.Services.Interfaces.Profiles
 {
     public interface IProfileService<TProfileDto, in TUpdateDto>
     {

@@ -1,5 +1,5 @@
 using Application.DTOs.ProfileDTOs;
-using Application.Services.Interfaces;
+using Application.Services.Interfaces.PictureMaker;
 using Domain.Entities.Profiles.TourGuide;
 using Domain.Interfaces;
 using Infrastructure.Data;

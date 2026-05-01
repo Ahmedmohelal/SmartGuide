@@ -1,11 +1,11 @@
-﻿using Application.Services.Interfaces;
+﻿using Application.Services.Interfaces.PictureMaker;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Application.Services.UseCases
+namespace Application.Services.UseCases.PictureMaker
 {
     public class AttachmentService : IAttachmentService
     {

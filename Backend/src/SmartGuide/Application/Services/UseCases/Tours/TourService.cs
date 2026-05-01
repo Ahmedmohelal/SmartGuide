@@ -1,6 +1,6 @@
 ﻿using Application.DTOs.AuthenticationDTOs;
 using Application.DTOs.Tour;
-using Application.Services.Interfaces;
+using Application.Services.Interfaces.PictureMaker;
 using Application.Services.Interfaces.Tour;
 using Domain.Entities.Tours;
 using Domain.Entities.Tours.Enums;

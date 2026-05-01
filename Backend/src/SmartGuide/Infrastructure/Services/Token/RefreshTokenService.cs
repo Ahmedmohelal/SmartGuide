@@ -1,5 +1,4 @@
 ﻿using Application.DTOs;
-using Application.Services.Interfaces;
 using Infrastructure.Data;
 using Infrastructure.Data.Entities;
 using Infrastructure.Settings;
@@ -8,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
 using System.Security.Cryptography;
+using Application.Services.Interfaces.Auth;
 
 namespace Infrastructure.Services.Token
 {

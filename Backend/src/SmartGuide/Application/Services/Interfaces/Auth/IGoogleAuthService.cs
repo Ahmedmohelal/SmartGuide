@@ -1,6 +1,6 @@
 using Application.DTOs.AuthenticationDTOs;
 
-namespace Application.Services.Interfaces
+namespace Application.Services.Interfaces.Auth
 {
     public interface IGoogleAuthService
     {

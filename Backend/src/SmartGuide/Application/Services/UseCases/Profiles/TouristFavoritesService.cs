@@ -1,12 +1,12 @@
 ﻿using Application.DTOs.AuthenticationDTOs;
 using Application.DTOs.Saved;
-using Application.Services.Interfaces;
+using Application.Services.Interfaces.Profiles;
 using Domain.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Application.Services.UseCases
+namespace Application.Services.UseCases.Profiles
 {
     public class TouristFavoritesService : ITouristFavoritesService
     {

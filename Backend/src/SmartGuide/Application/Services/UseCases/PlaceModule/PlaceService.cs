@@ -4,7 +4,7 @@ using Application.Services.Interfaces.Home;
 using Domain.Entities.Home;
 using Domain.Interfaces;
 
-namespace Application.Services.UseCases
+namespace Application.Services.UseCases.PlaceModule
 {
     public class PlaceService : IPlaceService
     {

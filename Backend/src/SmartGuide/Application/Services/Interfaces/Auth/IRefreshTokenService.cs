@@ -1,6 +1,6 @@
 ﻿using Application.DTOs;
 
-namespace Application.Services.Interfaces
+namespace Application.Services.Interfaces.Auth
 {
     public interface IRefreshTokenService
     {

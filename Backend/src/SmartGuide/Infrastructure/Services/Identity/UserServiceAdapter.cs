@@ -1,6 +1,6 @@
 using Application.DTOs;
 using Application.Helper;
-using Application.Services.Interfaces;
+using Application.Services.Interfaces.Auth;
 using Infrastructure.Data.Entities.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;

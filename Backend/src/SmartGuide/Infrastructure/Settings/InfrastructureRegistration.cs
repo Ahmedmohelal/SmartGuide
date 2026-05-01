@@ -1,6 +1,8 @@
 using Application.DTOs.ProfileDTOs;
 using Application.DTOs.Saved;
-using Application.Services.Interfaces;
+using Application.Services.Interfaces.Auth;
+using Application.Services.Interfaces.PictureMaker;
+using Application.Services.Interfaces.Profiles;
 using Application.Services.Interfaces.Tour;
 using Domain.Entities.Home;
 

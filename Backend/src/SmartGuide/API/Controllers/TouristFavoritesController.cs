@@ -1,6 +1,6 @@
 ﻿using Application.DTOs.Saved;
 using Application.DTOs.Saved;
-using Application.Services.Interfaces;
+using Application.Services.Interfaces.Profiles;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;

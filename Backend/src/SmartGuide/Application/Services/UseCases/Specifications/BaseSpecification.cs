@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Text;
 
-namespace Application.Services.UseCases
+namespace Application.Services.UseCases.Specifications
 {
     public class BaseSpecification<T> : ISpecification<T>
     {

@@ -1,10 +1,11 @@
 ﻿using Application.DTOs.Home;
+using Application.Services.UseCases.Specifications;
 using Domain.Entities.Home;
 using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Application.Services.UseCases
+namespace Application.Services.UseCases.PlaceModule
 {
     public class PlaceSpecification : BaseSpecification<Place>
     {

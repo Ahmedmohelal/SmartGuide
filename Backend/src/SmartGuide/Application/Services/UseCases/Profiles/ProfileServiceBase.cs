@@ -1,7 +1,7 @@
-using Application.Services.Interfaces;
+using Application.Services.Interfaces.Profiles;
 using Domain.Interfaces;
 
-namespace Application.Services.UseCases
+namespace Application.Services.UseCases.Profiles
 {
     public abstract class ProfileServiceBase<TProfileDto, TUpdateDto> : IProfileService<TProfileDto, TUpdateDto>
     {

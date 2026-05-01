@@ -1,5 +1,5 @@
 ﻿using Application.DTOs;
-using Application.Services.Interfaces;
+using Application.Services.Interfaces.Auth;
 using Infrastructure.Data.Entities.Identity;
 using Infrastructure.Settings;
 using Microsoft.AspNetCore.Identity;

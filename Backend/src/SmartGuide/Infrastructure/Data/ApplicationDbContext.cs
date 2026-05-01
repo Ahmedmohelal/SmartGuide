@@ -1,4 +1,3 @@
-using Domain.Entities;
 using Domain.Entities.Home;
 using Domain.Entities.Profiles.TourGuide;
 using Domain.Entities.Profiles.Tourist;
@@ -9,6 +8,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Infrastructure.Data.Configurations.RefreshToken;
 using Domain.Entities.Book;
+using Domain.Entities.Favorites;
 
 namespace Infrastructure.Data
 {

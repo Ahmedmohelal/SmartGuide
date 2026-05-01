@@ -1,14 +1,16 @@
 using Application.DTOs;
 using Application.Helper;
-using Application.Services.Interfaces;
 using Microsoft.Extensions.Logging;
 using System.Security.Cryptography;
 using System.Text;
 using System.ComponentModel;
 using System.Net;
 using Application.DTOs.AuthenticationDTOs;
+using Application.Services.Interfaces.Auth;
+using Application.Services.Interfaces.PictureMaker;
+using Application.Services.Interfaces.Profiles;
 
-namespace Application.Services.UseCases
+namespace Application.Services.UseCases.Auth
 {
     public class AuthService : IAuthService
     {
