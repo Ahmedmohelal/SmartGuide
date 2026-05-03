@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using Domain.Entities.Tours;
 
 namespace Domain.Entities.Book
 {
@@ -8,7 +7,10 @@ namespace Domain.Entities.Book
     {
         public Guid Id { get; set; }
 
-        public string GuideId { get; set; }
+        public string GuideId { get; set; } = null!;
+
+        public Guid TourId { get; set; }
+        public Tour Tour { get; set; } = null!;
 
         public DateOnly Date { get; set; }
 

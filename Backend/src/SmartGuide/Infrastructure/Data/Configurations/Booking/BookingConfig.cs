@@ -88,6 +88,11 @@ namespace Infrastructure.Data.Configurations.Booking
          .HasForeignKey(e => e.SlotId)
          .OnDelete(DeleteBehavior.Restrict);
 
+            builder.HasMany(e => e.SelectedAddOns)
+                .WithOne(a => a.Booking)
+                .HasForeignKey(a => a.BookingId)
+                .OnDelete(DeleteBehavior.Cascade);
+
         }
     }
 }

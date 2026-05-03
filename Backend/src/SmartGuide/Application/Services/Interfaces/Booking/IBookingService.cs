@@ -11,8 +11,8 @@ namespace Application.Services.Interfaces.Booking
         Task<OperationResultDto> AddSlotAsync(
             string guideId, CreateBookingSlotDto dto);
 
-        Task<List<BookingSlotDto>> GetGuideSlotsByDateAsync(
-            string guideId, DateOnly date);
+        Task<List<BookingSlotDto>> GetSlotsByTourAndDateAsync(
+            Guid tourId, DateOnly date);
 
         // Bookings
         Task<BookingResultDto> CreateBookingAsync(

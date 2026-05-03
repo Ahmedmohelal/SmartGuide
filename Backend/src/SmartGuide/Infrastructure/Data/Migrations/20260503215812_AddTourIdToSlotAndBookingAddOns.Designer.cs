@@ -4,6 +4,7 @@ using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260503215812_AddTourIdToSlotAndBookingAddOns")]
+    partial class AddTourIdToSlotAndBookingAddOns
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -28,14 +31,8 @@ namespace Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateOnly>("BookingDate")
-                        .HasColumnType("date");
-
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
-
-                    b.Property<TimeOnly>("EndTime")
-                        .HasColumnType("time");
 
                     b.Property<string>("GuideId")
                         .IsRequired()
@@ -48,9 +45,6 @@ namespace Infrastructure.Data.Migrations
 
                     b.Property<Guid>("SlotId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<TimeOnly>("StartTime")
-                        .HasColumnType("time");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -79,9 +73,6 @@ namespace Infrastructure.Data.Migrations
 
                     b.HasIndex("TouristId")
                         .HasDatabaseName("IX_Bookings_TouristId");
-
-                    b.HasIndex("GuideId", "BookingDate")
-                        .HasDatabaseName("IX_Bookings_GuideId_Date");
 
                     b.ToTable("Bookings", (string)null);
                 });

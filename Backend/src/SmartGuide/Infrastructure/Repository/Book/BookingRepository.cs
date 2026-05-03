@@ -83,6 +83,8 @@ namespace Infrastructure.Repository.Book
         {
             return await _context.Bookings
                 .Include(b => b.Slot)
+                .Include(b => b.SelectedAddOns)
+                    .ThenInclude(a => a.TourAddOn)
                 .FirstOrDefaultAsync(b => b.Id == bookingId);
         }
 
@@ -91,14 +93,16 @@ namespace Infrastructure.Repository.Book
             return await _context.Bookings
                 .Where(b => b.GuideId == guideId)
                 .Include(b => b.Slot)
+                .Include(b => b.SelectedAddOns)
+                    .ThenInclude(a => a.TourAddOn)
                 .OrderByDescending(b => b.CreatedAtUtc)
                 .ToListAsync();
         }
 
-        public async Task<List<BookingSlot>> GetGuideSlotsByDateAsync(string guideId, DateOnly date)
+        public async Task<List<BookingSlot>> GetSlotsByTourAndDateAsync(Guid tourId, DateOnly date)
         {
             return await _context.BookingsSlot
-                .Where(s => s.GuideId == guideId && s.Date == date)
+                .Where(s => s.TourId == tourId && s.Date == date)
                 .OrderBy(s => s.StartTime)
                 .ToListAsync();
         }
@@ -114,6 +118,8 @@ namespace Infrastructure.Repository.Book
             return await _context.Bookings
             .Where(b => b.TouristId == touristId)
             .Include(b => b.Slot)
+            .Include(b => b.SelectedAddOns)
+                .ThenInclude(a => a.TourAddOn)
             .OrderByDescending(b => b.CreatedAtUtc)
             .ToListAsync();
         }

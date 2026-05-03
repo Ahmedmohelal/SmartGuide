@@ -36,7 +36,7 @@ namespace Infrastructure.Settings
         {
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
-                    configuration.GetConnectionString("SawsanDefaulConnection"),
+                    configuration.GetConnectionString("DefaultConnection"),
                         sqlOptions => sqlOptions.EnableRetryOnFailure()
 ));
 
