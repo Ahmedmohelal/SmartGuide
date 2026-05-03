@@ -24,5 +24,8 @@ namespace Domain.Entities.Book
         public decimal TotalPrice { get; set; }
 
         public PaymentMethod PaymentMethod { get; set; }
+        public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
+
+        public BookingSlot Slot { get; set; } = null!;
     }
 }

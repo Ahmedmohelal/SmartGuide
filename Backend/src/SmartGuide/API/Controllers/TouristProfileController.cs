@@ -1,5 +1,5 @@
 using Application.DTOs.ProfileDTOs;
-using Application.Services.Interfaces;
+using Application.Services.Interfaces.Profiles;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

@@ -41,7 +41,7 @@ var app = builder.Build();
 
 
 await app.MigrateDataBaseAsync();
-
+await app.SeedPlacesDataAsync();
 
 
 // Configure the HTTP request pipeline.

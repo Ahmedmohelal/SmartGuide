@@ -1,6 +1,13 @@
-using Application.Services.Interfaces;
+using Application.Services.Interfaces.Auth;
+using Application.Services.Interfaces.Booking;
+using Application.Services.Interfaces.Home;
+using Application.Services.Interfaces.PictureMaker;
+using Application.Services.Interfaces.Profiles;
 using Application.Services.Interfaces.Tour;
-using Application.Services.UseCases;
+using Application.Services.UseCases.Auth;
+using Application.Services.UseCases.PictureMaker;
+using Application.Services.UseCases.PlaceModule;
+using Application.Services.UseCases.Profiles;
 using Application.Services.UseCases.Tours;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,6 +28,9 @@ namespace Application.Settings
             services.AddScoped<ITouristFavoritesService, TouristFavoritesService>();
 
             services.AddScoped<ITourService, TourService>();
+            services.AddScoped<IPlaceService, PlaceService>();
+            services.AddScoped<IBookingService, BookingService>();
+
             return services;
 
         }

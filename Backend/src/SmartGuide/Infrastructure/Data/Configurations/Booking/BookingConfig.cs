@@ -28,7 +28,7 @@ namespace Infrastructure.Data.Configurations.Booking
 
             builder.Property(e => e.BookingDate)
                    .IsRequired();
-
+          
             builder.Property(e => e.StartTime)
                    .IsRequired();
 
@@ -83,10 +83,10 @@ namespace Infrastructure.Data.Configurations.Booking
             builder.HasIndex(e => e.SlotId)
                    .HasDatabaseName("IX_Bookings_SlotId");
 
-            builder.HasOne<BookingSlot>()
-                   .WithMany()
-                   .HasForeignKey(e => e.SlotId)
-                   .OnDelete(DeleteBehavior.Restrict);
+            builder.HasOne(e => e.Slot)        
+         .WithMany() 
+         .HasForeignKey(e => e.SlotId)
+         .OnDelete(DeleteBehavior.Restrict);
 
         }
     }

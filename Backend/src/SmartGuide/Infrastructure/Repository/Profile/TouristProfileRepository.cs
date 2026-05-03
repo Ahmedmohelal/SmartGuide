@@ -1,5 +1,5 @@
 using Application.DTOs.ProfileDTOs;
-using Application.Services.Interfaces;
+using Application.Services.Interfaces.PictureMaker;
 using Application.Services.UseCases;
 using Domain.Entities.Profiles.Tourist;
 using Domain.Interfaces;

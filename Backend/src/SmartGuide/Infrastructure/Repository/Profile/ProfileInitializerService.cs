@@ -1,5 +1,5 @@
 using Application.Helper;
-using Application.Services.Interfaces;
+using Application.Services.Interfaces.Profiles;
 using Domain.Entities.Profiles.TourGuide;
 using Domain.Entities.Profiles.Tourist;
 using Infrastructure.Data;

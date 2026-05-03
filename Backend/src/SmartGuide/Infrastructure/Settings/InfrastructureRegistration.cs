@@ -1,8 +1,21 @@
 using Application.DTOs.ProfileDTOs;
-using Application.Services.Interfaces;
+using Application.DTOs.Saved;
+using Application.Services.Interfaces.Auth;
+using Application.Services.Interfaces.PictureMaker;
+using Application.Services.Interfaces.Profiles;
+using Application.Services.Interfaces.Tour;
+using Domain.Entities.Home;
+
 using Domain.Interfaces;
 using Infrastructure.Data;
+using Infrastructure.Data.DbSeeder;
 using Infrastructure.Data.Entities.Identity;
+using Infrastructure.Repository.Book;
+
+using Infrastructure.Repository.Home;
+
+using Infrastructure.Repository.Profile;
+using Infrastructure.Repository.Tours;
 using Infrastructure.Services.Auth;
 using Infrastructure.Services.Email;
 using Infrastructure.Services.Files;
@@ -14,10 +27,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
-using Infrastructure.Repository.Profile;
-using Application.DTOs.Saved;
-using Infrastructure.Repository.Tours;
-using Application.Services.Interfaces.Tour;
 
 namespace Infrastructure.Settings
 {
@@ -62,14 +71,21 @@ namespace Infrastructure.Settings
                            System.Text.Encoding.UTF8.GetBytes(JWT["Key"]!)),
                        ClockSkew = TimeSpan.Zero
                    });
-        
 
+            //Repositories 
+            services.AddScoped<ITourRepository, TourRepository>();
+            services.AddScoped<IProfileRepository<TourGuideProfileDto, UpdateTourGuideProfileDto>, TourGuideProfileRepository>();
+            services.AddScoped<IProfileRepository<TouristProfileDto, UpdateTouristProfileDto>, TouristProfileRepository>();
+            services.AddScoped<ITouristFavoritesRepository<SavedTourGuideDto>, TouristFavoritesRepository>();
+            services.AddScoped<IBookingRepository, BookingRepository>();
+
+
+            //Services
             services.Configure<GoogleAuthOptions>(configuration.GetSection(GoogleAuthOptions.SectionName));
             services.Configure<EmailSettings>(configuration.GetSection(EmailSettings.SectionName));
 
             services.AddHttpContextAccessor();
             services.AddScoped<IImageUrlService, ImageUrlService>();
-
 
             services.AddScoped<IUserService, UserServiceAdapter>();
             services.AddScoped<ITokenService, TokenService>();
@@ -77,13 +93,15 @@ namespace Infrastructure.Settings
             services.AddScoped<IGoogleAuthService, GoogleAuthService>();
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<IProfileInitializerService, ProfileInitializerService>();
-            services.AddScoped<IProfileRepository<TourGuideProfileDto, UpdateTourGuideProfileDto>, TourGuideProfileRepository>();
+         
 
-            services.AddScoped<IProfileRepository<TouristProfileDto, UpdateTouristProfileDto>, TouristProfileRepository>();
 
            services.AddScoped<ITouristFavoritesRepository<SavedTourGuideDto>, TouristFavoritesRepository>();
 
             services.AddScoped<ITourRepository, TourRepository>();
+            services.AddScoped<IPlaceRepository<Place>, PlaceRepository<Place>>();
+            services.AddScoped<PlacesSeeder>();
+
             return services;
         }
 

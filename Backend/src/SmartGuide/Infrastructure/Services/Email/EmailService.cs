@@ -1,7 +1,7 @@
 using System.Net;
 using System.Net.Mail;
 using System.Threading.Tasks;
-using Application.Services.Interfaces;
+using Application.Services.Interfaces.Auth;
 using Infrastructure.Settings;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;

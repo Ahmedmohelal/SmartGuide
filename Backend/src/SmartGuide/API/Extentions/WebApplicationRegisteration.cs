@@ -1,4 +1,5 @@
 ﻿using Infrastructure.Data;
+using Infrastructure.Data.DbSeeder;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Extentions
@@ -15,6 +16,16 @@ namespace API.Extentions
             {
                 await dbContext.Database.MigrateAsync();
             }
+            return app;
+        }
+        public async static Task<WebApplication> SeedPlacesDataAsync(this WebApplication app)
+        {
+            await using var scope = app.Services.CreateAsyncScope();
+
+            var seeder = scope.ServiceProvider.GetRequiredService<PlacesSeeder>();
+
+            await seeder.SeedPlacesAsync();
+
             return app;
         }
     }

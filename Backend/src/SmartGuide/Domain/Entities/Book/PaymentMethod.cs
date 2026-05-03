@@ -2,7 +2,7 @@
 {
     public enum PaymentMethod
     {
-        Cash,
-        Online
+        Cash=1,
+        Online=2
     }
 }
