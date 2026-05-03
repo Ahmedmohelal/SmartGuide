@@ -5,15 +5,13 @@ using Application.Services.Interfaces.PictureMaker;
 using Application.Services.Interfaces.Profiles;
 using Application.Services.Interfaces.Tour;
 using Application.Services.UseCases.Auth;
+using Application.Services.UseCases.Booking;
 using Application.Services.UseCases.PictureMaker;
 using Application.Services.UseCases.PlaceModule;
 using Application.Services.UseCases.Profiles;
 using Application.Services.UseCases.Tours;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Application.Settings
 {

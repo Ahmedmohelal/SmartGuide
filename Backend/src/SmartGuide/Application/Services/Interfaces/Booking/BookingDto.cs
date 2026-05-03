@@ -10,5 +10,6 @@
         public string PaymentMethod { get; set; } = string.Empty;
         public DateTime CreatedAtUtc { get; set; }
         public BookingSlotInfoDto Slot { get; set; } = null!;
+        public List<BookingAddOnDto> SelectedAddOns { get; set; } = new();
     }
 }

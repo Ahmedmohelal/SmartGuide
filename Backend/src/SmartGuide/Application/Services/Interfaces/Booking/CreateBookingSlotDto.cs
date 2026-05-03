@@ -6,6 +6,9 @@ namespace Application.Services.Interfaces.Booking
     public class CreateBookingSlotDto
     {
         [Required]
+        public Guid TourId { get; set; }
+
+        [Required]
         public DateOnly Date { get; set; }
 
         [Required]

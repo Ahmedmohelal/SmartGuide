@@ -1,10 +1,7 @@
 ﻿using Domain.Entities.Book;
-using Domain.Entities.Profiles.TourGuide;
+using Domain.Entities.Tours;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Infrastructure.Data.Configurations.Booking
 {
@@ -18,6 +15,8 @@ namespace Infrastructure.Data.Configurations.Booking
 
             builder.Property(x => x.GuideId).IsRequired();
 
+            builder.Property(x => x.TourId).IsRequired();
+
             builder.Property(x => x.Date).IsRequired();
 
             builder.Property(x => x.StartTime).IsRequired();
@@ -29,8 +28,16 @@ namespace Infrastructure.Data.Configurations.Booking
             builder.Property(x => x.BookedCount)
                    .HasDefaultValue(0);
 
-            builder.HasIndex(x => new { x.GuideId, x.Date, x.StartTime })
+            builder.HasIndex(x => x.TourId)
+                .HasDatabaseName("IX_BookingSlots_TourId");
+
+            builder.HasIndex(x => new { x.TourId, x.Date, x.StartTime })
                    .IsUnique();
+
+            builder.HasOne(x => x.Tour)
+                .WithMany()
+                .HasForeignKey(x => x.TourId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             builder.HasCheckConstraint(
      "CK_BookingSlot_Time",

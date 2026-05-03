@@ -1,14 +1,13 @@
-﻿using Application.DTOs;
-using Application.Services.Interfaces.Booking;
+﻿using Application.Services.Interfaces.Booking;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
 namespace API.Controllers.Booking
 {
-    [Route("api/[controller]")]
+    [Route("api/tours")]
     [ApiController]
-    [Authorize(Roles = "TourGuide")]
+    [Authorize]
     public class BookingSlotsController : ControllerBase
     {
         private readonly IBookingService _bookingService;
@@ -18,7 +17,8 @@ namespace API.Controllers.Booking
             _bookingService = bookingService;
         }
 
-        [HttpPost]
+        [HttpPost("slots")]
+        [Authorize(Roles = "TourGuide")]
         public async Task<IActionResult> AddSlotAsync(
             [FromBody] CreateBookingSlotDto dto)
         {
@@ -37,17 +37,13 @@ namespace API.Controllers.Booking
             return Ok(result);
         }
 
-        [HttpGet]
-        public async Task<IActionResult> GetMySlotsByDateAsync(
+        [HttpGet("{tourId:guid}/slots")]
+        [Authorize(Roles = "Tourist,TourGuide")]
+        public async Task<IActionResult> GetSlotsByTourAsync(
+            Guid tourId,
             [FromQuery] DateOnly date)
         {
-            var guideId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrWhiteSpace(guideId))
-                return Unauthorized();
-
-            var result = await _bookingService
-                .GetGuideSlotsByDateAsync(guideId, date);
-
+            var result = await _bookingService.GetSlotsByTourAndDateAsync(tourId, date);
             return Ok(result);
         }
     }

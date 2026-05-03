@@ -5,7 +5,7 @@ public interface IBookingRepository
     // Slots
     Task AddSlotAsync(BookingSlot slot);
     Task<BookingSlot?> GetSlotByIdAsync(Guid slotId);
-    Task<List<BookingSlot>> GetGuideSlotsByDateAsync(string guideId, DateOnly date);
+    Task<List<BookingSlot>> GetSlotsByTourAndDateAsync(Guid tourId, DateOnly date);
     Task<bool> IsSlotAvailableAsync(Guid slotId);
     Task IncrementBookedCountAsync(Guid slotId);
 

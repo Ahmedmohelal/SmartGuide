@@ -11,8 +11,7 @@ namespace Application.Services.Interfaces.Booking
         [Required]
         public Guid SlotId { get; set; }
 
-        [Required]
-        public decimal TotalPrice { get; set; }
+        public List<Guid> SelectedAddOnIds { get; set; } = new();
 
         [Required]
         public PaymentMethod PaymentMethod { get; set; }

@@ -38,6 +38,8 @@ namespace Infrastructure.Data
 
         public DbSet<BookingSlot> BookingsSlot { get; set; }
 
+        public DbSet<BookingAddOn> BookingAddOns { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
