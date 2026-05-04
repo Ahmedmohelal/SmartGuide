@@ -3,6 +3,7 @@ import { Mail, ArrowLeft, Loader2 } from "lucide-react";
 import { useNavigate, Link } from "react-router-dom";
 import forgotPasswordService from "../Services/forgotPasswordService";
 import ForgotImg from "../assets/images/OTP.png";
+import { toast } from "react-hot-toast";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -26,8 +27,8 @@ export default function ForgotPassword() {
 
       // السيرفر في السواجر بيرجع isSuccess: true
       if (data && data.isSuccess) {
-        alert("OTP has been sent to your email.");
-        navigate("/verify-otp", { state: { email: email, type: "reset" } }); 
+        toast.success("OTP has been sent to your email.");
+        navigate("/OTP", { state: { email: email, type: "reset" } }); 
       } else {
         // لو السيرفر رجع success: false ومعاها رسالة
         setError(data?.message || "Something went wrong. Check if the email exists.");

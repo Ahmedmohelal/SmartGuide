@@ -3,6 +3,7 @@ import { Lock, Loader2, ArrowLeft } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import otpService from "../Services/otpService"; // تأكد من المسار
 import OTPImg from "../assets/images/OTP.png";
+import { toast } from "react-hot-toast";
 
 export default function OTPVerification() {
   const navigate = useNavigate();
@@ -65,7 +66,7 @@ export default function OTPVerification() {
       const data = await otpService.verifyResetOtp(email, fullOtp);
 
       if (data.isSuccess) {
-        alert("Verified Successfully!");
+        toast.success("Verified Successfully!");
         if (type === "register") {
           navigate("/login");
         } else {
@@ -168,7 +169,9 @@ export default function OTPVerification() {
               </button>
             </p>
           </div>
+          
         </div>
+        
       </div>
     </div>
   );

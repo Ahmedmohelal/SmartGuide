@@ -366,7 +366,7 @@ export default function Register() {
 
                   localStorage.setItem("token", data.accessToken);
                   localStorage.setItem("refreshToken", data.refreshToken);
-                  navigate("/");
+                  navigate("/home");
                 } catch (err) {
                   setGeneralError(err.message || "Google login failed.");
                 } finally {

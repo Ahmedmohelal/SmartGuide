@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
-import { Lock, Eye, EyeOff, CheckCircle2, Loader2 } from "lucide-react";
+import { Lock, Eye, EyeOff, CheckCircle2, Loader2, ArrowLeft } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import otpService from "../Services/otpService"; // السيرفس اللي فيه resetPassword
 import ResetImg from "../assets/images/login.png"; // ممكن تستخدم نفس صورة اللوجن
+import { Link } from "react-router-dom";
+import { toast } from "react-hot-toast";
 
 export default function ResetPassword() {
   const navigate = useNavigate();
@@ -44,10 +46,10 @@ export default function ResetPassword() {
     setLoading(true);
     try {
       // بننادي السيرفس اللي إنت عملته
-      const response = await otpService.resetPassword(email, otp, formData.password);
+      const response = await otpService.resetPassword(email, otp, formData.password, formData.confirmPassword);
 
       if (response.isSuccess) {
-        alert("Password reset successfully! You can now login.");
+        toast.success("Password reset successfully! You can now login.");
         navigate("/login");
       } else {
         setError(response.message || "Something went wrong.");
@@ -130,6 +132,15 @@ export default function ResetPassword() {
                 ) : "Update Password"}
               </button>
             </form>
+            <div className="mt-8 pt-6 border-t border-gray-100">
+              <Link 
+                to="/login" 
+                className="inline-flex items-center justify-center gap-2 text-sm font-bold text-gray-500 hover:text-green-700 transition-colors uppercase tracking-widest"
+              >
+                <ArrowLeft size={16} />
+                Back to Reset Password
+              </Link>
+            </div>
           </div>
         </div>
       </div>

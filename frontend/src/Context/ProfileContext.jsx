@@ -27,7 +27,7 @@ const normalizeProfileData = (rawUser = {}, fallbackUser = {}) => {
       rawUser.username,
       rawUser.UserName,
       fallbackUser.userName,
-      fallbackUser.username
+      fallbackUser.username,
     ) || "";
 
   const firstName =
@@ -36,7 +36,7 @@ const normalizeProfileData = (rawUser = {}, fallbackUser = {}) => {
       rawUser.firstname,
       rawUser.FirstName,
       fallbackUser.firstName,
-      fallbackUser.firstname
+      fallbackUser.firstname,
     ) || "";
 
   const lastName =
@@ -45,41 +45,48 @@ const normalizeProfileData = (rawUser = {}, fallbackUser = {}) => {
       rawUser.lastname,
       rawUser.LastName,
       fallbackUser.lastName,
-      fallbackUser.lastname
+      fallbackUser.lastname,
     ) || "";
 
   const normalizedFirstName =
     firstName || (userName ? userName.split(" ")[0] : "");
   const normalizedLastName =
-    lastName || (userName && userName.includes(" ") ? userName.split(" ").slice(1).join(" ") : "");
+    lastName ||
+    (userName && userName.includes(" ")
+      ? userName.split(" ").slice(1).join(" ")
+      : "");
 
-  const bio =
-    pickFirst(rawUser.bio, rawUser.Bio, fallbackUser.bio) ?? "";
+  const bio = pickFirst(rawUser.bio, rawUser.Bio, fallbackUser.bio) ?? "";
   const pricePerDay = pickFirst(
     rawUser.pricePerDay,
     rawUser.PricePerDay,
-    fallbackUser.pricePerDay
+    fallbackUser.pricePerDay,
   );
   const cities = asArray(
-    pickFirst(rawUser.cities, rawUser.Cities, fallbackUser.cities)
+    pickFirst(rawUser.cities, rawUser.Cities, fallbackUser.cities),
   );
   const languages = asArray(
-    pickFirst(rawUser.languages, rawUser.Languages, fallbackUser.languages)
+    pickFirst(rawUser.languages, rawUser.Languages, fallbackUser.languages),
   );
   const gallery = asArray(
-    pickFirst(rawUser.gallery, rawUser.Gallery, fallbackUser.gallery)
+    pickFirst(rawUser.gallery, rawUser.Gallery, fallbackUser.gallery),
   );
   const profilePicture = pickFirst(
     rawUser.profilePicture,
     rawUser.ProfilePicture,
-    fallbackUser.profilePicture
+    fallbackUser.profilePicture,
   );
 
   return {
     ...fallbackUser,
     ...rawUser,
     id: pickFirst(rawUser.id, rawUser.Id, fallbackUser.id),
-    userId: pickFirst(rawUser.userId, rawUser.UserId, fallbackUser.userId, fallbackUser.id),
+    userId: pickFirst(
+      rawUser.userId,
+      rawUser.UserId,
+      fallbackUser.userId,
+      fallbackUser.id,
+    ),
     userName,
     firstName: normalizedFirstName,
     lastName: normalizedLastName,
@@ -89,13 +96,13 @@ const normalizeProfileData = (rawUser = {}, fallbackUser = {}) => {
       rawUser.whatsAppNumber,
       rawUser.whatsappNumber,
       rawUser.WhatsAppNumber,
-      fallbackUser.whatsAppNumber
+      fallbackUser.whatsAppNumber,
     ),
     touristImage: pickFirst(
       rawUser.touristImage,
       rawUser.profileImage,
       fallbackUser.touristImage,
-      ""
+      "",
     ),
     bio,
     pricePerDay: pricePerDay ?? 0,
@@ -134,7 +141,13 @@ const normalizeWhatsAppNumber = (rawValue, fallbackValue = "") => {
   // Egyptian defaults for local entries (01XXXXXXXXX or 10/11 digits without +20)
   if (digits.startsWith("0") && digits.length === 11) return `+2${digits}`;
   if (digits.startsWith("20") && digits.length >= 11) return `+${digits}`;
-  if ((digits.startsWith("10") || digits.startsWith("11") || digits.startsWith("12") || digits.startsWith("15")) && digits.length === 10) {
+  if (
+    (digits.startsWith("10") ||
+      digits.startsWith("11") ||
+      digits.startsWith("12") ||
+      digits.startsWith("15")) &&
+    digits.length === 10
+  ) {
     return `+20${digits}`;
   }
 
@@ -147,26 +160,26 @@ const normalizeWhatsAppNumber = (rawValue, fallbackValue = "") => {
 
 const buildTourGuideProfileFormData = (updatedData, currentUser) => {
   const firstName = String(
-    updatedData.firstName ?? currentUser?.firstName ?? ""
+    updatedData.firstName ?? currentUser?.firstName ?? "",
   ).trim();
   const lastName = String(
-    updatedData.lastName ?? currentUser?.lastName ?? ""
+    updatedData.lastName ?? currentUser?.lastName ?? "",
   ).trim();
   const country = String(
-    updatedData.country ?? currentUser?.country ?? ""
+    updatedData.country ?? currentUser?.country ?? "",
   ).trim();
   const whatsAppNumber = String(
-    updatedData.whatsAppNumber ?? currentUser?.whatsAppNumber ?? ""
+    updatedData.whatsAppNumber ?? currentUser?.whatsAppNumber ?? "",
   ).trim();
   const normalizedWhatsApp = normalizeWhatsAppNumber(
     whatsAppNumber,
-    currentUser?.whatsAppNumber
+    currentUser?.whatsAppNumber,
   );
   const bio = String(updatedData.bio ?? currentUser?.bio ?? "").trim();
   const priceRaw = pickFirst(
     updatedData.pricePerDay,
     currentUser?.pricePerDay,
-    0
+    0,
   );
   const pricePerDay =
     typeof priceRaw === "number" && !Number.isNaN(priceRaw)
@@ -188,22 +201,26 @@ const buildTourGuideProfileFormData = (updatedData, currentUser) => {
   return formData;
 };
 
-const buildTouristProfileFormData = (updatedData, currentUser, profileUserId) => {
+const buildTouristProfileFormData = (
+  updatedData,
+  currentUser,
+  profileUserId,
+) => {
   const firstName = String(
-    updatedData.firstName ?? currentUser?.firstName ?? ""
+    updatedData.firstName ?? currentUser?.firstName ?? "",
   ).trim();
   const lastName = String(
-    updatedData.lastName ?? currentUser?.lastName ?? ""
+    updatedData.lastName ?? currentUser?.lastName ?? "",
   ).trim();
   const country = String(
-    updatedData.country ?? currentUser?.country ?? ""
+    updatedData.country ?? currentUser?.country ?? "",
   ).trim();
   const whatsAppNumber = String(
-    updatedData.whatsAppNumber ?? currentUser?.whatsAppNumber ?? ""
+    updatedData.whatsAppNumber ?? currentUser?.whatsAppNumber ?? "",
   ).trim();
   const normalizedWhatsApp = normalizeWhatsAppNumber(
     whatsAppNumber,
-    currentUser?.whatsAppNumber
+    currentUser?.whatsAppNumber,
   );
 
   const formData = new FormData();
@@ -223,7 +240,11 @@ const buildTouristProfileFormData = (updatedData, currentUser, profileUserId) =>
 };
 
 export const ProfileProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(() => ({
+    userName: localStorage.getItem("userName") || "",
+    email: localStorage.getItem("email") || "",
+    country: localStorage.getItem("country") || "",
+  }));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -235,20 +256,33 @@ export const ProfileProvider = ({ children }) => {
       const role = localStorage.getItem("userRole");
 
       if (!token || !userId || !role) {
+        setUser((prev) => prev || {});
         setLoading(false);
         return;
       }
 
-      const endpoint =
-        isTouristRole(role)
-          ? `${BASE_URL}/tourists/${userId}/profile`
-          : `${BASE_URL}/tour-guides/${userId}/profile`;
+      const endpoint = isTouristRole(role)
+        ? `${BASE_URL}/tourists/${userId}/profile`
+        : `${BASE_URL}/tour-guides/${userId}/profile`;
 
       const response = await axios.get(`${endpoint}?t=${Date.now()}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      setUser((prev) => normalizeProfileData(response.data, prev || {}));
+      console.log("GET PROFILE:", response.data);
+
+      // 🔥 الحل هنا
+      if (!response.data || Object.keys(response.data).length === 0) {
+        const fallbackUser = {
+          userName: localStorage.getItem("userName"),
+          email: localStorage.getItem("email"),
+        };
+
+        setUser(normalizeProfileData({}, fallbackUser));
+      } else {
+        setUser((prev) => normalizeProfileData(response.data, prev || {}));
+      }
+
       setError(null);
     } catch (err) {
       console.error("Error fetching profile:", err);
@@ -276,7 +310,7 @@ export const ProfileProvider = ({ children }) => {
         const formData = buildTouristProfileFormData(
           updatedData,
           user,
-          profileUserId
+          profileUserId,
         );
         response = await axios.put(endpoint, formData, {
           headers: {
@@ -304,7 +338,10 @@ export const ProfileProvider = ({ children }) => {
 
       return { success: false, error: "تعذر حفظ التعديلات، حاولي مرة أخرى" };
     } catch (err) {
-      console.error("Error updating profile:", err.response?.data || err.message);
+      console.error(
+        "Error updating profile:",
+        err.response?.data || err.message,
+      );
       if (err?.response?.data?.errors) {
         console.error("Validation errors:", err.response.data.errors);
       }

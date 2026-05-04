@@ -24,11 +24,12 @@ const otpService = {
   },
 
   // 3. تعيين كلمة سر جديدة
-  resetPassword: async (email, otp, newPassword) => {
+  resetPassword: async (email, otp, newPassword, confirmPassword) => {
     try {
-      const response = await axios.post(`${BASE_URL}/reset-password`, { email, otp, newPassword });
+      const response = await axios.post(`${BASE_URL}/reset-password`, { email, otp, newPassword, confirmPassword });
       return response.data;
     } catch (error) {
+      console.error("Server Error Details:", error.response?.data);
       throw error.response ? error.response.data : new Error("Error resetting password");
     }
   }

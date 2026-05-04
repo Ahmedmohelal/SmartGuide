@@ -6,11 +6,12 @@ import authService from "../Services/authService";
 import loginImg from "../assets/images/login.png";
 import { useForm } from "react-hook-form";
 import { toast } from "react-hot-toast";
+import { useProfile } from "../Context/ProfileContext";
 
 export default function Login() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
-
+  const { setUser } = useProfile();
   const [loading, setLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState({});
   const [generalError, setGeneralError] = useState("");
@@ -32,15 +33,27 @@ export default function Login() {
       const res = await authService.login(data);
       console.log("البيانات اللي راجعة من اللوجن:", res);
       toast.success("Login successful! Welcome back.");
+
       localStorage.setItem("token", res.token);
       localStorage.setItem("refreshToken", res.refreshToken);
       localStorage.setItem("userId", res.id);
+      localStorage.setItem("userName", res.userName || "");
+      localStorage.setItem("email", res.email || "");
+      localStorage.setItem("country", res.country || "");
       if (res.roles && res.roles.length > 0) {
-    // هيخزنها 'Tourist' أو 'TourGuide' زي ما جاية بالظبط
-    localStorage.setItem("userRole", res.roles[0]); 
-  }
+        // هيخزنها 'Tourist' أو 'TourGuide' زي ما جاية بالظبط
+        localStorage.setItem("userRole", res.roles[0]);
+      }
+      setUser({
+        id: res.id,
+        userName: res.userName || "",
+        email: res.email || "",
+        country: res.country || "",
+        firstName: res.firstName || "",
+        lastName: res.lastName || "",
+      });
 
-      navigate("/home");
+      window.location.href = "/home";
     } catch (err) {
       const msg = err.message || "Invalid email or password.";
       if (msg.toLowerCase().includes("password")) {
@@ -220,7 +233,7 @@ export default function Login() {
 
                   localStorage.setItem("token", data.accessToken);
                   localStorage.setItem("refreshToken", data.refreshToken);
-                  navigate("/");
+                  navigate("/home");
                 } catch (err) {
                   setGeneralError(err.message || "Google login failed.");
                 } finally {
