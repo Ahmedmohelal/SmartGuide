@@ -1,7 +1,7 @@
 ﻿using Application.Helper;
 using System.ComponentModel.DataAnnotations;
 
-namespace Application.Services.Interfaces.Booking
+namespace Application.DTOs.Booking
 {
     public class CreateBookingSlotDto
     {

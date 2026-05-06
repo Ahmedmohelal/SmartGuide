@@ -1,4 +1,5 @@
-﻿using Application.DTOs.ProfileDTOs;
+﻿using Application.DTOs.Booking;
+using Application.DTOs.ProfileDTOs;
 using Application.Services.Interfaces;
 using Application.Services.Interfaces.Booking;
 using Microsoft.AspNetCore.Authorization;
