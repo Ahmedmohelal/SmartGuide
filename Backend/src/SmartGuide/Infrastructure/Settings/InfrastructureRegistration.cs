@@ -38,7 +38,7 @@ namespace Infrastructure.Settings
                 options.UseSqlServer(
                     configuration.GetConnectionString("DefaultConnection"),
                         sqlOptions => sqlOptions.EnableRetryOnFailure()
-));
+            ));
 
             services.AddIdentity<ApplicationUser, IdentityRole>(options =>
             {
