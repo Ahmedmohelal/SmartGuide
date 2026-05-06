@@ -90,6 +90,16 @@ namespace Infrastructure.Repository.Tours
             return await _context.Tours.AnyAsync(t => t.Id == tourId);
         }
 
-
+        public async Task<List<Tour>> GetToursByPlaceAsync(int placeId)
+        {
+            return await _context.Tours
+                .Include(t => t.TourImages)
+                .Include(t => t.TourStops)
+                    .ThenInclude(s => s.Place)
+                .Where(t =>
+                    t.IsActive &&
+                    t.TourStops.Any(s => s.PlaceId == placeId))
+                .ToListAsync();
+        }
     }
 }
