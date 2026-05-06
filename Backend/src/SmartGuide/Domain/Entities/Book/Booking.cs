@@ -13,6 +13,7 @@ namespace Domain.Entities.Book
         public Guid SlotId { get; set; }
         public decimal TotalPrice { get; set; }
         public PaymentMethod PaymentMethod { get; set; }
+        public string? PaymentIntentId { get; set; }
         public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
 
         public BookingSlot Slot { get; set; } = null!;
