@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Domain.Entities.Home;
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace Domain.Entities.Tours
@@ -17,13 +18,21 @@ namespace Domain.Entities.Tours
 
         public Tour Tour { get; private set; }
 
-        public TourStops(Guid tourId, int orderIndex, string title, string description)
+        public int? PlaceId { get; private set; }
+
+        public Place? Place { get; private set; }
+
+        public bool IsCustomStop => PlaceId == null;
+
+
+        public TourStops(Guid tourId, int orderIndex, string title, string description, int? placeId)
         {
             Id = Guid.NewGuid();
             TourId = tourId;
             OrderIndex = orderIndex;
             Title = title;
             Description = description;
+            PlaceId = placeId;
         }
 
 

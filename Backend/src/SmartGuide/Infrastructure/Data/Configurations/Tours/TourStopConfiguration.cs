@@ -16,10 +16,11 @@ namespace Infrastructure.Data.Configurations.Tours
             builder.Property(e => e.Title).HasMaxLength(200);
             builder.Property(e => e.Description).HasMaxLength(500);
 
-            //builder.HasOne(e => e.Tour)
-            //    .WithMany(t => t.TourStops)
-            //    .HasForeignKey(e => e.TourId)
-            //    .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasOne(x => x.Place)
+     .WithMany(p => p.TourStops)
+     .HasForeignKey(x => x.PlaceId)
+     .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }
