@@ -1,4 +1,5 @@
 ﻿using Application.DTOs.AuthenticationDTOs;
+using Application.DTOs.Booking;
 using System;
 using System.Collections.Generic;
 using System.Text;

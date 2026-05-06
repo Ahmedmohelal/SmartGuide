@@ -1,4 +1,4 @@
-﻿namespace Application.Services.Interfaces.Booking
+﻿namespace Application.DTOs.Booking
 {
     public class BookingDto
     {

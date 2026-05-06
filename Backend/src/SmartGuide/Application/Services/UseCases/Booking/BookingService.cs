@@ -1,4 +1,5 @@
 ﻿using Application.DTOs.AuthenticationDTOs;
+using Application.DTOs.Booking;
 using Application.Services.Interfaces;
 using Application.Services.Interfaces.Booking;
 using Domain.Entities.Book;
@@ -100,6 +101,14 @@ namespace Application.Services.UseCases.Booking
             var slot = await _bookingRepo.GetSlotByIdAsync(dto.SlotId);
             if (slot == null)
                 return BookingResultDto.Failure("Slot not found.");
+
+            var slotDateTimeUtc = slot.Date.ToDateTime(slot.StartTime);
+
+            if (slotDateTimeUtc <= DateTime.UtcNow)
+            {
+                return BookingResultDto.Failure(
+                    "This tour slot has already passed.");
+            }
 
             if (slot.TourId != dto.TourId)
                 return BookingResultDto.Failure("Slot does not belong to this tour.");
