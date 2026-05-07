@@ -7,7 +7,7 @@ namespace Application.Services.Interfaces.Home
 {
     public interface IPlaceService
     {
-        public Task<Pagination<PlaceCardDto>> GetPlaces(PlaceSpecParams param);
+        Task<Pagination<PlaceCardDto>> GetPlaces(PlaceSpecParams param,string? touristUserId);
         Task<PlaceDetailsDto?> GetById(int id);
 
     }

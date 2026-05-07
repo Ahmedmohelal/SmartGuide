@@ -1,20 +1,18 @@
 using Application.DTOs.ProfileDTOs;
 using Application.DTOs.Saved;
+using Application.DTOs.SavedPlaces;
 using Application.Services.Interfaces.Auth;
-using Application.Services.Interfaces.PictureMaker;
 using Application.Services.Interfaces.Payment;
+using Application.Services.Interfaces.PictureMaker;
 using Application.Services.Interfaces.Profiles;
 using Application.Services.Interfaces.Tour;
 using Domain.Entities.Home;
-
 using Domain.Interfaces;
 using Infrastructure.Data;
 using Infrastructure.Data.DbSeeder;
 using Infrastructure.Data.Entities.Identity;
 using Infrastructure.Repository.Book;
-
 using Infrastructure.Repository.Home;
-
 using Infrastructure.Repository.Profile;
 using Infrastructure.Repository.Tours;
 using Infrastructure.Services.Auth;
@@ -105,6 +103,7 @@ namespace Infrastructure.Settings
             services.AddScoped<ITourRepository, TourRepository>();
             services.AddScoped<IPlaceRepository<Place>, PlaceRepository<Place>>();
             services.AddScoped<PlacesSeeder>();
+            services.AddScoped<ISavedPlacesRepository<SavedPlaceDto>,SavedPlacesRepository>();
 
             return services;
         }

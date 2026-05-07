@@ -1,4 +1,5 @@
 ﻿using Application.DTOs.Home;
+using Application.DTOs.SavedPlaces;
 using Application.Services.Interfaces;
 using Application.Services.Interfaces.Home;
 using Domain.Entities.Home;
@@ -10,12 +11,19 @@ namespace Application.Services.UseCases.PlaceModule
     {
         private readonly IPlaceRepository<Place> _repo;
 
-        public PlaceService(IPlaceRepository<Place> repo)
+        private readonly ISavedPlacesRepository<SavedPlaceDto> _savedPlacesRepository;
+
+        public PlaceService(
+            IPlaceRepository<Place> repo,
+            ISavedPlacesRepository<SavedPlaceDto> savedPlacesRepository)
         {
             _repo = repo;
+            _savedPlacesRepository = savedPlacesRepository;
         }
 
-        public async Task<Pagination<PlaceCardDto>> GetPlaces(PlaceSpecParams param)
+        public async Task<Pagination<PlaceCardDto>> GetPlaces(
+            PlaceSpecParams param,
+            string? touristUserId)
         {
             param ??= new PlaceSpecParams();
 
@@ -26,17 +34,34 @@ namespace Application.Services.UseCases.PlaceModule
                 param.PageIndex = 1;
 
             var spec = new PlaceSpecification(param);
+
             var countSpec = new PlaceCountSpecification(param);
 
             var data = await _repo.GetAllWithSpecAsync(spec);
+
             var count = await _repo.CountAsync(countSpec);
+
+            HashSet<int> savedPlaceIds = new();
+
+            if (!string.IsNullOrWhiteSpace(touristUserId))
+            {
+                var savedPlaces = await _savedPlacesRepository
+                    .GetSavedPlacesAsync(touristUserId);
+
+                savedPlaceIds = savedPlaces
+                    .Select(x => x.PlaceId)
+                    .ToHashSet();
+            }
 
             var mapped = data.Select(p => new PlaceCardDto
             {
                 Id = p.Id,
                 Name = p.Name,
                 ImageUrl = p.ImageUrl,
-                Rating = p.Rating
+                Rating = p.Rating,
+
+                IsSaved = savedPlaceIds.Contains(p.Id)
+
             }).ToList();
 
             return new Pagination<PlaceCardDto>(
