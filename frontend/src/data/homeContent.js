@@ -8,87 +8,87 @@ const [ex1, ex2, ex3, ex4] = homeImages.experiences;
 const [newsImg1, newsImg2, newsImg3, newsImg4] = homeImages.news;
 
 export const navLinks = [
-  { label: "الرئيسية", href: "#hero" },
-  { label: "من نحن", href: "#about" },
-  { label: "الأماكن السياحية", href: "#featured" },
-  { label: "آخر الأخبار", href: "#news" },
-  { label: "الأسئلة الشائعة", href: "#faq" },
-  { label: "التواصل", href: "#footer" },
+  { label: "Home", href: "#hero" },
+  { label: "About", href: "#about" },
+  { label: "Destinations", href: "#featured" },
+  { label: "Guides", href: "#news" },
+  { label: "Tours", href: "#tours" },
+  { label: "Contact", href: "#footer" },
 ];
 
 export const hero = {
-  title: "عجائب الطبيعة في انتظارك",
+  title: "Nature's Wonders Are Waiting",
   subtitle:
-    "اكتشف مصر من جديد: تاريخ عريق، شواطئ ساحرة، وضيافة أصيلة في رحلة واحدة لا تُنسى.",
-  cta: "ابدأ رحلتك",
+    "Rediscover Egypt through timeless history, stunning beaches, and authentic hospitality in one unforgettable journey.",
+  cta: "Start Your Journey",
   image: homeImages.hero,
 };
 
 export const services = [
   {
-    title: "تنظيم الرحلات",
-    description: "برامج سياحية مرنة تناسب عائلتك أو مجموعتك بأفضل الأسعار.",
+    title: "Trip Planning",
+    description: "Flexible travel programs for families and groups at great prices.",
     icon: "plane",
   },
   {
-    title: "الإقامة",
-    description: "فنادق وفيلات مختارة بعناية في أهم المدن والمنتجعات.",
+    title: "Accommodation",
+    description: "Carefully selected hotels and villas in top cities and resorts.",
     icon: "hotel",
   },
   {
-    title: "جولات مرشدة",
-    description: "مرشدون محليون يعرفون تاريخ مصر وأسرارها الحقيقية.",
+    title: "Guided Tours",
+    description: "Local guides who know Egypt's history and hidden gems.",
     icon: "map",
   },
   {
-    title: "تجارب فوتوغرافية",
-    description: "أماكن تصوير مميزة وتنسيق لالتقاط ذكرياتك الأجمل.",
+    title: "Photo Experiences",
+    description: "Scenic spots and planning support to capture your best memories.",
     icon: "camera",
   },
 ];
 
 export const featuredPlaces = {
-  title: "الأماكن المتميزة",
+  title: "Featured Places",
   items: [
     {
       id: 1,
-      name: "الأهرامات",
+      name: "The Pyramids",
       span: "sm",
       image: feat1,
     },
     {
       id: 2,
-      name: "أبو سمبل",
+      name: "Abu Simbel",
       span: "sm",
       image: feat2,
     },
     {
       id: 3,
-      name: "الإسكندرية",
+      name: "Alexandria",
       span: "sm",
       image: feat3,
     },
     {
       id: 4,
-      name: "الأقصر",
+      name: "Luxor",
       span: "sm",
       image: feat4,
     },
     {
       id: 5,
-      name: "النيل والمعابد",
+      name: "Nile & Temples",
       span: "lg",
       image: feat5,
     },
     {
       id: 6,
-      name: "البحر الأحمر",
+      name: "Red Sea",
       span: "lg",
       image: feat6,
     },
     {
       id: 7,
-      name: "واحة سيوة",
+      name: "Siwa Oasis",
       span: "lg",
       image: feat7,
     },
@@ -96,100 +96,98 @@ export const featuredPlaces = {
 };
 
 export const partners = [
-  "مصر للطيران",
-  "وزارة السياحة",
-  "فنادق النيل",
-  "رحلات أثرية",
-  "سفاري الصحراء",
+  "EgyptAir",
+  "Ministry of Tourism",
+  "Nile Hotels",
+  "Heritage Tours",
+  "Desert Safari",
 ];
 
 export const about = {
-  title: "عن Smart Guide Egypt",
+  title: "About Smart Guide Egypt",
   body:
-    "نحن منصة سياحية مصرية تربط المسافر بأفضل الوجهات والخدمات، مع التركيز على الجودة والأمان وتجربة مستخدم عربية بالكامل.",
+    "We are an Egyptian travel platform connecting travelers with top destinations and services, with a focus on quality, safety, and a seamless experience.",
   bullets: [
-    { text: "دعم متواصل أثناء الرحلة", icon: "headphones" },
-    { text: "برامج مخصصة للعائلات والشباب", icon: "users" },
+    { text: "Continuous support throughout your trip", icon: "headphones" },
+    { text: "Tailored programs for families and young travelers", icon: "users" },
   ],
-  cta: "اقرأ المزيد",
+  cta: "Read More",
   image: homeImages.about,
 };
 
 export const experiences = {
-  title: "اختبر مصر بأسلوبك",
+  title: "Experience Egypt Your Way",
   body:
-    "من الصحراء الذهبية إلى مياه البحر الأحمر، صمّمنا لك مسارات متنوعة تجمع بين التاريخ والطبيعة والرفاهية.",
-  cta: "استكشف البرامج",
+    "From golden deserts to the Red Sea, we designed diverse routes that blend history, nature, and comfort.",
+  cta: "Explore Programs",
   cards: [
     {
-      title: "أبو الهول",
+      title: "The Sphinx",
       image: ex1,
     },
     {
-      title: "الأقصر",
+      title: "Luxor",
       image: ex2,
     },
     {
-      title: "القاهرة",
+      title: "Cairo",
       image: ex3,
     },
     {
-      title: "شرم الشيخ",
+      title: "Sharm El-Sheikh",
       image: ex4,
     },
   ],
 };
 
 export const news = {
-  title: "أخر الأخبار",
+  title: "Latest News",
   items: [
     {
-      title: "موسم الشتاء في الأقصر",
-      excerpt: "أفضل الأوقات لزيارة المعابد دون ازدحام، مع نصائح للتصوير.",
-      date: "مارس 2026",
+      title: "Luxor Winter Season",
+      excerpt: "The best time to visit temples with fewer crowds, plus photography tips.",
+      date: "March 2026",
       image: newsImg1,
     },
     {
-      title: "رحلات نيلية بأجواء خاصة",
-      excerpt: "عشاء على متن مركب تقليدي مع إطلالة على معالم القاهرة المضيئة.",
-      date: "فبراير 2026",
+      title: "Private Nile Cruises",
+      excerpt: "Dinner on a traditional boat with views of Cairo's illuminated landmarks.",
+      date: "February 2026",
       image: newsImg2,
     },
     {
-      title: "شواطئ الإسكندرية",
-      excerpt: "جولة في كورنيش الإسكندرية وقلعة قايتباي في يوم واحد.",
-      date: "يناير 2026",
+      title: "Alexandria Beaches",
+      excerpt: "A one-day tour across Alexandria Corniche and Qaitbay Citadel.",
+      date: "January 2026",
       image: newsImg3,
     },
     {
-      title: "غوص في البحر الأحمر",
-      excerpt: "مواقع غوص آمنة للمبتدئين والمحترفين مع مراكز معتمدة.",
-      date: "ديسمبر 2025",
+      title: "Red Sea Diving",
+      excerpt: "Safe diving spots for beginners and professionals with certified centers.",
+      date: "December 2025",
       image: newsImg4,
     },
   ],
 };
 
 export const appBanner = {
-  title: "حمّل تطبيقنا الآن",
-  subtitle: "احجز، تتبع رحلتك، واستلم إشعارات العروض من هاتفك.",
+  title: "Download Our App Now",
+  subtitle: "Book, track your trip, and receive offer notifications on your phone.",
 };
 
 export const nileCta = {
-  title: "جاهز لرحلة العمر؟",
-  subtitle: "تواصل معنا لبرنامج مخصص يناسب ميزانيتك ووقتك.",
-  cta: "احجز استشارة مجانية",
+  title: "Ready for the Trip of a Lifetime?",
+  subtitle: "Contact us for a custom plan that matches your budget and schedule.",
+  cta: "Book Your Trip",
   image: homeImages.nileCta,
 };
 
 export const footer = {
   brand: "Smart Guide Egypt",
   links: [
-    { label: "الرئيسية", href: "#hero" },
-    { label: "الوجهات", href: "#featured" },
-    { label: "المدونة", href: "#news" },
-    { label: "سياسة الخصوصية", href: "#" },
-    { label: "الشروط", href: "#" },
+    { label: "Home", href: "#hero" },
+    { label: "Privacy Policy", href: "#" },
+    { label: "Terms", href: "#" },
   ],
-  copyright: "© 2026 Smart Guide Egypt. جميع الحقوق محفوظة.",
+  copyright: "© 2026 Smart Guide Egypt. All rights reserved.",
 };

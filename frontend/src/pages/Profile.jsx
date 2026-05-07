@@ -1,4 +1,4 @@
-import { useProfile } from "../context/ProfileContext";
+import { useProfile } from "../Context/ProfileContext";
 import { Navigate } from "react-router-dom";
 import TouristProfile from "../Features/Profile/TouristProfile";
 import GuideProfile from "../Features/Profile/GuideProfile";
@@ -10,10 +10,10 @@ export default function Profile() {
   const storedRole = localStorage.getItem("userRole");
   const normalizedRole = storedRole?.toLowerCase();
 
-  if (loading) return <div className="p-20 text-center">جاري التحميل...</div>;
+  if (loading) return <div className="p-20 text-center">Loading...</div>;
 
   // لو مفيش يوزر وفيه ايرور، يبقى التوكن باظ، ارجع للوجن
-  if (error && !user) return <Navigate to="/login" replace />;
+  if (error) return <Navigate to="/login" replace />;
 
   return (
     <div className="min-h-screen bg-gray-50 pt-20">

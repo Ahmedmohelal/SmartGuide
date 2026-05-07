@@ -35,7 +35,7 @@ export default function Navbar() {
   }, [location.pathname, location.hash]);
 
   return (
-    <header className="fixed inset-x-0 top-2 z-50 w-full px-4" dir="rtl">
+    <header className="fixed inset-x-0 top-2 z-50 w-full px-4" dir="ltr">
       <nav
         className={`mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 transition-all duration-400 ease-in-out ${
           isScrolled
@@ -67,11 +67,11 @@ export default function Navbar() {
             </button>
 
             {isProfileOpen && (
-              <div className="absolute right-0 mt-3 w-56 rounded-xl bg-white/90 shadow-lg ring-1 ring-black ring-opacity-5 overflow-hidden transition-all">
+              <div className="absolute left-1/2 -translate-x-1/2 mt-3 w-56 rounded-xl bg-white/90 shadow-lg ring-1 ring-black ring-opacity-5 overflow-hidden transition-all">
                 <div className="py-2">
-                  <Link onClick={() => setIsProfileOpen(false)} to="/profile" className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition"><User className="w-5 h-5" /> حسابي</Link>
-                  <Link onClick={() => setIsProfileOpen(false)} to="/settings" className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition"><Settings className="w-5 h-5" /> الإعدادات</Link>
-                  <Link onClick={() => setIsProfileOpen(false)} to="/support" className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition"><Headphones className="w-5 h-5" /> الدعم والمساعدة</Link>
+                  <Link onClick={() => setIsProfileOpen(false)} to="/profile" className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition"><User className="w-5 h-5" /> My Account</Link>
+                  <Link onClick={() => setIsProfileOpen(false)} to="/settings" className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition"><Settings className="w-5 h-5" /> Settings</Link>
+                  <Link onClick={() => setIsProfileOpen(false)} to="/support" className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition"><Headphones className="w-5 h-5" /> Support</Link>
                   <hr className="my-1 border-gray-200" />
                   <button
                     onClick={() => {
@@ -80,7 +80,7 @@ export default function Navbar() {
                     }}
                     className="flex w-full items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition font-bold"
                   >
-                    <LogOut className="w-5 h-5" /> تسجيل الخروج
+                    <LogOut className="w-5 h-5" /> Log Out
                   </button>
                 </div>
               </div>
@@ -154,9 +154,9 @@ export default function Navbar() {
           
           {/* لينكات البروفايل في الموبايل */}
           <ul className="flex flex-col items-center gap-2 text-sm font-medium text-gray-300">
-            <li className="w-full text-center"><Link to="/profile" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-center gap-2 py-3 hover:text-white transition"><User className="w-5 h-5" /> حسابي</Link></li>
-            <li className="w-full text-center"><Link to="/settings" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-center gap-2 py-3 hover:text-white transition"><Settings className="w-5 h-5" /> الإعدادات</Link></li>
-            <li className="w-full text-center"><Link to="/support" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-center gap-2 py-3 hover:text-white transition"><Headphones className="w-5 h-5" /> الدعم والمساعدة</Link></li>
+            <li className="w-full text-center"><Link to="/profile" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-center gap-2 py-3 hover:text-white transition"><User className="w-5 h-5" /> My Account</Link></li>
+            <li className="w-full text-center"><Link to="/settings" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-center gap-2 py-3 hover:text-white transition"><Settings className="w-5 h-5" /> Settings</Link></li>
+            <li className="w-full text-center"><Link to="/support" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-center gap-2 py-3 hover:text-white transition"><Headphones className="w-5 h-5" /> Support</Link></li>
             <li className="w-full text-center mt-2">
               <button
                 onClick={() => {
@@ -165,7 +165,7 @@ export default function Navbar() {
                 }}
                 className="flex w-full items-center justify-center gap-2 py-3 text-red-500 hover:text-red-400 font-bold transition bg-red-500/10 rounded-lg"
               >
-                <LogOut className="w-5 h-5" /> تسجيل الخروج
+                <LogOut className="w-5 h-5" /> Log Out
               </button>
             </li>
           </ul>

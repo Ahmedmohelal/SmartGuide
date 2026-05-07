@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 // 1. استيراد الكونتيكست والصفحة الجديدة
-import { ProfileProvider } from "./context/ProfileContext"; 
+import { ProfileProvider } from "./Context/ProfileContext";
 import Profile from "./pages/Profile";
 
 // استدعاء الصفحات التانية
@@ -14,6 +14,8 @@ import SelectRole from "./pages/SelectRole";
 import Home from "./pages/Home";
 import Support from "./pages/Support";
 import Layout from "./Layout/Layout";
+import Tours from "./pages/Tours";
+import TourDetails from "./pages/TourDetails";
 
 function App() {
   return (
@@ -38,6 +40,8 @@ function App() {
           
           {/* 3. إضافة مسار البروفايل هنا */}
           <Route path="/profile" element={<Profile />} />
+          <Route path="/tours" element={<Tours />} />
+          <Route path="/tours/:id" element={<TourDetails />} />
           
           {/* صفحات المستقبل */}
           {/* <Route path="/settings" element={<SettingsPage />} /> */}

@@ -1,16 +1,24 @@
 import axios from 'axios';
 
-const BASE_URL = 'http://smartguide.runasp.net/api/Auth';
+const BASE_URL = 'https://smartguide.runasp.net/api/Auth';
 
 const authService = {
   login: async (userData) => {
-    try {
-      const response = await axios.post(`${BASE_URL}/login`, userData);
-      return response.data;
-    } catch (error) {
-      throw error.response ? error.response.data : new Error("Network Error");
-    }
+  try {
+    const response = await axios.post(`${BASE_URL}/login`, userData);
+
+    localStorage.setItem("token", response.data.token);
+    localStorage.setItem("userRole", response.data.role);
+
+    return response.data;
+  } catch (error) {
+    throw error.response
+      ? error.response.data
+      : new Error("Network Error");
+  }
+  
   },
+  
 
   // رجعناها تقبل FormData زي الأول
   register: async (formDataContent) => {
@@ -39,7 +47,9 @@ const authService = {
   try {
     const response = await axios.post(`${BASE_URL}/google-login`, {
       idToken: googleToken,
+    
     });
+    
 
     return response.data;
   } catch (error) {
@@ -49,5 +59,6 @@ const authService = {
   }
 }
 };
+
 
 export default authService;

@@ -1,13 +1,13 @@
 import "../styles/home.css";
-import {  
+import {
   HeroSection,
   ServicesSection,
+  ToursSliderSection,
   FeaturedPlacesSection,
   PartnersSection,
   AboutSection,
   ExperiencesSection,
   NewsSection,
-  FaqSection,
   AppDownloadSection,
   NileCtaSection,
 } from "../components/home";
@@ -22,14 +22,15 @@ export default function Home() {
       
       <HeroSection />
       <ServicesSection />
+      <ToursSliderSection />
       <FeaturedPlacesSection />
       <PartnersSection />
       <AboutSection />
       <ExperiencesSection />
       <NewsSection />
-      <FaqSection />
       <AppDownloadSection />
       <NileCtaSection />
+      
     </div>
   );
 }

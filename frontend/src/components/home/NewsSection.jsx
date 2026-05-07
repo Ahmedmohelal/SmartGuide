@@ -32,7 +32,7 @@ export default function NewsSection() {
                   href="#"
                   className="mt-4 text-sm font-bold text-egypt-teal hover:underline"
                 >
-                  اقرأ المزيد
+                  Read More
                 </a>
                 <span className="mt-2 text-xs text-slate-400">{item.date}</span>
               </div>

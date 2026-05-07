@@ -18,7 +18,7 @@ export default function ExperiencesSection() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center p-4 text-white">
-                <span className="text-xs opacity-80">وجهة</span>
+                <span className="text-xs opacity-80">Destination</span>
                 <h3 className="text-center text-sm font-bold sm:text-base">
                   {card.title}
                 </h3>
@@ -43,21 +43,21 @@ export default function ExperiencesSection() {
             <a
               href="#"
               className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 transition hover:border-egypt-teal hover:text-egypt-teal"
-              aria-label="فيسبوك"
+              aria-label="Facebook"
             >
               <Facebook className="h-5 w-5" />
             </a>
             <a
               href="#"
               className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 transition hover:border-egypt-teal hover:text-egypt-teal"
-              aria-label="إنستغرام"
+              aria-label="Instagram"
             >
               <Instagram className="h-5 w-5" />
             </a>
             <a
               href="#"
               className="flex h-11 w-11 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 transition hover:border-egypt-teal hover:text-egypt-teal"
-              aria-label="تويتر"
+              aria-label="Twitter"
             >
               <Twitter className="h-5 w-5" />
             </a>

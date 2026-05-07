@@ -14,7 +14,7 @@ import { GoogleLogin } from "@react-oauth/google";
 import authService from "../Services/authService";
 import registerImage from "../assets/images/register.png";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
+import { toast } from "react-hot-toast";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -69,6 +69,7 @@ export default function Register() {
 
     try {
       const submitData = new FormData();
+      toast.success("Registration successful! Please log in.");
 
       Object.keys(basicInfo).forEach((key) => {
         submitData.append(key, basicInfo[key]);
@@ -77,7 +78,7 @@ export default function Register() {
       await authService.register(submitData);
 
       
-      toast.success("Registration successful! Welcome to Smart Guide.");
+      
 
       navigate("/login", {
         state: { email: data.email, type: "register" },

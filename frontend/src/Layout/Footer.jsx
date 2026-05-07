@@ -8,7 +8,7 @@ export default function HomeFooter() {
     <footer
       id="footer"
       className="bg-footer-navy px-4 py-14 text-white sm:px-6 lg:px-8"
-      dir="rtl" // ضفتلك rtl عشان العربي يظبط لو فيه نصوص
+      dir="ltr"
     >
       <div className="mx-auto max-w-4xl text-center">
         
@@ -47,18 +47,7 @@ export default function HomeFooter() {
           })}
 
           {/* 2. لينكات الصفحات الخارجية */}
-          <RouterLink
-            to="/login"
-            className="text-white/85 transition hover:text-white"
-          >
-            تسجيل الدخول
-          </RouterLink>
-          <RouterLink
-            to="/register"
-            className="text-white/85 transition hover:text-white"
-          >
-            إنشاء حساب
-          </RouterLink>
+          
         </nav>
         
         {/* أيقونات السوشيال ميديا */}

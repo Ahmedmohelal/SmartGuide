@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { useProfile } from "../../context/ProfileContext";
+import { useProfile } from "../../Context/ProfileContext";
 import ProfileHeader from "./components/ProfileHeader";
 import PersonalInfoCard from "./components/PersonalInfoCard";
 import EditProfileModal from "./components/EditProfileModal";
 import { CalendarDays, Globe2, Star, Users } from "lucide-react";
+import GuideToursManager from "./components/GuideToursManager";
 
 export default function GuideProfile() {
   const { user, loading, error, updateProfileData } = useProfile();
@@ -32,7 +33,7 @@ export default function GuideProfile() {
           onClick={() => window.location.reload()}
           className="mt-4 text-sm underline text-red-500"
         >
-          حاول مرة أخرى
+          Try again
         </button>
       </div>
     );
@@ -40,19 +41,19 @@ export default function GuideProfile() {
 
   const stats = [
     {
-      title: "الجولات المنفذة",
+      title: "Completed Tours",
       value: user?.completedTours ?? 0,
       icon: CalendarDays,
       color: "text-blue-600 bg-blue-50",
     },
     {
-      title: "التقييم",
+      title: "Rating",
       value: user?.rating ?? "0.0",
       icon: Star,
       color: "text-amber-600 bg-amber-50",
     },
     {
-      title: "عدد السائحين",
+      title: "Tourists Served",
       value: user?.touristsCount ?? 0,
       icon: Users,
       color: "text-emerald-600 bg-emerald-50",
@@ -68,10 +69,10 @@ export default function GuideProfile() {
           <PersonalInfoCard />
 
           <div className="bg-gradient-to-br from-indigo-600 to-teal-700 p-6 rounded-[2rem] text-white shadow-xl shadow-indigo-100/50">
-            <h4 className="font-bold text-lg mb-2">لوحة المرشد السياحي</h4>
+            <h4 className="font-bold text-lg mb-2">Tour Guide Dashboard</h4>
             <p className="text-indigo-50 text-xs leading-relaxed opacity-90">
-              حدث بياناتك باستمرار ليظهر ملفك بشكل احترافي أمام السائحين
-              ويزيد فرص حجز الجولات.
+              Keep your information updated so your profile looks professional
+              and increases your booking opportunities.
             </p>
           </div>
         </div>
@@ -101,19 +102,21 @@ export default function GuideProfile() {
 
           <div className="bg-white p-6 md:p-8 rounded-[2rem] border border-gray-100 shadow-sm min-h-[320px]">
             <h3 className="font-bold text-gray-900 text-lg mb-4 text-right">
-              نبذة عنك كمرشد
+              About You as a Guide
             </h3>
-            <div className="space-y-4 text-right" dir="rtl">
-              <div className="flex items-center justify-end gap-2 text-gray-700">
-                <span>{user?.country || "مصر"}</span>
+            <div className="space-y-4" dir="ltr">
+              <div className="flex items-center gap-2 text-gray-700">
+                <span>{user?.country || "Egypt"}</span>
                 <Globe2 size={18} className="text-egypt-teal" />
               </div>
               <p className="text-sm leading-7 text-gray-600 bg-gray-50 p-4 rounded-2xl">
                 {user?.bio ||
-                  "أضف نبذة قصيرة عن خبرتك، اللغات التي تتحدثها، ونوع الجولات التي تقدمها ليكون ملفك أكثر جاذبية للسائحين."}
+                  "Add a short summary about your experience, languages you speak, and tour types to make your profile more appealing to tourists."}
               </p>
             </div>
           </div>
+
+          <GuideToursManager />
         </div>
       </div>
 

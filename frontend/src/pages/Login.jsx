@@ -13,12 +13,14 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const { setUser } = useProfile();
   const [loading, setLoading] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState({});
+  // const [fieldErrors, setFieldErrors] = useState({});
   const [generalError, setGeneralError] = useState("");
 
   const {
     register,
     handleSubmit,
+    setError,
+    clearErrors,
     formState: { errors },
   } = useForm({
     defaultValues: {
@@ -28,6 +30,8 @@ export default function Login() {
   });
 
   const onSubmit = async (data) => {
+    clearErrors();
+    setGeneralError("");
     setLoading(true);
     try {
       const res = await authService.login(data);
@@ -57,12 +61,18 @@ export default function Login() {
     } catch (err) {
       const msg = err.message || "Invalid email or password.";
       if (msg.toLowerCase().includes("password")) {
-        setFieldErrors({ password: "The password you entered is incorrect" });
+        setError("password", {
+          type: "server",
+          message: "The password you entered is incorrect",
+        });
       } else if (
         msg.toLowerCase().includes("email") ||
         msg.toLowerCase().includes("user")
       ) {
-        setFieldErrors({ email: "No account found with this email" });
+        setError("email", {
+          type: "server",
+          message: "No account found with this email",
+        });
       } else {
         setGeneralError(msg);
       }

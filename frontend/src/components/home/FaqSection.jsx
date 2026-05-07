@@ -7,10 +7,10 @@ export default function FaqSection() {
     >
       <div className="mx-auto max-w-3xl px-4 text-center sm:px-6">
         <h2 className="text-2xl font-extrabold text-slate-900 sm:text-3xl">
-          الأسئلة الشائعة
+          Frequently Asked Questions
         </h2>
         <p className="mt-4 text-slate-600">
-          نجهّز إجابات لأكثر الأسئلة شيوعاً عن الخدمات والحجوزات. تابعنا قريباً.
+          We are preparing answers for the most common questions about services and bookings. Stay tuned.
         </p>
       </div>
     </section>

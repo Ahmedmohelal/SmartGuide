@@ -13,7 +13,7 @@ export default function AboutSection() {
         <div className="home-scallop-frame relative aspect-[4/5] max-h-[480px] w-full max-w-md justify-self-center lg:max-w-none">
           <img
             src={about.image}
-            alt="قلعة قايتباي — الإسكندرية"
+            alt="Qaitbay Citadel - Alexandria"
             className="h-full w-full object-cover"
           />
         </div>

@@ -4,7 +4,6 @@ import ProfileHeader from "./components/ProfileHeader";
 import PersonalInfoCard from "./components/PersonalInfoCard";
 import TouristTrips from "./components/TouristTrips";
 import EditProfileModal from "./components/EditProfileModal";
-import { toast } from "react-hot-toast"; // أو المكتبة اللي بتستخدمها للـ Alerts
 
 export default function TouristProfile() {
   const { user, loading, error, updateProfileData } = useProfile();
@@ -38,7 +37,7 @@ const handleSaveProfile = async (newData) => {
           onClick={() => window.location.reload()} 
           className="mt-4 text-sm underline text-red-500"
         >
-          حاول مرة أخرى
+          Try again
         </button>
       </div>
     );
@@ -61,9 +60,9 @@ const handleSaveProfile = async (newData) => {
           
           {/* كارت إضافي بسيط لتجميل الشكل */}
           <div className="bg-gradient-to-br from-teal-600 to-teal-800 p-6 rounded-[2rem] text-white shadow-xl shadow-teal-100/50">
-            <h4 className="font-bold text-lg mb-2">مرحباً بك في مصر! 🇪🇬</h4>
+            <h4 className="font-bold text-lg mb-2">Welcome to Egypt! 🇪🇬</h4>
             <p className="text-teal-50 text-xs leading-relaxed opacity-90">
-              اكتشف أسرار الحضارة المصرية مع أفضل المرشدين المحليين. رحلتك القادمة تبدأ من هنا.
+              Discover the secrets of Egyptian civilization with the best local guides. Your next adventure starts here.
             </p>
           </div>
         </div>
