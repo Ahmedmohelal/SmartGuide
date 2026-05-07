@@ -4,6 +4,7 @@ using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260506170630_AddPaymentIntentIdToBooking")]
+    partial class AddPaymentIntentIdToBooking
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -28,14 +31,8 @@ namespace Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateOnly>("BookingDate")
-                        .HasColumnType("date");
-
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
-
-                    b.Property<TimeOnly>("EndTime")
-                        .HasColumnType("time");
 
                     b.Property<string>("GuideId")
                         .IsRequired()
@@ -52,9 +49,6 @@ namespace Infrastructure.Data.Migrations
 
                     b.Property<Guid>("SlotId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<TimeOnly>("StartTime")
-                        .HasColumnType("time");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -83,9 +77,6 @@ namespace Infrastructure.Data.Migrations
 
                     b.HasIndex("TouristId")
                         .HasDatabaseName("IX_Bookings_TouristId");
-
-                    b.HasIndex("GuideId", "BookingDate")
-                        .HasDatabaseName("IX_Bookings_GuideId_Date");
 
                     b.ToTable("Bookings", (string)null);
                 });
@@ -488,9 +479,6 @@ namespace Infrastructure.Data.Migrations
                     b.Property<int>("OrderIndex")
                         .HasColumnType("int");
 
-                    b.Property<int?>("PlaceId")
-                        .HasColumnType("int");
-
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -500,8 +488,6 @@ namespace Infrastructure.Data.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("PlaceId");
 
                     b.HasIndex("TourId", "OrderIndex")
                         .IsUnique();
@@ -930,18 +916,11 @@ namespace Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Domain.Entities.Tours.TourStops", b =>
                 {
-                    b.HasOne("Domain.Entities.Home.Place", "Place")
-                        .WithMany("TourStops")
-                        .HasForeignKey("PlaceId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("Domain.Entities.Tours.Tour", "Tour")
                         .WithMany("TourStops")
                         .HasForeignKey("TourId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Place");
 
                     b.Navigation("Tour");
                 });
@@ -1011,11 +990,6 @@ namespace Infrastructure.Data.Migrations
             modelBuilder.Entity("Domain.Entities.Book.Booking", b =>
                 {
                     b.Navigation("SelectedAddOns");
-                });
-
-            modelBuilder.Entity("Domain.Entities.Home.Place", b =>
-                {
-                    b.Navigation("TourStops");
                 });
 
             modelBuilder.Entity("Domain.Entities.Profiles.TourGuide.TourGuideProfile", b =>

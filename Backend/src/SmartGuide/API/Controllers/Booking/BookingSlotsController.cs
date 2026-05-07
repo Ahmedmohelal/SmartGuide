@@ -1,4 +1,5 @@
-﻿using Application.Services.Interfaces.Booking;
+﻿using Application.DTOs.Booking;
+using Application.Services.Interfaces.Booking;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;

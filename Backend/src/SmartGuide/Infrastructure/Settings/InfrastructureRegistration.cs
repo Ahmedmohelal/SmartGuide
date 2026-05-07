@@ -2,6 +2,7 @@ using Application.DTOs.ProfileDTOs;
 using Application.DTOs.Saved;
 using Application.Services.Interfaces.Auth;
 using Application.Services.Interfaces.PictureMaker;
+using Application.Services.Interfaces.Payment;
 using Application.Services.Interfaces.Profiles;
 using Application.Services.Interfaces.Tour;
 using Domain.Entities.Home;
@@ -20,6 +21,7 @@ using Infrastructure.Services.Auth;
 using Infrastructure.Services.Email;
 using Infrastructure.Services.Files;
 using Infrastructure.Services.Identity;
+using Infrastructure.Services.Payment;
 using Infrastructure.Services.Token;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -38,7 +40,7 @@ namespace Infrastructure.Settings
                 options.UseSqlServer(
                     configuration.GetConnectionString("DefaultConnection"),
                         sqlOptions => sqlOptions.EnableRetryOnFailure()
-));
+            ));
 
             services.AddIdentity<ApplicationUser, IdentityRole>(options =>
             {
@@ -83,6 +85,7 @@ namespace Infrastructure.Settings
             //Services
             services.Configure<GoogleAuthOptions>(configuration.GetSection(GoogleAuthOptions.SectionName));
             services.Configure<EmailSettings>(configuration.GetSection(EmailSettings.SectionName));
+            services.Configure<StripeSettings>(configuration.GetSection(StripeSettings.SectionName));
 
             services.AddHttpContextAccessor();
             services.AddScoped<IImageUrlService, ImageUrlService>();
@@ -93,6 +96,7 @@ namespace Infrastructure.Settings
             services.AddScoped<IGoogleAuthService, GoogleAuthService>();
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<IProfileInitializerService, ProfileInitializerService>();
+            services.AddScoped<IPaymentService, PaymentService>();
          
 
 

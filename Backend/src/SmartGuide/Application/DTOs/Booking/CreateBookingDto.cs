@@ -1,7 +1,7 @@
 ﻿using Domain.Entities.Book;
 using System.ComponentModel.DataAnnotations;
 
-namespace Application.Services.Interfaces.Booking
+namespace Application.DTOs.Booking
 {
     public class CreateBookingDto
     {

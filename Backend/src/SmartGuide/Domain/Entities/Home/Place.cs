@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Domain.Entities.Tours;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -29,5 +30,8 @@ namespace Domain.Entities.Home
         public string? Period { get; set; }
 
         public int? StartYear { get; set; }
+
+        public ICollection<TourStops> TourStops { get; set; }
+           = new List<TourStops>();
     }
 }

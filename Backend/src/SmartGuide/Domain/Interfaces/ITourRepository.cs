@@ -12,10 +12,12 @@ namespace Domain.Interfaces
         public Task AddAsync(Tour tour);
 
         public Task UpdateAsync(Tour tour);
-        Task ReplaceTourRelationsAsync(Tour tour,List<TourStops> stops,List<TourInclusion> inclusions,List<TourAddOn> addons);
+        public Task ReplaceTourRelationsAsync(Tour tour, List<TourStops> stops, List<TourInclusion> inclusions, List<TourAddOn> addons);
 
-        Task ReplaceTourImagesAsync(Tour tour, List<TourImage> images);
+        public Task ReplaceTourImagesAsync(Tour tour, List<TourImage> images);
         public Task DeleteAsync(Guid tourId);
+
+        public Task<List<Tour>> GetToursByPlaceAsync(int placeId);
 
     }
 }

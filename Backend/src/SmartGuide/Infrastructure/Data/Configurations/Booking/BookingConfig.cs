@@ -49,6 +49,10 @@ namespace Infrastructure.Data.Configurations.Booking
                    .HasMaxLength(20)
                    .IsRequired();
 
+            builder.Property(e => e.PaymentIntentId)
+                   .HasMaxLength(255)
+                   .IsRequired(false);
+
           
 
             builder.HasIndex(e => new { e.GuideId, e.BookingDate })

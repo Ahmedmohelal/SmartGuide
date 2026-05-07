@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
-namespace API.Controllers
+namespace API.Controllers.Tours
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -35,7 +35,7 @@ namespace API.Controllers
         }
 
         // Get All Tours For TourGide To The Tourist To See The Tours To Choose One
-        [Authorize(Roles ="Tourist")]
+        [Authorize(Roles = "Tourist")]
         [HttpGet("guide/{guideId}")]
         public async Task<IActionResult> GetGuideTours(string guideId)
         {
@@ -106,6 +106,14 @@ namespace API.Controllers
                 return BadRequest(res);
             return Ok(res);
 
+        }
+
+        [HttpGet("by-place/{placeId}")]
+        public async Task<IActionResult> GetToursByPlace(int placeId)
+        {
+            var tours = await _tourService.GetToursByPlaceAsync(placeId);
+
+            return Ok(tours);
         }
     }
 }

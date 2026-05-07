@@ -15,7 +15,7 @@ namespace Application.Services.UseCases.Tours
         private readonly IImageUrlService _imageUrlService;
         private readonly IAttachmentService _attachmentService;
 
-        public TourService(ITourRepository tourRepository,IImageUrlService imageUrlService,IAttachmentService attachmentService)
+        public TourService(ITourRepository tourRepository, IImageUrlService imageUrlService, IAttachmentService attachmentService)
         {
             _tourRepository = tourRepository;
             _imageUrlService = imageUrlService;
@@ -67,7 +67,9 @@ namespace Application.Services.UseCases.Tours
                 {
                     Title = s.Title,
                     Description = s.Description,
-                    OrderIndex = s.OrderIndex
+                    OrderIndex = s.OrderIndex,
+                    PlaceId = s.PlaceId
+
                 }).ToList(),
 
                 Inclusions = tour.TourInclusions.Select(i => new CreateTourInclusionDto
@@ -85,7 +87,7 @@ namespace Application.Services.UseCases.Tours
         }
 
 
-        public async Task<CreateTourResponseDTO> CreateTourAsync(CreateTourRequestDTO request,string guideId)
+        public async Task<CreateTourResponseDTO> CreateTourAsync(CreateTourRequestDTO request, string guideId)
         {
             try
             {
@@ -119,7 +121,8 @@ namespace Application.Services.UseCases.Tours
                         tour.Id,
                         s.OrderIndex,
                         s.Title,
-                        s.Description
+                        s.Description,
+                        s.PlaceId
                     )).ToList();
                 }
 
@@ -256,7 +259,8 @@ namespace Application.Services.UseCases.Tours
                 tour.Id,
                 s.OrderIndex,
                 s.Title,
-                s.Description
+                s.Description,
+                s.PlaceId
             )).ToList();
 
             var inclusionEntities = inclusions.Select(i => new TourInclusion
@@ -387,5 +391,30 @@ namespace Application.Services.UseCases.Tours
                 Message = "Tour deleted successfully"
             };
         }
+
+        public async Task<List<TourCardDto>> GetToursByPlaceAsync(int placeId)
+        {
+            var tours = await _tourRepository.GetToursByPlaceAsync(placeId);
+
+            return tours.Select(t => new TourCardDto
+            {
+                Id = t.Id,
+
+                Title = t.Title,
+
+                Price = t.Price,
+
+                DurationHours = t.DurationHours,
+
+                ImageUrl = _imageUrlService.ToPublicImageUrl(
+                    t.TourImages
+                        .OrderBy(i => i.OrderIndex)
+                        .FirstOrDefault()?.ImageUrl,
+                    $"ToursImages/{t.Id}"
+                ) ?? string.Empty
+            }).ToList();
+        }
+
+
     }
 }
