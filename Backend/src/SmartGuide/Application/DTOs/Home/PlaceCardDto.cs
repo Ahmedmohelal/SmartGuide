@@ -10,5 +10,7 @@ namespace Application.DTOs.Home
         public string?   Name { get; set; }
         public string? ImageUrl { get; set; }
         public double? Rating { get; set; }
+        public bool IsSaved { get; set; }
+
     }
 }

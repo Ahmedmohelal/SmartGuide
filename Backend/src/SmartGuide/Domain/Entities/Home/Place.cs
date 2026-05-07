@@ -1,4 +1,5 @@
-﻿using Domain.Entities.Tours;
+﻿using Domain.Entities.SavedPlaces;
+using Domain.Entities.Tours;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -33,5 +34,7 @@ namespace Domain.Entities.Home
 
         public ICollection<TourStops> TourStops { get; set; }
            = new List<TourStops>();
+        public ICollection<SavedPlace> SavedByTourists { get; set; }
+           = new List<SavedPlace>();
     }
 }
