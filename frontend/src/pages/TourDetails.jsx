@@ -1,7 +1,7 @@
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import {
-  ArrowRight,
+  ArrowLeft,
   Banknote,
   Clock,
   ImageIcon,
@@ -17,6 +17,8 @@ const pick = (...vals) =>
 
 export default function TourDetails() {
   const { id } = useParams();
+  const navigate = useNavigate();
+
   const [tour, setTour] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -27,30 +29,24 @@ export default function TourDetails() {
 
   useEffect(() => {
     if (!id) {
-      setError("معرّف الرحلة غير صالح.");
+      setError("Invalid tour ID.");
       setLoading(false);
-      return undefined;
+      return;
     }
 
     let cancelled = false;
 
     (async () => {
-      setLoading(true);
-      setError(null);
       try {
+        setLoading(true);
         const data = await getTourById(id);
+
         if (!cancelled) {
           setTour(data);
           setActiveImageIdx(0);
         }
-      } catch (err) {
-        const status = err?.response?.status;
-        if (!cancelled) {
-          if (status === 401)
-            setError("يجب تسجيل الدخول لعرض تفاصيل هذه الرحلة.");
-          else if (status === 404) setError("لم يتم العثور على هذه الرحلة.");
-          else setError("تعذّر تحميل بيانات الرحلة.");
-        }
+      } catch {
+        if (!cancelled) setError("Failed to load tour details.");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -66,59 +62,36 @@ export default function TourDetails() {
     const list = Array.isArray(tour.images)
       ? tour.images
       : Array.isArray(tour.Images)
-        ? tour.Images
-        : [];
+      ? tour.Images
+      : [];
     return list.filter(Boolean);
   }, [tour]);
 
+  const hero =
+    images.length > 0
+      ? images[Math.min(activeImageIdx, images.length - 1)]
+      : FALLBACK_HERO;
+
   if (loading) {
     return (
-      <div
-        dir="rtl"
-        lang="ar"
-        className="min-h-[60vh] bg-white px-4 py-16 text-center text-slate-600"
-      >
-        جاري تحميل الرحلة…
+      <div className="min-h-screen flex items-center justify-center">
+        Loading...
       </div>
     );
   }
 
   if (error || !tour) {
-    const is401 =
-      typeof error === "string" && error.includes("تسجيل الدخول");
-
     return (
-      <div
-        dir="rtl"
-        lang="ar"
-        className="mx-auto max-w-lg px-4 py-16 text-center"
-      >
-        <p className="text-red-600 font-medium">{error || "لا توجد بيانات."}</p>
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-          {is401 ? (
-            <Link
-              to="/login"
-              className="inline-flex items-center gap-2 rounded-xl bg-egypt-teal px-5 py-2.5 text-sm font-semibold text-white hover:bg-teal-700"
-            >
-              تسجيل الدخول
-            </Link>
-          ) : null}
-          <Link
-            to="/home"
-            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 hover:bg-slate-50"
-          >
-            <ArrowRight size={18} aria-hidden />
-            الرئيسية
-          </Link>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-red-500">{error}</p>
       </div>
     );
   }
 
   const title = pick(tour.title, tour.Title);
   const description =
-    pick(tour.description, tour.Description) ||
-    "لا يوجد وصف لهذه الرحلة بعد.";
+    pick(tour.description, tour.Description) || "No description available.";
+
   const durationHours = pick(tour.durationHours, tour.DurationHours);
   const price = pick(tour.price, tour.Price);
   const maxGroupSize = pick(tour.maxGroupSize, tour.MaxGroupSize);
@@ -126,208 +99,155 @@ export default function TourDetails() {
   const stops = Array.isArray(tour.stops)
     ? tour.stops
     : Array.isArray(tour.Stops)
-      ? tour.Stops
-      : [];
+    ? tour.Stops
+    : [];
 
   const inclusions = Array.isArray(tour.inclusions)
     ? tour.inclusions
     : Array.isArray(tour.Inclusions)
-      ? tour.Inclusions
-      : [];
+    ? tour.Inclusions
+    : [];
 
   const addOns = Array.isArray(tour.addOns)
     ? tour.addOns
     : Array.isArray(tour.AddOns)
-      ? tour.AddOns
-      : [];
-
-  const safeIdx =
-    images.length > 0
-      ? Math.min(activeImageIdx, Math.max(0, images.length - 1))
-      : 0;
-
-  const hero = images.length > 0 ? images[safeIdx] : FALLBACK_HERO;
+    ? tour.AddOns
+    : [];
 
   return (
-    <div
-      dir="rtl"
-      lang="ar"
-      className="min-h-screen bg-slate-50 pb-16 font-sans antialiased"
-    >
-      <div className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
-          <Link
-            to="/home"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-egypt-teal hover:underline"
-          >
-            <ArrowRight size={18} aria-hidden />
-            الرئيسية
-          </Link>
-        </div>
-      </div>
+    <>
+      {/* 🔥 FIXED BACKGROUND LAYER */}
+      <div className="fixed inset-0 -z-10 bg-gradient-to-br from-[#0a7462] via-white to-[#e7f0ff]" />
 
-      <article className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
-        <header className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
-          <div className="relative aspect-[21/9] min-h-[200px] w-full sm:aspect-[2.4/1]">
-            <img
-              src={hero}
-              alt=""
-              className="h-full w-full object-cover"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-            <div className="absolute bottom-0 start-0 end-0 p-6 sm:p-8">
-              <h1 className="text-2xl font-extrabold leading-tight text-white drop-shadow sm:text-4xl">
+      <div className="min-h-screen pt-24 pb-20">
+        <article className="mx-auto m-20 max-w-7xl px-4 lg:px-8 space-y-10">
+
+          {/* BACK BUTTON */}
+          <div>
+            <button
+              onClick={() => navigate(-1)}
+              className="inline-flex items-center gap-2 rounded-full bg-white/60 backdrop-blur px-5 py-2 shadow hover:scale-105 transition"
+            >
+              <ArrowLeft size={18} />
+              Back
+            </button>
+          </div>
+
+          {/* HERO */}
+          <header className="grid lg:grid-cols-2 gap-8">
+
+            <div className="rounded-[32px] overflow-hidden shadow-2xl">
+              <img
+                src={hero}
+                className="w-full h-full object-cover"
+                alt={title}
+              />
+            </div>
+
+            <div className="rounded-[32px] bg-white/50 backdrop-blur-xl p-8 shadow-xl">
+              <h1 className="text-4xl font-extrabold text-slate-900">
                 {title}
               </h1>
-              <div className="mt-4 flex flex-wrap gap-2 text-sm text-white/95">
-                {durationHours != null ? (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 backdrop-blur">
-                    <Clock size={16} />
-                    {durationHours} ساعة
+
+              <p className="mt-5 text-slate-700">{description}</p>
+
+              <div className="mt-8 flex flex-wrap gap-3">
+                {durationHours && (
+                  <span className="px-4 py-2 bg-white/40 rounded-full">
+                    <Clock className="inline text-egypt-teal" />{" "}
+                    {durationHours} hrs
                   </span>
-                ) : null}
-                {maxGroupSize != null && maxGroupSize !== "" ? (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 backdrop-blur">
-                    <Users size={16} />
-                    حتى {maxGroupSize} ضيف
+                )}
+
+                {maxGroupSize && (
+                  <span className="px-4 py-2 bg-white/40 rounded-full">
+                    <Users className="inline text-egypt-teal" />{" "}
+                    {maxGroupSize}
                   </span>
-                ) : null}
-                {price != null && price !== "" ? (
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-egypt-teal/90 px-3 py-1 font-semibold">
-                    <Banknote size={16} />
-                    {price} جنيه
+                )}
+
+                {price && (
+                  <span className="px-4 py-2 bg-egypt-teal text-white rounded-full">
+                    <Banknote className="inline" /> {price} EGP
                   </span>
-                ) : null}
+                )}
               </div>
             </div>
-          </div>
-        </header>
+          </header>
 
-        <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_320px]">
-          <div className="space-y-8">
-            <section className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-              <h2 className="text-lg font-bold text-slate-900">عن الرحلة</h2>
-              <p className="mt-3 whitespace-pre-line text-base leading-relaxed text-slate-600">
-                {description}
-              </p>
-            </section>
+          {/* CONTENT */}
+          <div className="grid lg:grid-cols-3 gap-8">
 
-            {stops.length > 0 ? (
-              <section className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-                <div className="flex items-center gap-2 text-lg font-bold text-slate-900">
-                  <MapPinned className="text-egypt-teal" size={22} />
-                  المحطات والبرنامج
-                </div>
-                <ol className="mt-4 space-y-4">
-                  {stops
-                    .slice()
-                    .sort(
-                      (a, b) =>
-                        (a.orderIndex ?? a.OrderIndex ?? 0) -
-                        (b.orderIndex ?? b.OrderIndex ?? 0)
-                    )
-                    .map((stop, idx) => (
-                      <li
-                        key={idx}
-                        className="flex gap-3 border-s-4 border-egypt-teal ps-4"
-                      >
-                        <div>
-                          <p className="font-semibold text-slate-900">
-                            {stop.title ?? stop.Title}
-                          </p>
-                          {(stop.description ?? stop.Description) ? (
-                            <p className="mt-1 text-sm text-slate-600">
-                              {stop.description ?? stop.Description}
-                            </p>
-                          ) : null}
-                        </div>
-                      </li>
-                    ))}
-                </ol>
-              </section>
-            ) : null}
+            {/* STOPS */}
+            {stops.length > 0 && (
+              <section className="bg-white/50 backdrop-blur-xl p-7 rounded-3xl shadow">
+                <h2 className="text-xl font-bold flex gap-2">
+                  <MapPinned className="text-egypt-teal" />
+                  Program
+                </h2>
 
-            {inclusions.length > 0 ? (
-              <section className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-                <div className="flex items-center gap-2 text-lg font-bold text-slate-900">
-                  <Package className="text-egypt-teal" size={22} />
-                  ما يشمله العرض
-                </div>
-                <ul className="mt-4 space-y-2 text-slate-700">
-                  {inclusions.map((inc, idx) => (
-                    <li key={idx} className="flex gap-2 text-sm">
-                      <span className="text-egypt-teal" aria-hidden>
-                        •
-                      </span>
-                      <span>
-                        {inc.description ?? inc.Description}
-                        {inc.type || inc.Type ? (
-                          <span className="ms-1 text-xs text-slate-500">
-                            ({inc.type ?? inc.Type})
-                          </span>
-                        ) : null}
-                      </span>
-                    </li>
+                <div className="mt-6 space-y-5">
+                  {stops.map((s, i) => (
+                    <div key={i} className="flex gap-4">
+                      <div className="w-9 h-9 rounded-full bg-egypt-teal text-white flex items-center justify-center">
+                        {i + 1}
+                      </div>
+                      <div>
+                        <p className="font-semibold">{s.title}</p>
+                        <p className="text-sm text-slate-600">
+                          {s.description}
+                        </p>
+                      </div>
+                    </div>
                   ))}
-                </ul>
-              </section>
-            ) : null}
-
-            {addOns.length > 0 ? (
-              <section className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
-                <div className="flex items-center gap-2 text-lg font-bold text-slate-900">
-                  <Sparkles className="text-egypt-teal" size={22} />
-                  إضافات اختيارية
                 </div>
-                <ul className="mt-4 divide-y divide-slate-100">
-                  {addOns.map((a, idx) => (
-                    <li
-                      key={idx}
-                      className="flex items-center justify-between gap-3 py-3 text-sm"
+              </section>
+            )}
+
+            {/* INCLUSIONS */}
+            {inclusions.length > 0 && (
+              <section className="bg-white/50 backdrop-blur-xl p-7 rounded-3xl shadow">
+                <h2 className="text-xl font-bold flex gap-2">
+                  <Package className="text-egypt-teal" />
+                  Included
+                </h2>
+
+                <div className="mt-5 grid gap-3">
+                  {inclusions.map((inc, i) => (
+                    <div key={i} className="bg-white/40 p-4 rounded-xl">
+                      {inc.description}
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* ADD ONS */}
+            {addOns.length > 0 && (
+              <section className="bg-white/50 backdrop-blur-xl p-7 rounded-3xl shadow">
+                <h2 className="text-xl font-bold flex gap-2">
+                  <Sparkles className="text-egypt-teal" />
+                  Add-ons
+                </h2>
+
+                <div className="mt-5 space-y-3">
+                  {addOns.map((a, i) => (
+                    <div
+                      key={i}
+                      className="flex justify-between bg-white/40 p-4 rounded-xl"
                     >
-                      <span className="font-medium text-slate-800">
-                        {a.title ?? a.Title}
+                      <span>{a.title}</span>
+                      <span className="text-egypt-teal font-semibold">
+                        +{a.price} EGP
                       </span>
-                      <span className="shrink-0 font-semibold text-egypt-teal">
-                        +{a.price ?? a.Price} جنيه
-                      </span>
-                    </li>
+                    </div>
                   ))}
-                </ul>
+                </div>
               </section>
-            ) : null}
+            )}
           </div>
-
-          {images.length > 1 ? (
-            <aside className="space-y-3 lg:sticky lg:top-24 lg:self-start">
-              <div className="flex items-center gap-2 text-sm font-bold text-slate-800">
-                <ImageIcon size={18} className="text-egypt-teal" />
-                معرض الصور
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                {images.map((src, idx) => (
-                  <button
-                    type="button"
-                    key={`${src}-${idx}`}
-                    className={`overflow-hidden rounded-xl border bg-slate-100 ring-offset-2 hover:ring-2 hover:ring-egypt-teal/40 ${
-                      idx === safeIdx
-                        ? "ring-2 ring-egypt-teal border-egypt-teal"
-                        : "border-slate-100"
-                    }`}
-                    onClick={() => setActiveImageIdx(idx)}
-                  >
-                    <img
-                      src={src}
-                      alt=""
-                      className="aspect-square w-full object-cover"
-                    />
-                  </button>
-                ))}
-              </div>
-            </aside>
-          ) : null}
-        </div>
-      </article>
-    </div>
+        </article>
+      </div>
+    </>
   );
 }

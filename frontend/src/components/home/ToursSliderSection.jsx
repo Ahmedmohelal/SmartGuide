@@ -28,10 +28,12 @@ export default function ToursSliderSection() {
   const [tours, setTours] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
   const token =
     typeof localStorage !== "undefined"
       ? localStorage.getItem("token")
       : null;
+
   const role = (
     typeof localStorage !== "undefined"
       ? localStorage.getItem("userRole") || ""
@@ -49,17 +51,23 @@ export default function ToursSliderSection() {
     (async () => {
       setLoading(true);
       setError(null);
+
       try {
         const isGuide = role === "tourguide";
         const data = isGuide ? await getMyTours() : await getToursCatalog();
-        if (!cancelled) setTours(Array.isArray(data) ? data : []);
+
+        if (!cancelled) {
+          setTours(Array.isArray(data) ? data : []);
+        }
       } catch {
         if (!cancelled) {
-          setError("تعذّر تحميل الرحلات.");
+          setError("Failed to load tours.");
           setTours([]);
         }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     })();
 
@@ -71,20 +79,29 @@ export default function ToursSliderSection() {
   const scrollStrip = (direction) => {
     const el = stripRef.current;
     if (!el) return;
+
     const step = Math.min(el.clientWidth * 0.92, 380) * direction;
-    el.scrollBy({ left: step, behavior: "smooth" });
+
+    el.scrollBy({
+      left: step,
+      behavior: "smooth",
+    });
   };
 
   return (
-    <section id="tours" className="bg-white py-16 sm:py-20 border-y border-slate-100">
+    <section
+      id="tours"
+      className="border-y border-slate-100 bg-white py-16 sm:py-20"
+    >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
+        <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
           <div>
             <h2 className="text-3xl font-extrabold text-slate-900 sm:text-4xl">
-              رحلات المرشدين
+              Guide Tours
             </h2>
+
             <p className="mt-2 max-w-2xl text-sm text-slate-600 sm:text-base">
-              تصفّح الرحلات المتاحة، واضغط على أي بطاقة لعرض التفاصيل الكاملة.
+              Browse available tours and click any card to view full details.
             </p>
           </div>
 
@@ -94,15 +111,16 @@ export default function ToursSliderSection() {
                 type="button"
                 onClick={() => scrollStrip(-1)}
                 className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-egypt-teal hover:text-egypt-teal"
-                aria-label="السابق"
+                aria-label="Previous"
               >
                 <ChevronRight size={22} />
               </button>
+
               <button
                 type="button"
                 onClick={() => scrollStrip(1)}
                 className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm transition hover:border-egypt-teal hover:text-egypt-teal"
-                aria-label="التالي"
+                aria-label="Next"
               >
                 <ChevronLeft size={22} />
               </button>
@@ -112,14 +130,15 @@ export default function ToursSliderSection() {
 
         {!token ? (
           <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 px-6 py-10 text-center">
-            <p className="text-slate-700 font-medium">
-              سجّل الدخول لمشاهدة الرحلات المتاحة وحجز تجربتك القادمة.
+            <p className="font-medium text-slate-700">
+              Sign in to explore available tours and book your next adventure.
             </p>
+
             <Link
               to="/login"
               className="mt-4 inline-flex rounded-xl bg-egypt-teal px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-700"
             >
-              تسجيل الدخول
+              Sign In
             </Link>
           </div>
         ) : loading ? (
@@ -130,6 +149,7 @@ export default function ToursSliderSection() {
                 className="min-w-[280px] flex-1 animate-pulse rounded-2xl border border-slate-100 bg-slate-100 sm:min-w-[320px]"
               >
                 <div className="aspect-[16/11] rounded-t-2xl bg-slate-200" />
+
                 <div className="space-y-3 p-4">
                   <div className="h-5 w-3/4 rounded bg-slate-200" />
                   <div className="h-3 w-full rounded bg-slate-200" />
@@ -141,13 +161,13 @@ export default function ToursSliderSection() {
           <p className="text-center text-sm text-red-600">{error}</p>
         ) : tours.length === 0 ? (
           <p className="rounded-2xl border border-slate-100 bg-slate-50 px-6 py-10 text-center text-sm text-slate-600">
-            لا توجد رحلات لعرضها بعد.{" "}
+            No tours available yet.{" "}
             {role === "tourguide"
-              ? "يمكنك إنشاء رحلات جديدة من صفحة حسابك."
-              : "تابعنا قريبًا لمزيد من البرامج."}
+              ? "You can create new tours from your dashboard."
+              : "Check back soon for more experiences."}
           </p>
         ) : (
-          <div dir="ltr" className="relative">
+          <div className="relative">
             <div
               ref={stripRef}
               role="list"
@@ -155,11 +175,16 @@ export default function ToursSliderSection() {
             >
               {tours.map((tour) => {
                 const img = extractTourImageUrl(tour) || FALLBACK_IMG;
-                const title = tour?.title ?? tour?.Title ?? "رحلة بدون عنوان";
+
+                const title =
+                  tour?.title ?? tour?.Title ?? "Untitled Tour";
+
                 const desc =
                   extractTourDescription(tour) ||
-                  "اكتشف هذا البرنامج المصمم لعشّاق السفر والتراث.";
+                  "Discover this unique experience designed for travel and culture lovers.";
+
                 const href = tourHref(tour);
+
                 return (
                   <Link
                     role="listitem"
@@ -170,36 +195,57 @@ export default function ToursSliderSection() {
                     <div className="relative aspect-[16/11] overflow-hidden">
                       <img
                         src={img}
-                        alt=""
+                        alt={title}
                         className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
                       />
+
                       <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent opacity-90" />
-                      <div className="absolute bottom-3 start-3 end-3">
+
+                      <div className="absolute bottom-3 left-3 right-3">
                         <span className="line-clamp-2 text-base font-bold leading-snug text-white drop-shadow">
                           {title}
                         </span>
                       </div>
                     </div>
-                    <div className="space-y-3 p-4" dir="rtl">
+
+                    <div className="space-y-3 p-4">
                       <p className="line-clamp-2 text-sm leading-relaxed text-slate-600">
                         {desc}
                       </p>
+
                       <div className="flex flex-wrap gap-2 text-xs text-slate-600">
                         <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 px-2.5 py-1 font-medium text-teal-900">
-                          <Banknote size={14} className="text-egypt-teal" />
-                          {tour?.price ?? tour?.Price ?? "—"} جنيه
+                          <Banknote
+                            size={14}
+                            className="text-egypt-teal"
+                          />
+                          {tour?.price ?? tour?.Price ?? "—"} EGP
                         </span>
+
                         <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-800">
-                          <Clock size={14} className="text-egypt-teal" />
-                          {tour?.durationHours ?? tour?.DurationHours ?? "—"} س
+                          <Clock
+                            size={14}
+                            className="text-egypt-teal"
+                          />
+                          {tour?.durationHours ??
+                            tour?.DurationHours ??
+                            "—"}{" "}
+                          hrs
                         </span>
+
                         <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-800">
-                          <Users size={14} className="text-egypt-teal" />
-                          حتى {extractTourMaxGroupSize(tour) || "—"} ضيف
+                          <Users
+                            size={14}
+                            className="text-egypt-teal"
+                          />
+                          Up to{" "}
+                          {extractTourMaxGroupSize(tour) || "—"}{" "}
+                          guests
                         </span>
                       </div>
+
                       <span className="inline-block text-sm font-semibold text-egypt-teal group-hover:underline">
-                        التفاصيل ←
+                        View Details →
                       </span>
                     </div>
                   </Link>
