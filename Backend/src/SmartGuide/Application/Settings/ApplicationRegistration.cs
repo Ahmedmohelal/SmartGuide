@@ -8,6 +8,7 @@ using Application.Services.Interfaces.Profiles;
 using Application.Services.Interfaces.Tour;
 using Application.Services.UseCases;
 
+using Application.Services.UseCases.Auth;
 using Application.Services.UseCases.Booking;
 using Application.Services.UseCases.PictureMaker;
 using Application.Services.UseCases.PlaceModule;

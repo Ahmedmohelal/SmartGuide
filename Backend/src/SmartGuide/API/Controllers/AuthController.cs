@@ -31,7 +31,7 @@ namespace API.Controllers
             Console.WriteLine($"RT => {result.RefreshToken}");
             Console.WriteLine($"RTT => {result.RefreshTokenExpiresOn}");
 
-            if (!result.IsAuthanticated)
+            if (!result.IsAuthenticated)
                 return BadRequest(result.Message);
 
 
@@ -49,7 +49,7 @@ namespace API.Controllers
 
             var result = await _authService.GetTokenAsync(model);
 
-            if (!result.IsAuthanticated)
+            if (!result.IsAuthenticated)
                 return BadRequest(result.Message);
 
 

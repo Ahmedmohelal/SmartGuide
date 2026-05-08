@@ -42,6 +42,7 @@ var app = builder.Build();
 
 await app.MigrateDataBaseAsync();
 await app.SeedPlacesDataAsync();
+await app.SeedAdminDataAsync();
 
 
 // Configure the HTTP request pipeline.
@@ -57,7 +58,6 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseCors("AllowFrontend");
-app.UseStaticFiles();
 app.Use(async (context, next) =>
 {
     if (context.Request.Path.StartsWithSegments("/api/payments/webhook"))

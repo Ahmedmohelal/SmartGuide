@@ -1,16 +1,14 @@
 using Application.DTOs.ProfileDTOs;
 using Application.DTOs.Saved;
-<<<<<<< HEAD
 using Application.DTOs.SavedPlaces;
-=======
 using Application.Services.Interfaces.Admin;
->>>>>>> # Admin DashBoard End Points
+
+using Application.Services.Interfaces.Admin;
 using Application.Services.Interfaces.Auth;
 using Application.Services.Interfaces.Payment;
 using Application.Services.Interfaces.PictureMaker;
 using Application.Services.Interfaces.Profiles;
 using Application.Services.Interfaces.Tour;
-using Application.Services.UseCases.Admin;
 using Domain.Entities.Home;
 using Domain.Interfaces;
 using Infrastructure.Data;
@@ -20,6 +18,7 @@ using Infrastructure.Repository.Book;
 using Infrastructure.Repository.Home;
 using Infrastructure.Repository.Profile;
 using Infrastructure.Repository.Tours;
+using Infrastructure.Services.Admin;
 using Infrastructure.Services.Auth;
 using Infrastructure.Services.Email;
 using Infrastructure.Services.Files;
@@ -41,7 +40,7 @@ namespace Infrastructure.Settings
         {
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
-                    configuration.GetConnectionString("DefaultConnection"),
+                    configuration.GetConnectionString("SawsanDefaultConnection"),
                         sqlOptions => sqlOptions.EnableRetryOnFailure()
             ));
 
@@ -83,7 +82,8 @@ namespace Infrastructure.Settings
             services.AddScoped<IProfileRepository<TouristProfileDto, UpdateTouristProfileDto>, TouristProfileRepository>();
             services.AddScoped<ITouristFavoritesRepository<SavedTourGuideDto>, TouristFavoritesRepository>();
             services.AddScoped<IBookingRepository, BookingRepository>();
-
+            services.AddScoped<ITouristFavoritesRepository<SavedTourGuideDto>, TouristFavoritesRepository>();
+            services.AddScoped<IPlaceRepository<Place>, PlaceRepository<Place>>();
 
             //Services
             services.Configure<GoogleAuthOptions>(configuration.GetSection(GoogleAuthOptions.SectionName));
@@ -100,16 +100,19 @@ namespace Infrastructure.Settings
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<IProfileInitializerService, ProfileInitializerService>();
             services.AddScoped<IPaymentService, PaymentService>();
-         
 
+            services.AddScoped<IAdminDashboardService, AdminDashboardService>(); 
+            services.AddScoped<IUserAdminService, UserAdminService>();
+            services.AddScoped<IGuideAdminService, GuideAdminService>();
+            services.AddScoped<ITourAdminService, TourAdminService>();
+            services.AddScoped<IBookingAdminService, BookingAdminService>();
+            
 
-           services.AddScoped<ITouristFavoritesRepository<SavedTourGuideDto>, TouristFavoritesRepository>();
-
-            services.AddScoped<ITourRepository, TourRepository>();
-            services.AddScoped<IPlaceRepository<Place>, PlaceRepository<Place>>();
+            //seeders
             services.AddScoped<PlacesSeeder>();
             services.AddScoped<ISavedPlacesRepository<SavedPlaceDto>,SavedPlacesRepository>();
 
+            services.AddScoped<IdentitySeeder>();
 
 
             return services;

@@ -135,7 +135,7 @@ namespace Application.Services.UseCases.Auth
             return new AuthDto
             {
                 Message = "User Registered Successfully",
-                IsAuthanticated = true,
+                IsAuthenticated = true,
                 Id = appUser.Id,
                 UserName = appUser.UserName,
                 Email = appUser.Email,
@@ -164,6 +164,15 @@ namespace Application.Services.UseCases.Auth
         {
             var user = await _userService.FindByEmailAsync(model.Email);
 
+            if (await _tokenService.IsUserLockedOutAsync(model.Email))
+            {
+                return new AuthDto
+                {
+                    IsAuthenticated = false,
+                    Message = "Your account is deactivated."
+                };
+            }
+
             if (user is null || !await _userService.CheckPasswordAsync(user, model.Password))
                 return new AuthDto { Message = "Email or Password Is incorrect" };
 
@@ -175,7 +184,7 @@ namespace Application.Services.UseCases.Auth
             {
 
                 Message = "Login successful",
-                IsAuthanticated = true,
+                IsAuthenticated = true,
                 Id = user.Id,
                 Email = user.Email,
                 UserName = user.UserName,
@@ -202,7 +211,7 @@ namespace Application.Services.UseCases.Auth
             var auth = new AuthDto
             {
                 Message = "Token refreshed successfully",
-                IsAuthanticated = true,
+                IsAuthenticated = true,
                 Email = result.User.Email,
                 UserName = result.User.UserName,
                 Country = result.User.Country,
