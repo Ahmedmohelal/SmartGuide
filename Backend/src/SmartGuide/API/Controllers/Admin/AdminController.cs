@@ -12,10 +12,19 @@ namespace API.Controllers.Admin
     [Authorize(Roles = "Admin")]
     public class AdminController : ControllerBase
     {
-        private readonly IAdminService _adminService;
+        private readonly IUserAdminService _userAdminService;
+        private readonly IGuideAdminService _guideAdminService;
+        private readonly ITourAdminService _tourAdminService;
+        private readonly IBookingAdminService _bookingAdminService;
+        private readonly IAdminDashboardService _adminService;
 
-        public AdminController(IAdminService adminService)
+
+        public AdminController(IUserAdminService userAdminService, IGuideAdminService guideAdminService, ITourAdminService tourAdminService, IBookingAdminService bookingAdminService, IAdminDashboardService adminService)
         {
+            _userAdminService = userAdminService;
+            _guideAdminService = guideAdminService;
+            _tourAdminService = tourAdminService;
+            _bookingAdminService = bookingAdminService;
             _adminService = adminService;
         }
 
@@ -24,14 +33,14 @@ namespace API.Controllers.Admin
         [HttpGet("users")]
         public async Task<IActionResult> GetAllUsersAsync()
         {
-            var result = await _adminService.GetAllUsersAsync();
+            var result = await _userAdminService.GetAllUsersAsync();
             return Ok(result);
         }
 
         [HttpGet("users/{id}")]
         public async Task<IActionResult> GetUserByIdAsync(string id)
         {
-            var result = await _adminService.GetUserByIdAsync(id);
+            var result = await _userAdminService.GetUserByIdAsync(id);
             if (result == null)
                 return NotFound(new { message = "User not found." });
             return Ok(result);
@@ -40,7 +49,7 @@ namespace API.Controllers.Admin
         [HttpPut("users/{id}/deactivate")]
         public async Task<IActionResult> DeactivateUserAsync(string id)
         {
-            var result = await _adminService.DeactivateUserAsync(id);
+            var result = await _userAdminService.DeactivateUserAsync(id);
             if (!result.IsSuccess)
                 return BadRequest(result);
             return Ok(result);
@@ -49,7 +58,7 @@ namespace API.Controllers.Admin
         [HttpPut("users/{id}/activate")]
         public async Task<IActionResult> ActivateUserAsync(string id)
         {
-            var result = await _adminService.ActivateUserAsync(id);
+            var result = await _userAdminService.ActivateUserAsync(id);
             if (!result.IsSuccess)
                 return BadRequest(result);
             return Ok(result);
@@ -58,7 +67,19 @@ namespace API.Controllers.Admin
         [HttpDelete("users/{id}")]
         public async Task<IActionResult> DeleteUserAsync(string id)
         {
-            var result = await _adminService.DeleteUserAsync(id);
+            var result = await _userAdminService.DeleteUserAsync(id);
+            if (!result.IsSuccess)
+                return BadRequest(result);
+            return Ok(result);
+        }
+
+        [HttpPost("create-admin")]
+        public async Task<IActionResult> CreateAdminAsync([FromForm] CreateAdminDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var result = await _userAdminService.CreateAdminAsync(dto);
             if (!result.IsSuccess)
                 return BadRequest(result);
             return Ok(result);
@@ -69,21 +90,21 @@ namespace API.Controllers.Admin
         [HttpGet("guides/pending")]
         public async Task<IActionResult> GetPendingGuidesAsync()
         {
-            var result = await _adminService.GetPendingGuidesAsync();
+            var result = await _guideAdminService.GetPendingGuidesAsync();
             return Ok(result);
         }
 
         [HttpGet("guides")]
         public async Task<IActionResult> GetAllGuidesAsync()
         {
-            var result = await _adminService.GetAllGuidesAsync();
+            var result = await _guideAdminService.GetAllGuidesAsync();
             return Ok(result);
         }
 
         [HttpPut("guides/{id}/approve")]
         public async Task<IActionResult> ApproveGuideAsync(string id)
         {
-            var result = await _adminService.ApproveGuideAsync(id);
+            var result = await _guideAdminService.ApproveGuideAsync(id);
             if (!result.IsSuccess)
                 return BadRequest(result);
             return Ok(result);
@@ -96,7 +117,7 @@ namespace API.Controllers.Admin
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var result = await _adminService.RejectGuideAsync(id, dto.Reason);
+            var result = await _guideAdminService.RejectGuideAsync(id, dto.Reason);
             if (!result.IsSuccess)
                 return BadRequest(result);
             return Ok(result);
@@ -107,14 +128,14 @@ namespace API.Controllers.Admin
         [HttpGet("tours")]
         public async Task<IActionResult> GetAllToursAsync()
         {
-            var result = await _adminService.GetAllToursAsync();
+            var result = await _tourAdminService.GetAllToursAsync();
             return Ok(result);
         }
 
         [HttpPut("tours/{id}/deactivate")]
         public async Task<IActionResult> DeactivateTourAsync(Guid id)
         {
-            var result = await _adminService.DeactivateTourAsync(id);
+            var result = await _tourAdminService.DeactivateTourAsync(id);
             if (!result.IsSuccess)
                 return BadRequest(result);
             return Ok(result);
@@ -123,7 +144,7 @@ namespace API.Controllers.Admin
         [HttpPut("tours/{id}/activate")]
         public async Task<IActionResult> ActivateTourAsync(Guid id)
         {
-            var result = await _adminService.ActivateTourAsync(id);
+            var result = await _tourAdminService.ActivateTourAsync(id);
             if (!result.IsSuccess)
                 return BadRequest(result);
             return Ok(result);
@@ -132,7 +153,7 @@ namespace API.Controllers.Admin
         [HttpDelete("tours/{id}")]
         public async Task<IActionResult> DeleteTourAsync(Guid id)
         {
-            var result = await _adminService.DeleteTourAsync(id);
+            var result = await _tourAdminService.DeleteTourAsync(id);
             if (!result.IsSuccess)
                 return BadRequest(result);
             return Ok(result);
@@ -145,7 +166,7 @@ namespace API.Controllers.Admin
             [FromQuery] string? status = null,
             [FromQuery] string? guideId = null)
         {
-            var result = await _adminService.GetAllBookingsAsync(status, guideId);
+            var result = await _bookingAdminService.GetAllBookingsAsync(status, guideId);
             return Ok(result);
         }
 

@@ -9,6 +9,7 @@ namespace Application.Services.Interfaces.Auth
     {
         public Task<(string token, DateTime expires)> CreateTokenAsync(User user);
 
+        Task<bool> IsUserLockedOutAsync(string email);
 
     }
 }

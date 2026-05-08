@@ -66,5 +66,15 @@ namespace Infrastructure.Services.Token
 
             return (jwtHandler.WriteToken(token), token.ValidTo);
         }
+
+        public async Task<bool> IsUserLockedOutAsync(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+
+            if (user == null)
+                return false;
+
+            return await _userManager.IsLockedOutAsync(user);
+        }
     }
 }
