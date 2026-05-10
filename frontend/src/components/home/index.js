@@ -5,8 +5,6 @@ export { default as ToursSliderSection } from "./ToursSliderSection";
 export { default as FeaturedPlacesSection } from "./FeaturedPlacesSection";
 export { default as PartnersSection } from "./PartnersSection";
 export { default as AboutSection } from "./AboutSection";
-export { default as ExperiencesSection } from "./ExperiencesSection";
-export { default as NewsSection } from "./NewsSection";
+export { default as OurGuidesSection } from "./OurGuidesSection";
 export { default as AppDownloadSection } from "./AppDownloadSection";
-export { default as NileCtaSection } from "./NileCtaSection";
 

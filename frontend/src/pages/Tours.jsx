@@ -1,12 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { getToursCatalog, getMyTours } from "../Services/api/tours";
 import {
   extractTourDescription,
   extractTourImageUrl,
   extractTourMaxGroupSize,
-  getToursCatalog,
-  getMyTours,
-} from "../Services/tourService";
+} from "../Services/utils/tourUtils";
 
 export default function Tours() {
   const [tours, setTours] = useState([]);

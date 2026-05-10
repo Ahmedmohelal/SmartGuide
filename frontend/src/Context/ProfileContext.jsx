@@ -17,8 +17,9 @@ const getUserIdFromToken = () => {
 
   const payload = JSON.parse(atob(token.split(".")[1]));
 
-  // 🔥 DEBUG (مهم جداً)
-  console.log("TOKEN PAYLOAD:", payload);
+  if (import.meta.env.DEV) {
+    console.log("TOKEN PAYLOAD:", payload);
+  }
 
   return payload.sub;
 };
@@ -94,8 +95,10 @@ export const ProfileProvider = ({ children }) => {
       const userId = getUserIdFromToken(); // 🔥 من التوكن
       const role = localStorage.getItem("userRole");
 
-      console.log("ROLE:", role);
-      console.log("USER ID FROM TOKEN:", userId);
+      if (import.meta.env.DEV) {
+        console.log("ROLE:", role);
+        console.log("USER ID FROM TOKEN:", userId);
+      }
 
       if (!token || !userId || !role) {
         setLoading(false);
@@ -141,6 +144,11 @@ export const ProfileProvider = ({ children }) => {
       formData.append("LastName", updatedData.lastName || "");
       formData.append("Country", updatedData.country || "");
       formData.append("WhatsAppNumber", updatedData.whatsAppNumber || "");
+      
+      // Add profile picture if provided
+      if (updatedData.profilePicture instanceof File) {
+        formData.append("ProfilePicture", updatedData.profilePicture);
+      }
 
       const response = await axios.put(endpoint, formData, {
         headers: {
@@ -149,7 +157,9 @@ export const ProfileProvider = ({ children }) => {
       });
 
       if (response.status === 200 || response.status === 204) {
+        console.log("Profile updated successfully, refreshing data...");
         await getProfileData();
+        console.log("Profile data refreshed");
         return { success: true };
       }
 

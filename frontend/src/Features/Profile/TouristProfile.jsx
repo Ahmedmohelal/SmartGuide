@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useProfile } from "../../context/ProfileContext";
+import { useProfile } from "../../Context/ProfileContext";
 import ProfileHeader from "./components/ProfileHeader";
 import PersonalInfoCard from "./components/PersonalInfoCard";
 import TouristTrips from "./components/TouristTrips";
@@ -48,7 +48,7 @@ const handleSaveProfile = async (newData) => {
       
       {/* 1. الهيدر (بنمرر له دالة فتح الـ Modal عشان زرار الـ Edit) */}
       <ProfileHeader 
-        user={user} 
+        user={user}
         onEditClick={() => setIsEditModalOpen(true)} 
       />
 

@@ -1,7 +1,7 @@
 import { LifeBuoy, MessageCircle, Mail, Phone, CircleHelp } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
-import { useProfile } from "../context/ProfileContext";
+import { useProfile } from "../Context/ProfileContext";
 
 export default function Support() {
   const { user } = useProfile();

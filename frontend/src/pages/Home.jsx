@@ -6,10 +6,8 @@ import {
   FeaturedPlacesSection,
   PartnersSection,
   AboutSection,
-  ExperiencesSection,
-  NewsSection,
+  OurGuidesSection,
   AppDownloadSection,
-  NileCtaSection,
 } from "../components/home";
 
 export default function Home() {
@@ -19,18 +17,17 @@ export default function Home() {
       lang="ar"
       className="min-h-screen bg-white font-sans antialiased"
     >
-      
       <HeroSection />
       <ServicesSection />
-      <ToursSliderSection />
-      <FeaturedPlacesSection />
-      <PartnersSection />
+
       <AboutSection />
-      <ExperiencesSection />
-      <NewsSection />
+      <PartnersSection />
+
+      <FeaturedPlacesSection />
+      <OurGuidesSection />
+
+      <ToursSliderSection />
       <AppDownloadSection />
-      <NileCtaSection />
-      
     </div>
   );
 }

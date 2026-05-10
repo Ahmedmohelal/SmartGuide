@@ -4,16 +4,16 @@
 import { homeImages } from "../assets/images/homeImages";
 
 const [feat1, feat2, feat3, feat4, feat5, feat6, feat7] = homeImages.featured;
-const [ex1, ex2, ex3, ex4] = homeImages.experiences;
 const [newsImg1, newsImg2, newsImg3, newsImg4] = homeImages.news;
 
 export const navLinks = [
   { label: "Home", href: "#hero" },
   { label: "About", href: "#about" },
-  { label: "Destinations", href: "#featured" },
-  { label: "Guides", href: "#news" },
+  { label: "Featured Places", href: "#featured" },
+  { label: "Our Guides", href: "#guides" },
   { label: "Tours", href: "#tours" },
   { label: "Contact", href: "#footer" },
+  { label: "Places", href: "/places" },
 ];
 
 export const hero = {
@@ -115,30 +115,7 @@ export const about = {
   image: homeImages.about,
 };
 
-export const experiences = {
-  title: "Experience Egypt Your Way",
-  body:
-    "From golden deserts to the Red Sea, we designed diverse routes that blend history, nature, and comfort.",
-  cta: "Explore Programs",
-  cards: [
-    {
-      title: "The Sphinx",
-      image: ex1,
-    },
-    {
-      title: "Luxor",
-      image: ex2,
-    },
-    {
-      title: "Cairo",
-      image: ex3,
-    },
-    {
-      title: "Sharm El-Sheikh",
-      image: ex4,
-    },
-  ],
-};
+
 
 export const news = {
   title: "Latest News",
@@ -175,12 +152,6 @@ export const appBanner = {
   subtitle: "Book, track your trip, and receive offer notifications on your phone.",
 };
 
-export const nileCta = {
-  title: "Ready for the Trip of a Lifetime?",
-  subtitle: "Contact us for a custom plan that matches your budget and schedule.",
-  cta: "Book Your Trip",
-  image: homeImages.nileCta,
-};
 
 export const footer = {
   brand: "Smart Guide Egypt",

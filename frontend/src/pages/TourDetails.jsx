@@ -10,7 +10,7 @@ import {
   Sparkles,
   Users,
 } from "lucide-react";
-import { getTourById } from "../Services/tourService";
+import { getTourById } from "../Services/api/tours";
 
 const pick = (...vals) =>
   vals.find((v) => v !== undefined && v !== null && v !== "");

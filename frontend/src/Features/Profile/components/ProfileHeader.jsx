@@ -2,20 +2,29 @@ import { MapPin, Mail, Phone, User, Camera } from "lucide-react";
 import { useProfile } from "../../../Context/ProfileContext"; // تأكد من المسار صح
 
 // التعديل هنا: ضفنا onEditClick للـ Props
-export default function ProfileHeader({ onEditClick }) {
+export default function ProfileHeader({ user: userProp, onEditClick }) {
   // دمج الاسم الأول والأخير
-  const { user } = useProfile();
+  const { user: userFromContext } = useProfile();
+  // استخدم ال user prop لو موجود، غير كده استخدم من ال context
+  const user = userProp || userFromContext;
+  
   const userName = user?.userName || user?.username || "";
   const fullName = `${user?.firstName || ""} ${user?.lastName || ""}`.trim() || userName;
   const role = (localStorage.getItem("userRole") || "").toLowerCase();
   const badgeLabel = role === "tourguide" ? "Active Guide" : "Active Tourist";
   
-  // صورة افتراضية لو الـ API مرجعش صورة
+  // صورة افتراضية لو الـ API مرجعش صورة - نستخدم نفس الطريقة اللي بيستخدمها places
+  // Tourists use touristImage, Guides use profilePicture
   const avatarUrl =
+    (role === "tourist" ? user?.touristImage : user?.profilePicture) ||
     user?.touristImage ||
     user?.profilePicture ||
+    user?.image ||
+    user?.imageUrl ||
+    user?.ImageUrl ||
     `https://ui-avatars.com/api/?name=${encodeURIComponent(fullName || "User")}&background=0D9488&color=fff`;
 
+  
   return (
     <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden mb-8">
       {/* Cover Image */}
@@ -31,7 +40,21 @@ export default function ProfileHeader({ onEditClick }) {
           {/* Avatar */}
           <div className="relative">
             <div className="h-32 w-32 rounded-2xl border-4 border-white shadow-lg overflow-hidden bg-gray-100">
-              <img src={avatarUrl} alt={fullName} className="w-full h-full object-cover" />
+              {avatarUrl && !avatarUrl.includes('ui-avatars.com') ? (
+                <div 
+                  className="w-full h-full rounded-2xl"
+                  style={{
+                    backgroundImage: `url(${avatarUrl})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    backgroundRepeat: 'no-repeat'
+                  }}
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-egypt-teal text-white rounded-2xl">
+                  <span className="text-2xl font-bold">{fullName?.charAt(0)?.toUpperCase() || 'U'}</span>
+                </div>
+              )}
             </div>
           </div>
 

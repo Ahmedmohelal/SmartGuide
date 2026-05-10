@@ -13,12 +13,14 @@ import {
 import {
   createTour,
   deleteTour,
+  getMyTours,
+  updateTour,
+} from "../../../Services/api/tours";
+import {
   extractTourDescription,
   extractTourImageUrl,
   extractTourMaxGroupSize,
-  getMyTours,
-  updateTour,
-} from "../../../Services/tourService";
+} from "../../../Services/utils/tourUtils";
 
 const initialState = {
   title: "",
@@ -100,7 +102,9 @@ export default function CreateTour() {
       await fetchMyTours();
     } catch (err) {
       toast.error(err?.response?.data?.message || "Something went wrong");
-      console.log("ERROR FULL:", err.response?.data);
+      if (import.meta.env.DEV) {
+        console.log("ERROR FULL:", err.response?.data);
+      }
     } finally {
       setLoading(false);
     }

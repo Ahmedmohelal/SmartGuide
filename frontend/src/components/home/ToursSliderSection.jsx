@@ -7,13 +7,12 @@ import {
   Clock,
   Users,
 } from "lucide-react";
+import { getMyTours, getToursCatalog } from "../../Services/api/tours";
 import {
   extractTourDescription,
   extractTourImageUrl,
   extractTourMaxGroupSize,
-  getMyTours,
-  getToursCatalog,
-} from "../../Services/tourService";
+} from "../../Services/utils/tourUtils";
 
 const FALLBACK_IMG =
   "https://images.unsplash.com/photo-1539768942893-daf53e449371?auto=format&fit=crop&w=900&q=80";
