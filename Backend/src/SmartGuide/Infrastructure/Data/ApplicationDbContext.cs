@@ -5,7 +5,9 @@ using Domain.Entities.Profiles.TourGuide;
 using Domain.Entities.Profiles.Tourist;
 using Domain.Entities.SavedPlaces;
 using Domain.Entities.Tours;
-using Infrastructure.Data.Configurations.RefreshToken;
+using Domain.Entities.Wallet;
+using Domain.Entities.Admin;
+using Infrastructure.Data.Configurations.RefreshTokens;
 using Infrastructure.Data.Entities;
 using Infrastructure.Data.Entities.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -42,7 +44,11 @@ namespace Infrastructure.Data
         public DbSet<BookingAddOn> BookingAddOns { get; set; }
 
         public DbSet<SavedPlace> SavedPlaces { get; set; }
+        public DbSet<GuideWallet> GuideWallets { get; set; }
+        public DbSet<GuideWalletTransaction> GuideWalletTransactions { get; set; }
+        public DbSet<AdminAuditLog> AdminAuditLogs { get; set; }
 
+        //public DbSet<SavedTourGuide> FavoriteTourGuides { get; set; }
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);

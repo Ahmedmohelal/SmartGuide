@@ -2,8 +2,10 @@ using Application.DTOs;
 using Application.Helper;
 using Application.Services.Interfaces.Auth;
 using Infrastructure.Data.Entities.Identity;
+using Infrastructure.Data.Entities.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
+using System;
 
 namespace Infrastructure.Services.Identity
 {
@@ -54,6 +56,9 @@ namespace Infrastructure.Services.Identity
                 UserName = user.UserName,
                 Country = user.Country,
                 Role = user.Role,
+                GuideAccountStatus = string.Equals(user.Role, Roles.TourGuide, StringComparison.OrdinalIgnoreCase)
+                    ? GuideAccountStatus.Pending
+                    : GuideAccountStatus.Active,
                 GuideLicenseImage = user.GuideLicenseImage,
                 NationalIdImage = user.NationalIdImage,
                 ProfileImage = user.ProfileImage,
@@ -91,8 +96,9 @@ namespace Infrastructure.Services.Identity
                 FirstName = user.FirstName ?? string.Empty,
                 LastName = user.LastName ?? string.Empty,
                 Email = user.Email,
-                Country = string.Empty,   
+                Country = string.Empty,
                 Role = Roles.Tourist,
+                GuideAccountStatus = GuideAccountStatus.Active,
                 UserName = user.UserName,
                 EmailConfirmed = true,
                 GuideLicenseImage = user.GuideLicenseImage,
@@ -287,6 +293,18 @@ namespace Infrastructure.Services.Identity
             }
 
             return true;
+        }
+
+        public async Task SetForceLogoutRequiredAsync(string userId, bool required)
+        {
+            var applicationUser = await _userManager.FindByIdAsync(userId);
+            if (applicationUser == null)
+            {
+                return;
+            }
+
+            applicationUser.ForceLogoutRequired = required;
+            await _userManager.UpdateAsync(applicationUser);
         }
     }
 }

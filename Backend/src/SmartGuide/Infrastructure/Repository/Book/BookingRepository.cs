@@ -25,10 +25,13 @@ namespace Infrastructure.Repository.Book
 
         public async Task<bool> CancelBookingAsync(Guid bookingId, string requesterId)
         {
+            var user = await _context.Users.FindAsync(requesterId);
+            if (user == null) return false;
             var booking = await _context.Bookings
                        .FirstOrDefaultAsync(b => b.Id == bookingId
                            && (b.TouristId == requesterId
-                           || b.GuideId == requesterId));
+                           || b.GuideId == requesterId
+                           || user.Role == "Admin"));
             if (booking == null) return false;
 
             if (booking.Status == BookingStatus.Cancelled) return false;

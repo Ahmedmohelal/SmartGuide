@@ -1,8 +1,9 @@
 ﻿using Application.DTOs.AdminDashboard;
 using Application.Services.Interfaces.Admin;
+using Infrastructure.Services.Admin;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace API.Controllers.Admin
 {
@@ -17,15 +18,26 @@ namespace API.Controllers.Admin
         private readonly ITourAdminService _tourAdminService;
         private readonly IBookingAdminService _bookingAdminService;
         private readonly IAdminDashboardService _adminService;
+        private readonly IGuideWalletAdminService _guideWalletAdminService;
+        private readonly IAdminAuditService _adminAuditService;
 
 
-        public AdminController(IUserAdminService userAdminService, IGuideAdminService guideAdminService, ITourAdminService tourAdminService, IBookingAdminService bookingAdminService, IAdminDashboardService adminService)
+        public AdminController(
+            IUserAdminService userAdminService,
+            IGuideAdminService guideAdminService,
+            ITourAdminService tourAdminService,
+            IBookingAdminService bookingAdminService,
+            IAdminDashboardService adminService,
+            IGuideWalletAdminService guideWalletAdminService,
+            IAdminAuditService adminAuditService)
         {
             _userAdminService = userAdminService;
             _guideAdminService = guideAdminService;
             _tourAdminService = tourAdminService;
             _bookingAdminService = bookingAdminService;
             _adminService = adminService;
+            _guideWalletAdminService = guideWalletAdminService;
+            _adminAuditService = adminAuditService;
         }
 
         // ==================== Users ====================
@@ -123,6 +135,113 @@ namespace API.Controllers.Admin
             return Ok(result);
         }
 
+        [HttpPatch("guides/{id}/activate")]
+        public async Task<IActionResult> ActivateGuideAsync(string id, [FromBody] GuideAccountStatusUpdateDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+            var result = await _guideAdminService.ActivateGuideAsync(id, adminId, dto.Reason, HttpContext.Connection.RemoteIpAddress?.ToString());
+            if (!result.IsSuccess) return BadRequest(result);
+            return Ok(result);
+        }
+
+        [HttpPatch("guides/{id}/suspend")]
+        public async Task<IActionResult> SuspendGuideAsync(string id, [FromBody] GuideAccountStatusUpdateDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+            var result = await _guideAdminService.SuspendGuideAsync(id, adminId, dto.Reason, HttpContext.Connection.RemoteIpAddress?.ToString());
+            if (!result.IsSuccess) return BadRequest(result);
+            return Ok(result);
+        }
+
+        [HttpPatch("guides/{id}/ban")]
+        public async Task<IActionResult> BanGuideAsync(string id, [FromBody] GuideAccountStatusUpdateDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+            var result = await _guideAdminService.BanGuideAsync(id, adminId, dto.Reason, HttpContext.Connection.RemoteIpAddress?.ToString());
+            if (!result.IsSuccess) return BadRequest(result);
+            return Ok(result);
+        }
+
+        [HttpPatch("guides/{id}/under-review")]
+        public async Task<IActionResult> PutGuideUnderReviewAsync(string id, [FromBody] GuideAccountStatusUpdateDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+            var result = await _guideAdminService.PutUnderReviewAsync(id, adminId, dto.Reason, HttpContext.Connection.RemoteIpAddress?.ToString());
+            if (!result.IsSuccess) return BadRequest(result);
+            return Ok(result);
+        }
+
+        [HttpPost("guides/{id}/force-logout")]
+        public async Task<IActionResult> ForceLogoutGuideAsync(string id, [FromBody] GuideAccountStatusUpdateDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+            var result = await _guideAdminService.ForceLogoutGuideAsync(id, adminId, dto.Reason, HttpContext.Connection.RemoteIpAddress?.ToString());
+            if (!result.IsSuccess) return BadRequest(result);
+            return Ok(result);
+        }
+
+        [HttpGet("guides/{id}/wallet")]
+        public async Task<IActionResult> GetGuideWalletAsync(string id)
+        {
+            var result = await _guideWalletAdminService.GetWalletAsync(id);
+            if (result == null)
+                return BadRequest("Not Found TourGuide With This Id");
+
+            return Ok(result);
+        }
+
+        [HttpGet("guides/{id}/wallet/transactions")]
+        public async Task<IActionResult> GetGuideWalletTransactionsAsync(string id, [FromQuery] int take = 100)
+        {
+            var result = await _guideWalletAdminService.GetTransactionsAsync(id, take);
+            return Ok(result);
+        }
+
+        [HttpPost("guides/{id}/wallet/add-balance")]
+        public async Task<IActionResult> AddBalanceAsync(string id, [FromBody] GuideWalletAdjustmentDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+            var result = await _guideWalletAdminService.AddBalanceAsync(id, adminId, dto, HttpContext.Connection.RemoteIpAddress?.ToString());
+            if (!result.IsSuccess) return BadRequest(result);
+            return Ok(result);
+        }
+
+        [HttpPost("guides/{id}/wallet/deduct-balance")]
+        public async Task<IActionResult> DeductBalanceAsync(string id, [FromBody] GuideWalletAdjustmentDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+            var result = await _guideWalletAdminService.DeductBalanceAsync(id, adminId, dto, HttpContext.Connection.RemoteIpAddress?.ToString());
+            if (!result.IsSuccess) return BadRequest(result);
+            return Ok(result);
+        }
+
+        [HttpPatch("guides/{id}/wallet/freeze")]
+        public async Task<IActionResult> FreezeWalletAsync(string id, [FromBody] GuideAccountStatusUpdateDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+            var result = await _guideWalletAdminService.SetFreezeStateAsync(id, true, adminId, dto.Reason, HttpContext.Connection.RemoteIpAddress?.ToString());
+            if (!result.IsSuccess) return BadRequest(result);
+            return Ok(result);
+        }
+
+        [HttpPatch("guides/{id}/wallet/unfreeze")]
+        public async Task<IActionResult> UnfreezeWalletAsync(string id, [FromBody] GuideAccountStatusUpdateDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
+            var result = await _guideWalletAdminService.SetFreezeStateAsync(id, false, adminId, dto.Reason, HttpContext.Connection.RemoteIpAddress?.ToString());
+            if (!result.IsSuccess) return BadRequest(result);
+            return Ok(result);
+        }
+
         // ==================== Tours ====================
 
         [HttpGet("tours")]
@@ -170,6 +289,20 @@ namespace API.Controllers.Admin
             return Ok(result);
         }
 
+        [HttpDelete("{bookingId}")]
+        public async Task<IActionResult> CancelBookingAsync(Guid bookingId)
+        {
+            var requesterId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrWhiteSpace(requesterId))
+                return Unauthorized();
+
+            var result = await _bookingAdminService
+                .CancelBookingAsync(bookingId, requesterId);
+
+            if (!result)
+                return BadRequest(new { IsSuccess = false, Message = "Booking not found or already cancelled." });
+            return Ok(new { IsSuccess = true, Message = "Booking cancelled successfully." });
+        }
         // ==================== Statistics ====================
 
         [HttpGet("statistics")]
@@ -185,6 +318,13 @@ namespace API.Controllers.Admin
         public async Task<IActionResult> GetRevenueAsync()
         {
             var result = await _adminService.GetRevenueAsync();
+            return Ok(result);
+        }
+
+        [HttpGet("audit-logs")]
+        public async Task<IActionResult> GetAuditLogsAsync([FromQuery] int take = 100)
+        {
+            var result = await _adminAuditService.GetRecentAsync(take);
             return Ok(result);
         }
     }

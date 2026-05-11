@@ -34,6 +34,8 @@ namespace Infrastructure.Services.Admin
 
                 VerificationStatus = u.IsGuideVerified.ToString(),
 
+                GuideAccountStatus = u.GuideAccountStatus.ToString(),
+
                 Bio = u.TourGuideProfile?.Bio,
 
                 Country = u.Country

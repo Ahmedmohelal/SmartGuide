@@ -12,5 +12,10 @@ namespace Application.Services.Interfaces.Admin
         Task<List<AdminGuideVerificationDto>> GetAllGuidesAsync();
         Task<OperationResultDto> ApproveGuideAsync(string guideId);
         Task<OperationResultDto> RejectGuideAsync(string guideId, string reason);
+        Task<OperationResultDto> ActivateGuideAsync(string guideId, string adminId, string reason, string? ipAddress);
+        Task<OperationResultDto> SuspendGuideAsync(string guideId, string adminId, string reason, string? ipAddress);
+        Task<OperationResultDto> BanGuideAsync(string guideId, string adminId, string reason, string? ipAddress);
+        Task<OperationResultDto> PutUnderReviewAsync(string guideId, string adminId, string reason, string? ipAddress);
+        Task<OperationResultDto> ForceLogoutGuideAsync(string guideId, string adminId, string reason, string? ipAddress);
     }
 }

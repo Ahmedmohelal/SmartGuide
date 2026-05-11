@@ -9,6 +9,7 @@ using Application.DTOs.AuthenticationDTOs;
 using Application.Services.Interfaces.Auth;
 using Application.Services.Interfaces.PictureMaker;
 using Application.Services.Interfaces.Profiles;
+using OperationResultDto = Application.DTOs.AuthenticationDTOs.OperationResultDto;
 
 namespace Application.Services.UseCases.Auth
 {
@@ -61,7 +62,7 @@ namespace Application.Services.UseCases.Auth
             if (!isTourGuide && !isTourist)
                 return new AuthDto { Message = "The specified role is not supported." };
 
-            string? profileImage = null;   
+            string? profileImage = null;
             string? licenseImage = null;
             string? nationalIdImage = null;
 
@@ -104,7 +105,7 @@ namespace Application.Services.UseCases.Auth
                 UserName = model.UserName,
                 Email = model.Email,
                 Country = model.Country,
-                Role = normalizedRole,  
+                Role = normalizedRole,
                 GuideLicenseImage = licenseImage,
                 NationalIdImage = nationalIdImage,
                 ProfileImage = profileImage,
@@ -179,6 +180,7 @@ namespace Application.Services.UseCases.Auth
             var (token, expires) = await _tokenService.CreateTokenAsync(user);
             var (refreshToken, refreshExpires) = await _refreshTokenService.CreateAsync(user.Id);
             var roles = await _userService.GetRolesAsync(user);
+            await _userService.SetForceLogoutRequiredAsync(user.Id, false);
 
             return new AuthDto
             {
@@ -207,6 +209,7 @@ namespace Application.Services.UseCases.Auth
 
             var (token, expires) = await _tokenService.CreateTokenAsync(result.User);
             var roles = await _userService.GetRolesAsync(result.User);
+            await _userService.SetForceLogoutRequiredAsync(result.User.Id, false);
 
             var auth = new AuthDto
             {
@@ -457,6 +460,7 @@ namespace Application.Services.UseCases.Auth
 
             var (token, expires) = await _tokenService.CreateTokenAsync(user);
             var (refreshToken, refreshExpires) = await _refreshTokenService.CreateAsync(user.Id);
+            await _userService.SetForceLogoutRequiredAsync(user.Id, false);
 
             var auth = new AuthResponseDto(
                 AccessToken: token,
