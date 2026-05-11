@@ -1,4 +1,5 @@
 ﻿using Application.DTOs.AdminDashboard;
+using Application.DTOs.AuthenticationDTOs;
 using Application.Services.Interfaces.Admin;
 using Domain.Entities.Book;
 using Infrastructure.Data;
@@ -85,5 +86,32 @@ namespace Infrastructure.Services.Admin
                 };
             }).ToList();
         }
+
+        public async Task<bool> CancelBookingAsync(Guid bookingId, string requesterId)
+        {
+            var user = await _context.Users.FindAsync(requesterId);
+            if (user == null) return false;
+            var booking = await _context.Bookings
+                       .FirstOrDefaultAsync(b => b.Id == bookingId
+                           && (b.TouristId == requesterId
+                           || b.GuideId == requesterId
+                           || user.Role == "Admin"));
+            if (booking == null) return false;
+
+            if (booking.Status == BookingStatus.Cancelled) return false;
+
+            booking.Status = BookingStatus.Cancelled;
+
+            await _context.SaveChangesAsync();
+
+            await _context.BookingsSlot
+                .Where(s => s.Id == booking.SlotId && s.BookedCount > 0)
+                .ExecuteUpdateAsync(s => s.SetProperty(
+                       x => x.BookedCount, x => x.BookedCount - 1));
+
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
     }
 }

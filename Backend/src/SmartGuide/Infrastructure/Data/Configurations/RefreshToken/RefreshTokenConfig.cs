@@ -1,16 +1,11 @@
-﻿using Infrastructure.Data.Entities;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using Refresh= Infrastructure.Data.Entities.RefreshToken;
 
-namespace Infrastructure.Data.Configurations.RefreshToken
+namespace Infrastructure.Data.Configurations.RefreshTokens
 {
-    public class RefreshTokenConfig : IEntityTypeConfiguration<Refresh>
+    public class RefreshTokenConfig : IEntityTypeConfiguration<Infrastructure.Data.Entities.RefreshToken>
     {
-        public void Configure(EntityTypeBuilder<Refresh> builder)
+        public void Configure(EntityTypeBuilder<Infrastructure.Data.Entities.RefreshToken> builder)
         {
             builder.ToTable("RefreshTokens");
             builder.HasKey(e => e.Id);

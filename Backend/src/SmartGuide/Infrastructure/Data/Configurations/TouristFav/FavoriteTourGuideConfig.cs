@@ -7,7 +7,7 @@ using System.Text;
 
 namespace Infrastructure.Data.Configurations.TouristFav
 {
-    public class SavedTourGuideConfig : IEntityTypeConfiguration<SavedTourGuide>
+    public class FavoriteTourGuideConfig : IEntityTypeConfiguration<SavedTourGuide>
     {
         public void Configure(EntityTypeBuilder<SavedTourGuide> builder)
         {

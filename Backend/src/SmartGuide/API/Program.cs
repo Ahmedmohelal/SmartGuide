@@ -6,6 +6,7 @@ using Infrastructure.Services.Email;
 using Infrastructure.Settings;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using API.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,6 +43,7 @@ var app = builder.Build();
 
 await app.MigrateDataBaseAsync();
 await app.SeedPlacesDataAsync();
+await app.SeedRolesDataAsync();
 await app.SeedAdminDataAsync();
 
 
@@ -68,6 +70,7 @@ app.Use(async (context, next) =>
     await next();
 });
 app.UseAuthentication();
+app.UseMiddleware<GuideAccessGuardMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();

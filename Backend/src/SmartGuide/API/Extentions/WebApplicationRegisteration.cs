@@ -35,6 +35,17 @@ namespace API.Extentions
             return app;
         }
 
+        public async static Task<WebApplication> SeedRolesDataAsync(this WebApplication app)
+        {
+            await using var scope = app.Services.CreateAsyncScope();
+
+            var seeder = scope.ServiceProvider
+                .GetRequiredService<RoleSeeder>();
+
+            await seeder.SeedRolesDataAsync();
+
+            return app;
+        }
         public async static Task<WebApplication> SeedAdminDataAsync(this WebApplication app)
         {
             await using var scope = app.Services.CreateAsyncScope();

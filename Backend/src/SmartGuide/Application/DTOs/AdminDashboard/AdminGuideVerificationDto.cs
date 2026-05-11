@@ -15,6 +15,7 @@ namespace Application.DTOs.AdminDashboard
         public string? NationalIdImage { get; set; }
         public string? ProfileImage { get; set; }
         public string VerificationStatus { get; set; }
+        public string GuideAccountStatus { get; set; }
         public string? Bio { get; set; }
         public string? Country { get; set; }
     }

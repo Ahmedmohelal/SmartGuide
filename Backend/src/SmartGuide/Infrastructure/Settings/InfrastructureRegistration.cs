@@ -9,6 +9,7 @@ using Application.Services.Interfaces.Payment;
 using Application.Services.Interfaces.PictureMaker;
 using Application.Services.Interfaces.Profiles;
 using Application.Services.Interfaces.Tour;
+using Application.Services.Interfaces.GuideDashboard;
 using Domain.Entities.Home;
 using Domain.Interfaces;
 using Infrastructure.Data;
@@ -20,6 +21,7 @@ using Infrastructure.Repository.Profile;
 using Infrastructure.Repository.Tours;
 using Infrastructure.Services.Admin;
 using Infrastructure.Services.Auth;
+using Infrastructure.Services.GuideDashboard;
 using Infrastructure.Services.Email;
 using Infrastructure.Services.Files;
 using Infrastructure.Services.Identity;
@@ -40,7 +42,7 @@ namespace Infrastructure.Settings
         {
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
-                    configuration.GetConnectionString("SawsanDefaultConnection"),
+                    configuration.GetConnectionString("AhmedDefaultConnection"),
                         sqlOptions => sqlOptions.EnableRetryOnFailure()
             ));
 
@@ -101,18 +103,22 @@ namespace Infrastructure.Settings
             services.AddScoped<IProfileInitializerService, ProfileInitializerService>();
             services.AddScoped<IPaymentService, PaymentService>();
 
-            services.AddScoped<IAdminDashboardService, AdminDashboardService>(); 
+            services.AddScoped<IAdminDashboardService, AdminDashboardService>();
+            services.AddScoped<IAdminAuditService, AdminAuditService>();
             services.AddScoped<IUserAdminService, UserAdminService>();
             services.AddScoped<IGuideAdminService, GuideAdminService>();
+            services.AddScoped<IGuideWalletAdminService, GuideWalletAdminService>();
             services.AddScoped<ITourAdminService, TourAdminService>();
             services.AddScoped<IBookingAdminService, BookingAdminService>();
-            
+            services.AddScoped<IGuideDashboardService, GuideDashboardService>();
+
 
             //seeders
             services.AddScoped<PlacesSeeder>();
-            services.AddScoped<ISavedPlacesRepository<SavedPlaceDto>,SavedPlacesRepository>();
+            services.AddScoped<ISavedPlacesRepository<SavedPlaceDto>, SavedPlacesRepository>();
 
             services.AddScoped<IdentitySeeder>();
+            services.AddScoped<RoleSeeder>();
 
 
             return services;

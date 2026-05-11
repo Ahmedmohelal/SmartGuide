@@ -33,5 +33,7 @@ namespace Application.Services.Interfaces.Auth
         public Task<bool> SetResetPasswordOtpAsync(User user, string otp, DateTime expiresAtUtc);
         public Task<(string? otp, DateTime? expiresAtUtc)> GetResetPasswordOtpAsync(User user);
         public Task<bool> ClearResetPasswordOtpAsync(User user);
+        public Task SetForceLogoutRequiredAsync(string userId, bool required);
+
     }
 }
