@@ -3,14 +3,32 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Infrastructure.Data.Migrations
+namespace Infrastructure.Migrations
 {
     /// <inheritdoc />
-    public partial class InitAfterMerge : Migration
+    public partial class initForMain : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.CreateTable(
+                name: "AdminAuditLogs",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    AdminId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Action = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false),
+                    EntityType = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false),
+                    EntityId = table.Column<string>(type: "nvarchar(120)", maxLength: 120, nullable: false),
+                    Details = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    IpAddress = table.Column<string>(type: "nvarchar(60)", maxLength: 60, nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AdminAuditLogs", x => x.Id);
+                });
+
             migrationBuilder.CreateTable(
                 name: "AspNetRoles",
                 columns: table => new
@@ -38,6 +56,8 @@ namespace Infrastructure.Data.Migrations
                     GuideLicenseImage = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     NationalIdImage = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     IsGuideVerified = table.Column<int>(type: "int", nullable: false),
+                    GuideAccountStatus = table.Column<int>(type: "int", nullable: false),
+                    ForceLogoutRequired = table.Column<bool>(type: "bit", nullable: false),
                     ProfileImage = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ResetPasswordOtp = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     ResetPasswordOtpExpiry = table.Column<DateTime>(type: "datetime2", nullable: true),
@@ -62,25 +82,6 @@ namespace Infrastructure.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "BookingSlots",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    GuideId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Date = table.Column<DateOnly>(type: "date", nullable: false),
-                    StartTime = table.Column<TimeOnly>(type: "time", nullable: false),
-                    EndTime = table.Column<TimeOnly>(type: "time", nullable: false),
-                    Capacity = table.Column<int>(type: "int", nullable: false),
-                    BookedCount = table.Column<int>(type: "int", nullable: false, defaultValue: 0)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_BookingSlots", x => x.Id);
-                    table.CheckConstraint("CK_BookingSlot_Capacity", "[BookedCount] <= [Capacity]");
-                    table.CheckConstraint("CK_BookingSlot_Time", "[EndTime] > [StartTime]");
-                });
-
-            migrationBuilder.CreateTable(
                 name: "FavoriteTourGuides",
                 columns: table => new
                 {
@@ -91,6 +92,46 @@ namespace Infrastructure.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_FavoriteTourGuides", x => new { x.TouristUserId, x.TourGuideUserId });
+                });
+
+            migrationBuilder.CreateTable(
+                name: "GuideWallets",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    GuideId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Balance = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    IsFrozen = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    RowVersion = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_GuideWallets", x => x.Id);
+                    table.CheckConstraint("CK_GuideWallet_Balance_NonNegative", "[Balance] >= 0");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "GuideWalletTransactions",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    WalletId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    GuideId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Type = table.Column<int>(type: "int", nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false),
+                    Amount = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    BalanceBefore = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    BalanceAfter = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    ReferenceId = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Notes = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    AdminId = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_GuideWalletTransactions", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -278,6 +319,7 @@ namespace Infrastructure.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_TouristProfiles", x => x.Id);
+                    table.UniqueConstraint("AK_TouristProfiles_UserId", x => x.UserId);
                     table.ForeignKey(
                         name: "FK_TouristProfiles_AspNetUsers_UserId",
                         column: x => x.UserId,
@@ -371,45 +413,52 @@ namespace Infrastructure.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Bookings",
+                name: "SavedPlaces",
                 columns: table => new
                 {
-                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    GuideId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    TouristId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    TourId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    BookingDate = table.Column<DateOnly>(type: "date", nullable: false),
-                    StartTime = table.Column<TimeOnly>(type: "time", nullable: false),
-                    EndTime = table.Column<TimeOnly>(type: "time", nullable: false),
-                    Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
-                    SlotId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    TotalPrice = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
-                    PaymentMethod = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    TouristUserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    PlaceId = table.Column<int>(type: "int", nullable: false),
                     CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Bookings", x => x.Id);
+                    table.PrimaryKey("PK_SavedPlaces", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Bookings_AspNetUsers_TouristId",
-                        column: x => x.TouristId,
-                        principalTable: "AspNetUsers",
+                        name: "FK_SavedPlaces_Places_PlaceId",
+                        column: x => x.PlaceId,
+                        principalTable: "Places",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_Bookings_BookingSlots_SlotId",
-                        column: x => x.SlotId,
-                        principalTable: "BookingSlots",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                    table.ForeignKey(
-                        name: "FK_Bookings_TourGuideProfiles_GuideId",
-                        column: x => x.GuideId,
-                        principalTable: "TourGuideProfiles",
+                        name: "FK_SavedPlaces_TouristProfiles_TouristUserId",
+                        column: x => x.TouristUserId,
+                        principalTable: "TouristProfiles",
                         principalColumn: "UserId",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "BookingSlots",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    GuideId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    TourId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Date = table.Column<DateOnly>(type: "date", nullable: false),
+                    StartTime = table.Column<TimeOnly>(type: "time", nullable: false),
+                    EndTime = table.Column<TimeOnly>(type: "time", nullable: false),
+                    Capacity = table.Column<int>(type: "int", nullable: false),
+                    BookedCount = table.Column<int>(type: "int", nullable: false, defaultValue: 0)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BookingSlots", x => x.Id);
+                    table.CheckConstraint("CK_BookingSlot_Capacity", "[BookedCount] <= [Capacity]");
+                    table.CheckConstraint("CK_BookingSlot_Time", "[EndTime] > [StartTime]");
                     table.ForeignKey(
-                        name: "FK_Bookings_Tours_TourId",
+                        name: "FK_BookingSlots_Tours_TourId",
                         column: x => x.TourId,
                         principalTable: "Tours",
                         principalColumn: "Id",
@@ -486,11 +535,18 @@ namespace Infrastructure.Data.Migrations
                     TourId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     OrderIndex = table.Column<int>(type: "int", nullable: false),
                     Title = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false)
+                    Description = table.Column<string>(type: "nvarchar(500)", maxLength: 500, nullable: false),
+                    PlaceId = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_TourStops", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_TourStops_Places_PlaceId",
+                        column: x => x.PlaceId,
+                        principalTable: "Places",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_TourStops_Tours_TourId",
                         column: x => x.TourId,
@@ -498,6 +554,94 @@ namespace Infrastructure.Data.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
+
+            migrationBuilder.CreateTable(
+                name: "Bookings",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    GuideId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    TouristId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    TourId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    BookingDate = table.Column<DateOnly>(type: "date", nullable: false),
+                    StartTime = table.Column<TimeOnly>(type: "time", nullable: false),
+                    EndTime = table.Column<TimeOnly>(type: "time", nullable: false),
+                    Status = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    SlotId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TotalPrice = table.Column<decimal>(type: "decimal(10,2)", nullable: false),
+                    PaymentMethod = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
+                    PaymentIntentId = table.Column<string>(type: "nvarchar(255)", maxLength: 255, nullable: true),
+                    CreatedAtUtc = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Bookings", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Bookings_AspNetUsers_TouristId",
+                        column: x => x.TouristId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Bookings_BookingSlots_SlotId",
+                        column: x => x.SlotId,
+                        principalTable: "BookingSlots",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Bookings_TourGuideProfiles_GuideId",
+                        column: x => x.GuideId,
+                        principalTable: "TourGuideProfiles",
+                        principalColumn: "UserId",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Bookings_Tours_TourId",
+                        column: x => x.TourId,
+                        principalTable: "Tours",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "BookingAddOns",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    BookingId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TourAddOnId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Price = table.Column<decimal>(type: "decimal(10,2)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BookingAddOns", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_BookingAddOns_Bookings_BookingId",
+                        column: x => x.BookingId,
+                        principalTable: "Bookings",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_BookingAddOns_TourAddOns_TourAddOnId",
+                        column: x => x.TourAddOnId,
+                        principalTable: "TourAddOns",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AdminAuditLogs_AdminId",
+                table: "AdminAuditLogs",
+                column: "AdminId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AdminAuditLogs_CreatedAtUtc",
+                table: "AdminAuditLogs",
+                column: "CreatedAtUtc");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AdminAuditLogs_EntityType",
+                table: "AdminAuditLogs",
+                column: "EntityType");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
@@ -539,6 +683,16 @@ namespace Infrastructure.Data.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
+                name: "IX_BookingAddOns_BookingId",
+                table: "BookingAddOns",
+                column: "BookingId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BookingAddOns_TourAddOnId",
+                table: "BookingAddOns",
+                column: "TourAddOnId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Bookings_GuideId_Date",
                 table: "Bookings",
                 columns: new[] { "GuideId", "BookingDate" });
@@ -564,15 +718,41 @@ namespace Infrastructure.Data.Migrations
                 columns: new[] { "GuideId", "Date", "BookedCount" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_BookingSlots_GuideId_Date_StartTime",
+                name: "IX_BookingSlots_TourId",
                 table: "BookingSlots",
-                columns: new[] { "GuideId", "Date", "StartTime" },
+                column: "TourId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_BookingSlots_TourId_Date_StartTime",
+                table: "BookingSlots",
+                columns: new[] { "TourId", "Date", "StartTime" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_FavoriteTourGuides_TouristUserId_CreatedAtUtc",
                 table: "FavoriteTourGuides",
                 columns: new[] { "TouristUserId", "CreatedAtUtc" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GuideWallets_GuideId",
+                table: "GuideWallets",
+                column: "GuideId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GuideWalletTransactions_CreatedAtUtc",
+                table: "GuideWalletTransactions",
+                column: "CreatedAtUtc");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GuideWalletTransactions_GuideId",
+                table: "GuideWalletTransactions",
+                column: "GuideId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GuideWalletTransactions_WalletId",
+                table: "GuideWalletTransactions",
+                column: "WalletId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_RefreshTokens_TokenHash",
@@ -583,6 +763,17 @@ namespace Infrastructure.Data.Migrations
                 name: "IX_RefreshTokens_UserId",
                 table: "RefreshTokens",
                 column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SavedPlaces_PlaceId",
+                table: "SavedPlaces",
+                column: "PlaceId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SavedPlaces_TouristUserId_PlaceId",
+                table: "SavedPlaces",
+                columns: new[] { "TouristUserId", "PlaceId" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_TourAddOns_TourId",
@@ -617,15 +808,14 @@ namespace Infrastructure.Data.Migrations
                 column: "TourId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TouristProfiles_UserId",
-                table: "TouristProfiles",
-                column: "UserId",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Tours_GuideId",
                 table: "Tours",
                 column: "GuideId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TourStops_PlaceId",
+                table: "TourStops",
+                column: "PlaceId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TourStops_TourId_OrderIndex",
@@ -637,6 +827,9 @@ namespace Infrastructure.Data.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "AdminAuditLogs");
+
             migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");
 
@@ -653,19 +846,22 @@ namespace Infrastructure.Data.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "Bookings");
+                name: "BookingAddOns");
 
             migrationBuilder.DropTable(
                 name: "FavoriteTourGuides");
 
             migrationBuilder.DropTable(
-                name: "Places");
+                name: "GuideWallets");
+
+            migrationBuilder.DropTable(
+                name: "GuideWalletTransactions");
 
             migrationBuilder.DropTable(
                 name: "RefreshTokens");
 
             migrationBuilder.DropTable(
-                name: "TourAddOns");
+                name: "SavedPlaces");
 
             migrationBuilder.DropTable(
                 name: "TourGuideCities");
@@ -683,13 +879,22 @@ namespace Infrastructure.Data.Migrations
                 name: "TourInclusions");
 
             migrationBuilder.DropTable(
-                name: "TouristProfiles");
-
-            migrationBuilder.DropTable(
                 name: "TourStops");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
+
+            migrationBuilder.DropTable(
+                name: "Bookings");
+
+            migrationBuilder.DropTable(
+                name: "TourAddOns");
+
+            migrationBuilder.DropTable(
+                name: "TouristProfiles");
+
+            migrationBuilder.DropTable(
+                name: "Places");
 
             migrationBuilder.DropTable(
                 name: "BookingSlots");

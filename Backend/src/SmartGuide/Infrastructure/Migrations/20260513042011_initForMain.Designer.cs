@@ -9,11 +9,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace Infrastructure.Data.Migrations
+namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260507231428_AdminSeeder")]
-    partial class AdminSeeder
+    [Migration("20260513042011_initForMain")]
+    partial class initForMain
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -25,14 +25,66 @@ namespace Infrastructure.Data.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("Domain.Entities.Admin.AdminAuditLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<string>("AdminId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Details")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EntityId")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("nvarchar(120)");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(60)
+                        .HasColumnType("nvarchar(60)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AdminId");
+
+                    b.HasIndex("CreatedAtUtc");
+
+                    b.HasIndex("EntityType");
+
+                    b.ToTable("AdminAuditLogs");
+                });
+
             modelBuilder.Entity("Domain.Entities.Book.Booking", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<DateOnly>("BookingDate")
+                        .HasColumnType("date");
+
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
+
+                    b.Property<TimeOnly>("EndTime")
+                        .HasColumnType("time");
 
                     b.Property<string>("GuideId")
                         .IsRequired()
@@ -49,6 +101,9 @@ namespace Infrastructure.Data.Migrations
 
                     b.Property<Guid>("SlotId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<TimeOnly>("StartTime")
+                        .HasColumnType("time");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -67,8 +122,6 @@ namespace Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("GuideId");
-
                     b.HasIndex("SlotId")
                         .HasDatabaseName("IX_Bookings_SlotId");
 
@@ -77,6 +130,9 @@ namespace Infrastructure.Data.Migrations
 
                     b.HasIndex("TouristId")
                         .HasDatabaseName("IX_Bookings_TouristId");
+
+                    b.HasIndex("GuideId", "BookingDate")
+                        .HasDatabaseName("IX_Bookings_GuideId_Date");
 
                     b.ToTable("Bookings", (string)null);
                 });
@@ -337,10 +393,35 @@ namespace Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId")
+                    b.ToTable("TouristProfiles", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.SavedPlaces.SavedPlace", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("PlaceId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TouristUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PlaceId");
+
+                    b.HasIndex("TouristUserId", "PlaceId")
                         .IsUnique();
 
-                    b.ToTable("TouristProfiles", (string)null);
+                    b.ToTable("SavedPlaces");
                 });
 
             modelBuilder.Entity("Domain.Entities.Tours.Tour", b =>
@@ -500,6 +581,97 @@ namespace Infrastructure.Data.Migrations
                     b.ToTable("TourStops", (string)null);
                 });
 
+            modelBuilder.Entity("Domain.Entities.Wallet.GuideWallet", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Balance")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("GuideId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<bool>("IsFrozen")
+                        .HasColumnType("bit");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GuideId")
+                        .IsUnique();
+
+                    b.ToTable("GuideWallets", t =>
+                        {
+                            t.HasCheckConstraint("CK_GuideWallet_Balance_NonNegative", "[Balance] >= 0");
+                        });
+                });
+
+            modelBuilder.Entity("Domain.Entities.Wallet.GuideWalletTransaction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("AdminId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("BalanceAfter")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("BalanceBefore")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("GuideId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ReferenceId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("WalletId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedAtUtc");
+
+                    b.HasIndex("GuideId");
+
+                    b.HasIndex("WalletId");
+
+                    b.ToTable("GuideWalletTransactions");
+                });
+
             modelBuilder.Entity("Infrastructure.Data.Entities.Identity.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
@@ -526,6 +698,12 @@ namespace Infrastructure.Data.Migrations
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("ForceLogoutRequired")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("GuideAccountStatus")
+                        .HasColumnType("int");
 
                     b.Property<string>("GuideLicenseImage")
                         .HasColumnType("nvarchar(max)");
@@ -877,6 +1055,26 @@ namespace Infrastructure.Data.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Domain.Entities.SavedPlaces.SavedPlace", b =>
+                {
+                    b.HasOne("Domain.Entities.Home.Place", "Place")
+                        .WithMany("SavedByTourists")
+                        .HasForeignKey("PlaceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.Profiles.Tourist.TouristProfile", "Tourist")
+                        .WithMany("SavedPlaces")
+                        .HasForeignKey("TouristUserId")
+                        .HasPrincipalKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Place");
+
+                    b.Navigation("Tourist");
+                });
+
             modelBuilder.Entity("Domain.Entities.Tours.Tour", b =>
                 {
                     b.HasOne("Domain.Entities.Profiles.TourGuide.TourGuideProfile", null)
@@ -1006,6 +1204,8 @@ namespace Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Domain.Entities.Home.Place", b =>
                 {
+                    b.Navigation("SavedByTourists");
+
                     b.Navigation("TourStops");
                 });
 
@@ -1016,6 +1216,11 @@ namespace Infrastructure.Data.Migrations
                     b.Navigation("Gallery");
 
                     b.Navigation("Languages");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Profiles.Tourist.TouristProfile", b =>
+                {
+                    b.Navigation("SavedPlaces");
                 });
 
             modelBuilder.Entity("Domain.Entities.Tours.Tour", b =>

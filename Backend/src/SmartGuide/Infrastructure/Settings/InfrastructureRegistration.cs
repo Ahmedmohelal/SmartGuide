@@ -42,7 +42,7 @@ namespace Infrastructure.Settings
         {
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
-                    configuration.GetConnectionString("DefaultConnection"),
+                    configuration.GetConnectionString("MainConnection"),
                         sqlOptions => sqlOptions.EnableRetryOnFailure()
             ));
 
