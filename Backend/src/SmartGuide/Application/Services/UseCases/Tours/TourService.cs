@@ -425,55 +425,19 @@ namespace Application.Services.UseCases.Tours
         public async Task<List<GuideToursHomeDto>> GetHomeToursAsync()
         {
             var tours = await _tourRepository.GetAllActiveToursAsync();
-
-            var groupedTours = tours.GroupBy(t => t.GuideId);
-
-            var result = new List<GuideToursHomeDto>();
-
-            foreach (var group in groupedTours)
+            return tours.Select(t => new GuideToursHomeDto
             {
-                var guide = await _userService.FindByIdAsync(group.Key);
-
-                if (guide == null)
-                    continue;
-
-                result.Add(new GuideToursHomeDto
-                {
-                    GuideId = guide.Id,
-
-                    GuideName = $"{guide.FirstName} {guide.LastName}",
-
-                    GuideImage = !string.IsNullOrWhiteSpace(guide.ProfileImage)
-    ? _imageUrlService.ToPublicImageUrl(
-        guide.ProfileImage,
-        "Profiles"
-      )
-    : string.Empty,
-
-                    Tours = group.Select(t => new TourListItemDto
-                    {
-                        Id = t.Id,
-
-                        Title = t.Title,
-
-                        DurationHours = t.DurationHours,
-
-                        MaxGroupSize = t.MaxGroupSize,
-
-                        Price = t.Price,
-
-                        PrimaryImage = t.TourImages != null && t.TourImages.Any()
-    ? _imageUrlService.ToPublicImageUrl(
-        t.TourImages.FirstOrDefault(i => i.IsPrimary)?.ImageUrl,
-        $"ToursImages/{t.Id}"
-      )
-    : string.Empty
-
-                    }).ToList()
-                });
-            }
-
-            return result;
+                Id = t.Id,
+                GuideId = t.GuideId,
+                Title = t.Title,
+                DurationHours = t.DurationHours,
+                Price = t.Price,
+                MaxGroupSize = t.MaxGroupSize,
+                PrimaryImage = _imageUrlService.ToPublicImageUrl(
+                    t.TourImages.FirstOrDefault(i => i.IsPrimary)?.ImageUrl,
+                    $"ToursImages/{t.Id}"
+                ) ?? string.Empty
+            }).ToList();
         }
 
     }
