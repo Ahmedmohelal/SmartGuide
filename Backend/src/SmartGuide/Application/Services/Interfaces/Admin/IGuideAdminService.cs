@@ -17,5 +17,6 @@ namespace Application.Services.Interfaces.Admin
         Task<OperationResultDto> BanGuideAsync(string guideId, string adminId, string reason, string? ipAddress);
         Task<OperationResultDto> PutUnderReviewAsync(string guideId, string adminId, string reason, string? ipAddress);
         Task<OperationResultDto> ForceLogoutGuideAsync(string guideId, string adminId, string reason, string? ipAddress);
+        Task<GuideDocumentsDto?> GetGuideDocumentsAsync(string guideId);
     }
 }

@@ -106,6 +106,17 @@ namespace API.Controllers.Admin
             return Ok(result);
         }
 
+        [HttpGet("guides/{guideId}/documents")]
+        public async Task<IActionResult> GetGuideDocumentsAsync(string guideId)
+        {
+            var result = await _guideAdminService.GetGuideDocumentsAsync(guideId);
+
+            if (result == null)
+                return NotFound(new { message = "Guide not found" });
+
+            return Ok(result);
+        }
+
         [HttpGet("guides")]
         public async Task<IActionResult> GetAllGuidesAsync()
         {
