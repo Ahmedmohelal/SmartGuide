@@ -12,6 +12,7 @@ namespace Application.DTOs.Tour
 
         public int DurationHours { get; set; }
 
+        public int MaxGroupSize { get; set; }
         public decimal Price { get; set; }
         public string? PrimaryImage { get; set; }
     }

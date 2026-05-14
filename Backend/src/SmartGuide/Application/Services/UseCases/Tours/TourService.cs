@@ -33,6 +33,7 @@ namespace Application.Services.UseCases.Tours
                 Title = t.Title,
                 DurationHours = t.DurationHours,
                 Price = t.Price,
+                MaxGroupSize = t.MaxGroupSize,
                 PrimaryImage = _imageUrlService.ToPublicImageUrl(
                     t.TourImages.FirstOrDefault(i => i.IsPrimary)?.ImageUrl,
                     $"ToursImages/{t.Id}"

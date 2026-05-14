@@ -14,24 +14,24 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend", policy =>
-    {
-        policy.WithOrigins(
-            "http://localhost:5174",
-                "http://127.0.0.1:5500",
-                "http://localhost:5500")
-              .AllowAnyMethod()
-              .AllowAnyHeader()
-              .AllowCredentials();
-    });
     //options.AddPolicy("AllowFrontend", policy =>
     //{
-    //    policy
-    //        .SetIsOriginAllowed(_ => true)
-    //        .AllowAnyMethod()
-    //        .AllowAnyHeader()
-    //        .AllowCredentials();
+    //    policy.WithOrigins(
+    //        "http://localhost:5174",
+    //            "http://127.0.0.1:5500",
+    //            "http://localhost:5500")
+    //          .AllowAnyMethod()
+    //          .AllowAnyHeader()
+    //          .AllowCredentials();
     //});
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy
+            .SetIsOriginAllowed(_ => true)
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials();
+    });
 });
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
