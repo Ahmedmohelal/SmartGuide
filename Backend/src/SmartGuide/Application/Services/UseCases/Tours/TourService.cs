@@ -1,10 +1,12 @@
 ﻿using Application.DTOs.AuthenticationDTOs;
 using Application.DTOs.Tour;
+using Application.Services.Interfaces.Auth;
 using Application.Services.Interfaces.PictureMaker;
 using Application.Services.Interfaces.Tour;
 using Domain.Entities.Tours;
 using Domain.Entities.Tours.Enums;
 using Domain.Interfaces;
+using Microsoft.AspNetCore.Identity;
 using System.Text.Json;
 
 namespace Application.Services.UseCases.Tours
@@ -15,11 +17,15 @@ namespace Application.Services.UseCases.Tours
         private readonly IImageUrlService _imageUrlService;
         private readonly IAttachmentService _attachmentService;
 
-        public TourService(ITourRepository tourRepository, IImageUrlService imageUrlService, IAttachmentService attachmentService)
+        private readonly IUserService _userService;
+
+        public TourService(ITourRepository tourRepository, IImageUrlService imageUrlService, IAttachmentService attachmentService,
+            IUserService userService)
         {
             _tourRepository = tourRepository;
             _imageUrlService = imageUrlService;
             _attachmentService = attachmentService;
+            _userService = userService;
         }
 
 
@@ -416,6 +422,59 @@ namespace Application.Services.UseCases.Tours
             }).ToList();
         }
 
+        public async Task<List<GuideToursHomeDto>> GetHomeToursAsync()
+        {
+            var tours = await _tourRepository.GetAllActiveToursAsync();
+
+            var groupedTours = tours.GroupBy(t => t.GuideId);
+
+            var result = new List<GuideToursHomeDto>();
+
+            foreach (var group in groupedTours)
+            {
+                var guide = await _userService.FindByIdAsync(group.Key);
+
+                if (guide == null)
+                    continue;
+
+                result.Add(new GuideToursHomeDto
+                {
+                    GuideId = guide.Id,
+
+                    GuideName = $"{guide.FirstName} {guide.LastName}",
+
+                    GuideImage = !string.IsNullOrWhiteSpace(guide.ProfileImage)
+    ? _imageUrlService.ToPublicImageUrl(
+        guide.ProfileImage,
+        "Profiles"
+      )
+    : string.Empty,
+
+                    Tours = group.Select(t => new TourListItemDto
+                    {
+                        Id = t.Id,
+
+                        Title = t.Title,
+
+                        DurationHours = t.DurationHours,
+
+                        MaxGroupSize = t.MaxGroupSize,
+
+                        Price = t.Price,
+
+                        PrimaryImage = t.TourImages != null && t.TourImages.Any()
+    ? _imageUrlService.ToPublicImageUrl(
+        t.TourImages.FirstOrDefault(i => i.IsPrimary)?.ImageUrl,
+        $"ToursImages/{t.Id}"
+      )
+    : string.Empty
+
+                    }).ToList()
+                });
+            }
+
+            return result;
+        }
 
     }
 }

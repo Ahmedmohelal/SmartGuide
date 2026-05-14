@@ -18,6 +18,6 @@ namespace Domain.Interfaces
         public Task DeleteAsync(Guid tourId);
 
         public Task<List<Tour>> GetToursByPlaceAsync(int placeId);
-
+        Task<List<Tour>> GetAllActiveToursAsync();
     }
 }

@@ -1,5 +1,6 @@
 ﻿using Application.DTOs.Tour;
 using Application.Services.Interfaces.Tour;
+using Domain.Entities.Tours;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -39,6 +40,18 @@ namespace API.Controllers.Tours
                 return NotFound();
             }
             return Ok(tour);
+        }
+
+        [Authorize(Roles = "Tourist")]
+        [HttpGet("home")]
+        public async Task<IActionResult> GetHomeTours()
+        {
+            var result = await _tourService.GetHomeToursAsync();
+            if (result == null)
+            {
+                return NotFound();
+            }
+            return Ok(result);
         }
 
     }
