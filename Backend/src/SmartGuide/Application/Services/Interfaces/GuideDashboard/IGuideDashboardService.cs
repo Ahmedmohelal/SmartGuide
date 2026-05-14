@@ -15,7 +15,7 @@ namespace Application.Services.Interfaces.GuideDashboard
         Task<GuideWalletDto> GetWalletAsync(string guideId);
         Task<List<GuideWalletTransactionDto>> GetWalletTransactionsAsync(string guideId, int take = 100);
         Task<List<GuideRecentActivityDto>> GetRecentActivitiesAsync(string guideId, int take = 20);
+        Task<GuideMyDocumentsDto?> GetMyDocumentsAsync(string guideId);
 
-        
     }
 }

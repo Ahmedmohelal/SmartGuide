@@ -1,6 +1,7 @@
 ﻿using Application.DTOs.AdminDashboard;
 using Application.DTOs.GuideDashboard;
 using Application.Services.Interfaces.GuideDashboard;
+using Application.Services.Interfaces.PictureMaker;
 using Domain.Entities.Book;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -10,10 +11,12 @@ namespace Infrastructure.Services.GuideDashboard
     public class GuideDashboardService : IGuideDashboardService
     {
         private readonly ApplicationDbContext _context;
+        private readonly IImageUrlService _imageUrlService;
 
-        public GuideDashboardService(ApplicationDbContext context)
+        public GuideDashboardService(ApplicationDbContext context , IImageUrlService imageUrlService)
         {
             _context = context;
+            _imageUrlService = imageUrlService;
         }
 
         public async Task<GuideDashboardResponseDto> GetDashboardAsync(
@@ -432,6 +435,25 @@ namespace Infrastructure.Services.GuideDashboard
                 .OrderByDescending(x => x.OccurredAtUtc)
                 .Take(take)
                 .ToList();
+        }
+        public async Task<GuideMyDocumentsDto?> GetMyDocumentsAsync(string guideId)
+        {
+            var guide = await _context.Users
+                .FirstOrDefaultAsync(g => g.Id == guideId);
+
+            if (guide == null)
+                return null;
+
+            return new GuideMyDocumentsDto
+            {
+                GuideId = guide.Id,
+                FullName = $"{guide.FirstName} {guide.LastName}",
+                NationalIdImageUrl = _imageUrlService.ToPublicImageUrl(guide.NationalIdImage, "nationalIds"),
+
+                LicenseImageUrl = _imageUrlService.ToPublicImageUrl(guide.GuideLicenseImage, "licenses"),
+
+                VerificationStatus = guide.IsGuideVerified.ToString()
+            };
         }
     }
 }

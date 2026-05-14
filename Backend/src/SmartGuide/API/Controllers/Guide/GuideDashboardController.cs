@@ -44,6 +44,22 @@ namespace API.Controllers.Guide
             return Ok(result);
         }
 
+        [HttpGet("documents")]
+        public async Task<IActionResult> GetMyDocumentsAsync()
+        {
+            var guideId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrWhiteSpace(guideId))
+                return Unauthorized();
+
+            var result = await _dashboardService.GetMyDocumentsAsync(guideId);
+
+            if (result == null)
+                return NotFound(new { message = "Guide not found" });
+
+            return Ok(result);
+        }
+
         [HttpGet("earnings")]
         public async Task<IActionResult> GetEarningsTimelineAsync([FromQuery] int months = 12)
         {
