@@ -1,12 +1,13 @@
 using API.Extentions;
+using API.Middleware;
 using Application.Services.Interfaces;
 using Application.Settings;
 using Infrastructure.Data;
+using Infrastructure.Hubs;
 using Infrastructure.Services.Email;
 using Infrastructure.Settings;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using API.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,11 +16,22 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:5174")
+        policy.WithOrigins(
+            "http://localhost:5174",
+                "http://127.0.0.1:5500",
+                "http://localhost:5500")
               .AllowAnyMethod()
               .AllowAnyHeader()
               .AllowCredentials();
     });
+    //options.AddPolicy("AllowFrontend", policy =>
+    //{
+    //    policy
+    //        .SetIsOriginAllowed(_ => true)
+    //        .AllowAnyMethod()
+    //        .AllowAnyHeader()
+    //        .AllowCredentials();
+    //});
 });
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -74,5 +86,6 @@ app.UseMiddleware<GuideAccessGuardMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<ChatHub>("/hubs/chat");
 
 app.Run();

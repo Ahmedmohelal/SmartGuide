@@ -12,6 +12,7 @@ using Infrastructure.Data.Entities;
 using Infrastructure.Data.Entities.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Domain.Entities.Chat;
 
 namespace Infrastructure.Data
 {
@@ -49,6 +50,13 @@ namespace Infrastructure.Data
         public DbSet<AdminAuditLog> AdminAuditLogs { get; set; }
 
         //public DbSet<SavedTourGuide> FavoriteTourGuides { get; set; }
+
+        public DbSet<Conversation> ChatConversations { get; set; }
+        public DbSet<ConversationParticipant> ChatConversationParticipants { get; set; }
+        public DbSet<ChatMessage> ChatMessages { get; set; }
+        public DbSet<ChatUserConnection> ChatUserConnections { get; set; }
+
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
