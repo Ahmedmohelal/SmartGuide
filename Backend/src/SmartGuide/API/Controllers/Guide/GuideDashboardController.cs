@@ -126,7 +126,7 @@ namespace API.Controllers.Guide
             return Ok(tours);
         }
 
-        [HttpGet("{id:guid}")]
+        [HttpGet("tour/{id:guid}")]
         public async Task<IActionResult> GetTourById(Guid id)
         {
             var tour = await _tourService.GetTourByIdAsync(id);
@@ -137,12 +137,14 @@ namespace API.Controllers.Guide
             return Ok(tour);
         }
 
-        [HttpPost("create")]
+        [HttpPost("tour/create")]
         public async Task<IActionResult> CreateTourWithImages(
         [FromForm] CreateTourRequestDTO request)
         {
             var userId = User.FindFirstValue("userId")
                          ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null)
+                return BadRequest("The User Id Is Null");
 
             if (string.IsNullOrWhiteSpace(userId))
                 return Unauthorized();
@@ -155,7 +157,19 @@ namespace API.Controllers.Guide
             return Ok(res);
         }
 
-        [HttpPut("{id:guid}")]
+        [HttpGet("tour/by-place/{placeId}")]
+        public async Task<IActionResult> GetToursByPlace(int placeId)
+        {
+            var tours = await _tourService.GetToursByPlaceAsync(placeId);
+
+            if (tours is null || tours.Count == 0)
+                return NotFound("There Is No Tour With This Place ");
+
+            return Ok(tours);
+        }
+
+
+        [HttpPut("tour/edit/{id:guid}")]
         public async Task<IActionResult> UpdateTour(
                                                      Guid id,
                                                      [FromForm] CreateTourRequestDTO request)
@@ -174,7 +188,7 @@ namespace API.Controllers.Guide
             return Ok(res);
         }
 
-        [HttpDelete("{id:guid}")]
+        [HttpDelete("tour/{id:guid}")]
         public async Task<IActionResult> DeleteTour(Guid id)
         {
             var userId = User.FindFirstValue("userId")
