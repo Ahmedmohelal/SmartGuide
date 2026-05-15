@@ -224,5 +224,23 @@ namespace Infrastructure.Services.Admin
 
             return user;
         }
+        public async Task<GuideDocumentsDto?> GetGuideDocumentsAsync(string guideId)
+        {
+            var guide = await _context.Users
+                .FirstOrDefaultAsync(g => g.Id == guideId && g.Role == "TourGuide");
+
+            if (guide == null)
+                return null;
+
+            return new GuideDocumentsDto
+            {
+                GuideId = guide.Id,
+                FullName = $"{guide.FirstName} {guide.LastName}",
+                Email = guide.Email,
+                NationalIdImageUrl = _imageUrlService.ToPublicImageUrl(guide.NationalIdImage, "nationalIds"),
+                LicenseImageUrl = _imageUrlService.ToPublicImageUrl(guide.GuideLicenseImage, "licenses"),
+                Status = guide.IsGuideVerified.ToString()
+            };
+        }
     }
 }

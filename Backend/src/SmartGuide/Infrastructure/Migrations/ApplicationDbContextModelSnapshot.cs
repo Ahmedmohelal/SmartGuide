@@ -206,6 +206,205 @@ namespace Infrastructure.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Domain.Entities.Chat.ChatMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DeliveredAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("EditedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsEdited")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("SeenAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("SenderUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime>("SentAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SenderUserId")
+                        .HasDatabaseName("IX_ChatMessages_SenderUserId");
+
+                    b.HasIndex("ConversationId", "SentAtUtc")
+                        .HasDatabaseName("IX_ChatMessages_Conversation_SentAt");
+
+                    b.ToTable("ChatMessages", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.Chat.ChatUserConnection", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("ConnectedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ConnectionId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DisconnectedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConnectionId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_ChatUserConnections_ConnectionId");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("IX_ChatUserConnections_UserId");
+
+                    b.ToTable("ChatUserConnections", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.Chat.Conversation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("GuideUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsMessagingBlocked")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("LastMessagePreview")
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<DateTime?>("LastMessageSentAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("MessagingBlockedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("MessagingBlockedByGuideUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("TouristUserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GuideUserId")
+                        .HasDatabaseName("IX_ChatConversations_GuideUserId");
+
+                    b.HasIndex("TouristUserId")
+                        .HasDatabaseName("IX_ChatConversations_TouristUserId");
+
+                    b.HasIndex("UpdatedAtUtc")
+                        .HasDatabaseName("IX_ChatConversations_UpdatedAtUtc");
+
+                    b.HasIndex("TouristUserId", "GuideUserId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_ChatConversations_Tourist_Guide_NotDeleted")
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("ChatConversations", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.Chat.ConversationParticipant", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime?>("DeletedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("JoinedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasMaxLength(450)
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("IX_ChatConversationParticipants_UserId");
+
+                    b.HasIndex("ConversationId", "UserId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_ChatConversationParticipants_Conversation_User_NotDeleted")
+                        .HasFilter("[IsDeleted] = 0");
+
+                    b.ToTable("ChatConversationParticipants", (string)null);
+                });
+
             modelBuilder.Entity("Domain.Entities.Favorites.SavedTourGuide", b =>
                 {
                     b.Property<string>("TouristUserId")
@@ -1001,6 +1200,43 @@ namespace Infrastructure.Migrations
                     b.Navigation("Tour");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Chat.ChatMessage", b =>
+                {
+                    b.HasOne("Domain.Entities.Chat.Conversation", "Conversation")
+                        .WithMany("Messages")
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Conversation");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Chat.Conversation", b =>
+                {
+                    b.HasOne("Infrastructure.Data.Entities.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("GuideUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Infrastructure.Data.Entities.Identity.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("TouristUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Domain.Entities.Chat.ConversationParticipant", b =>
+                {
+                    b.HasOne("Domain.Entities.Chat.Conversation", "Conversation")
+                        .WithMany("Participants")
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Conversation");
+                });
+
             modelBuilder.Entity("Domain.Entities.Profiles.TourGuide.TourGuideCity", b =>
                 {
                     b.HasOne("Domain.Entities.Profiles.TourGuide.TourGuideProfile", "TourGuideProfile")
@@ -1197,6 +1433,13 @@ namespace Infrastructure.Migrations
             modelBuilder.Entity("Domain.Entities.Book.Booking", b =>
                 {
                     b.Navigation("SelectedAddOns");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Chat.Conversation", b =>
+                {
+                    b.Navigation("Messages");
+
+                    b.Navigation("Participants");
                 });
 
             modelBuilder.Entity("Domain.Entities.Home.Place", b =>
