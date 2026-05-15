@@ -2,7 +2,9 @@
 using Application.DTOs.AuthenticationDTOs;
 using Application.Services.Interfaces.Admin;
 using Application.Services.Interfaces.Auth;
+using Application.Services.Interfaces.Notifications;
 using Application.Services.Interfaces.PictureMaker;
+using Domain.Entities.Notifications;
 using Infrastructure.Data;
 using Infrastructure.Data.Entities.Identity;
 using Infrastructure.Data.Entities.Enums;
@@ -19,6 +21,7 @@ namespace Infrastructure.Services.Admin
         private readonly IRefreshTokenService _refreshTokenService;
         private readonly IAdminAuditService _auditService;
         private readonly ILogger<GuideAdminService> _logger;
+        private readonly INotificationService _notificationService;
 
         public GuideAdminService(
             ApplicationDbContext context,
@@ -26,7 +29,8 @@ namespace Infrastructure.Services.Admin
             IImageUrlService imageUrlService,
             IRefreshTokenService refreshTokenService,
             IAdminAuditService auditService,
-            ILogger<GuideAdminService> logger)
+            ILogger<GuideAdminService> logger,
+            INotificationService notificationService)
         {
             _context = context;
             _emailService = emailService;
@@ -34,6 +38,7 @@ namespace Infrastructure.Services.Admin
             _refreshTokenService = refreshTokenService;
             _auditService = auditService;
             _logger = logger;
+            _notificationService = notificationService;
         }
 
 
@@ -78,6 +83,13 @@ namespace Infrastructure.Services.Admin
             user.GuideAccountStatus = GuideAccountStatus.Active;
             await _context.SaveChangesAsync();
 
+            await _notificationService.SendAsync(
+                guideId,
+                "Account Approved 🎉",
+                "Your tour guide account has been approved. You can now create tours!",
+                NotificationType.GuideApproved,
+                guideId, "Guide");
+
             try
             {
                 await _emailService.SendEmailAsync(
@@ -119,6 +131,13 @@ namespace Infrastructure.Services.Admin
             user.LockoutEnd = DateTimeOffset.UtcNow.AddYears(100);
             await _context.SaveChangesAsync();
 
+            await _notificationService.SendAsync(
+                guideId,
+                "Account Not Approved",
+                $"Your verification was rejected. Reason: {reason}",
+                NotificationType.GuideRejected,
+                guideId, "Guide");
+
             try
             {
                 await _emailService.SendEmailAsync(
@@ -154,6 +173,13 @@ namespace Infrastructure.Services.Admin
             user.LockoutEnd = null;
             user.ForceLogoutRequired = false;
             await _context.SaveChangesAsync();
+
+            await _notificationService.SendAsync(
+                guideId,
+                "Account Activated ✅",
+                "Your account is now active again.",
+                NotificationType.AccountActivated,
+                guideId, "Guide");
 
             await _auditService.WriteAsync(adminId, "ActivateGuide", "Guide", user.Id, reason, ipAddress);
 
@@ -206,6 +232,26 @@ namespace Infrastructure.Services.Admin
             user.LockoutEnabled = true;
             user.LockoutEnd = DateTimeOffset.UtcNow.AddYears(100);
             await _context.SaveChangesAsync();
+
+            var (notifTitle, notifType) = targetStatus switch
+            {
+                GuideAccountStatus.Suspended =>
+                    ("Account Suspended ⚠️", NotificationType.AccountSuspended),
+                GuideAccountStatus.Banned =>
+                    ("Account Banned 🚫", NotificationType.AccountBanned),
+                GuideAccountStatus.UnderReview =>
+                    ("Account Under Review 🔍", NotificationType.AccountUnderReview),
+                _ =>
+                    ("Account Status Updated", NotificationType.AccountActivated)
+            };
+
+            await _notificationService.SendAsync(
+                guideId,
+                notifTitle,
+                $"Reason: {reason}",
+                notifType,
+                guideId, "Guide");
+
             await _refreshTokenService.RevokeAllUserTokensAsync(guideId, CancellationToken.None);
 
             await _auditService.WriteAsync(adminId, action, "Guide", user.Id, reason, ipAddress);
@@ -227,6 +273,7 @@ namespace Infrastructure.Services.Admin
 
             return user;
         }
+
         public async Task<GuideDocumentsDto?> GetGuideDocumentsAsync(string guideId)
         {
             var guide = await _context.Users

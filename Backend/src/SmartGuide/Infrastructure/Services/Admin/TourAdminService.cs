@@ -2,7 +2,9 @@
 using Application.DTOs.AuthenticationDTOs;
 using Application.Services.Interfaces.Admin;
 using Application.Services.Interfaces.Auth;
+using Application.Services.Interfaces.Notifications;
 using Application.Services.Interfaces.PictureMaker;
+using Domain.Entities.Notifications;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -12,18 +14,20 @@ using System.Text;
 
 namespace Infrastructure.Services.Admin
 {
-    public class TourAdminService:ITourAdminService
+    public class TourAdminService : ITourAdminService
     {
         private readonly ApplicationDbContext _context;
         private readonly IImageUrlService _imageUrlService;
+        private readonly INotificationService _notificationService;
 
         public TourAdminService(
             ApplicationDbContext context,
-            IImageUrlService imageUrlService
-          )
+            IImageUrlService imageUrlService,
+            INotificationService notificationService)
         {
             _context = context;
             _imageUrlService = imageUrlService;
+            _notificationService = notificationService;
         }
         public async Task<List<AdminTourDto>> GetAllToursAsync()
         {
@@ -77,6 +81,13 @@ namespace Infrastructure.Services.Admin
             tour.IsActive = false;
             await _context.SaveChangesAsync();
 
+            await _notificationService.SendAsync(
+                tour.GuideId,
+                "Tour Deactivated ⚠️",
+                $"Your tour \"{tour.Title}\" has been deactivated by the administrator.",
+                NotificationType.TourDeactivated,
+                tour.Id.ToString(), "Tour");
+
             return new OperationResultDto { IsSuccess = true, Message = "Tour deactivated successfully." };
         }
 
@@ -88,6 +99,13 @@ namespace Infrastructure.Services.Admin
 
             tour.IsActive = true;
             await _context.SaveChangesAsync();
+
+            await _notificationService.SendAsync(
+                tour.GuideId,
+                "Tour Activated ✅",
+                $"Your tour \"{tour.Title}\" has been activated.",
+                NotificationType.TourActivated,
+                tour.Id.ToString(), "Tour");
 
             return new OperationResultDto { IsSuccess = true, Message = "Tour activated successfully." };
         }

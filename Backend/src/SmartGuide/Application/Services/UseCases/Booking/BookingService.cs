@@ -2,7 +2,9 @@
 using Application.DTOs.Booking;
 using Application.Services.Interfaces;
 using Application.Services.Interfaces.Booking;
+using Application.Services.Interfaces.Notifications;
 using Domain.Entities.Book;
+using Domain.Entities.Notifications;
 using Domain.Interfaces;
 using BookingEntity = Domain.Entities.Book.Booking;
 
@@ -12,13 +14,16 @@ namespace Application.Services.UseCases.Booking
     {
         private readonly IBookingRepository _bookingRepo;
         private readonly ITourRepository _tourRepo;
+        private readonly INotificationService _notificationService;
 
         public BookingService(
             IBookingRepository bookingRepo,
-            ITourRepository tourRepo)
+            ITourRepository tourRepo,
+            INotificationService notificationService)
         {
             _bookingRepo = bookingRepo;
             _tourRepo = tourRepo;
+            _notificationService = notificationService;
         }
 
         // ==================== Slots ====================
@@ -159,6 +164,12 @@ namespace Application.Services.UseCases.Booking
             try
             {
                 var created = await _bookingRepo.CreateBookingAsync(booking);
+                await _notificationService.SendToMultipleAsync(
+                    new[] { touristId, slot.GuideId },
+                    "New Booking 🔔",
+                    "A new booking has been created.",
+                    NotificationType.BookingCreated,
+                    created.Id.ToString(), "Booking");
                 return BookingResultDto.Success(created.Id);
             }
             catch (InvalidOperationException ex)
@@ -197,6 +208,17 @@ namespace Application.Services.UseCases.Booking
                     IsSuccess = false,
                     Message = "Booking not found or already cancelled."
                 };
+
+            var booking = await _bookingRepo.GetBookingByIdAsync(bookingId);
+            if (booking is not null)
+            {
+                await _notificationService.SendToMultipleAsync(
+                    new[] { booking.TouristId, booking.GuideId },
+                    "Booking Cancelled ❌",
+                    "A booking has been cancelled.",
+                    NotificationType.BookingCancelled,
+                    bookingId.ToString(), "Booking");
+            }
 
             return new OperationResultDto
             {

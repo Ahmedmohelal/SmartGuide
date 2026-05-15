@@ -1,5 +1,8 @@
+using Application.Services.Interfaces.Notifications;
 using Application.Services.Interfaces.Payment;
 using Domain.Entities.Book;
+using Domain.Entities.Notifications;
+using Domain.Interfaces;
 using Infrastructure.Settings;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -12,15 +15,18 @@ namespace Infrastructure.Services.Payment
         private readonly IBookingRepository _bookingRepo;
         private readonly StripeSettings _stripeSettings;
         private readonly ILogger<PaymentService> _logger;
+        private readonly INotificationService _notificationService;
 
         public PaymentService(
             IBookingRepository bookingRepo,
             IOptions<StripeSettings> stripeOptions,
-            ILogger<PaymentService> logger)
+            ILogger<PaymentService> logger,
+            INotificationService notificationService)
         {
             _bookingRepo = bookingRepo;
             _stripeSettings = stripeOptions.Value;
             _logger = logger;
+            _notificationService = notificationService;
             StripeConfiguration.ApiKey = _stripeSettings.SecretKey;
         }
 
@@ -137,6 +143,13 @@ namespace Infrastructure.Services.Payment
                     booking.Status = BookingStatus.Confirmed;
                     await _bookingRepo.SaveChangesAsync();
 
+                    await _notificationService.SendAsync(
+                        booking.TouristId,
+                        "Payment Successful 💳",
+                        $"Your payment of ${booking.TotalPrice} was confirmed.",
+                        NotificationType.PaymentSucceeded,
+                        booking.Id.ToString(), "Booking");
+
                     _logger.LogInformation(
                         "Booking {BookingId} confirmed after successful payment.",
                         bookingId);
@@ -150,11 +163,22 @@ namespace Infrastructure.Services.Payment
                         "bookingId", out var bookingIdStr))
                         return true;
 
-                    if (!Guid.TryParse(bookingIdStr, out var bookingId))
+                    if (!Guid.TryParse(bookingIdStr, out var failedBookingId))
                         return true;
 
+                    var failedBooking = await _bookingRepo.GetBookingByIdAsync(failedBookingId);
+                    if (failedBooking is not null)
+                    {
+                        await _notificationService.SendAsync(
+                            failedBooking.TouristId,
+                            "Payment Failed ❌",
+                            "Your payment could not be processed. Please try again.",
+                            NotificationType.PaymentFailed,
+                            failedBookingId.ToString(), "Booking");
+                    }
+
                     _logger.LogWarning(
-                        "Payment failed for Booking {BookingId}.", bookingId);
+                        "Payment failed for Booking {BookingId}.", failedBookingId);
                 }
 
                 return true;

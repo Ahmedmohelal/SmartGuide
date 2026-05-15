@@ -1,7 +1,9 @@
 ﻿using Application.DTOs.AdminDashboard;
 using Application.DTOs.AuthenticationDTOs;
 using Application.Services.Interfaces.Admin;
+using Application.Services.Interfaces.Notifications;
 using Domain.Entities.Book;
+using Domain.Entities.Notifications;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -13,10 +15,14 @@ namespace Infrastructure.Services.Admin
     public class BookingAdminService : IBookingAdminService
     {
         private readonly ApplicationDbContext _context;
+        private readonly INotificationService _notificationService;
 
-        public BookingAdminService(ApplicationDbContext context)
+        public BookingAdminService(
+            ApplicationDbContext context,
+            INotificationService notificationService)
         {
             _context = context;
+            _notificationService = notificationService;
         }
 
         public async Task<List<AdminBookingDto>> GetAllBookingsAsync(
@@ -103,6 +109,13 @@ namespace Infrastructure.Services.Admin
             booking.Status = BookingStatus.Cancelled;
 
             await _context.SaveChangesAsync();
+
+            await _notificationService.SendToMultipleAsync(
+                new[] { booking.TouristId, booking.GuideId },
+                "Booking Cancelled by Admin ❌",
+                "Your booking has been cancelled by the administrator.",
+                NotificationType.BookingCancelled,
+                bookingId.ToString(), "Booking");
 
             await _context.BookingsSlot
                 .Where(s => s.Id == booking.SlotId && s.BookedCount > 0)

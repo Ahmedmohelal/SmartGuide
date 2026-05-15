@@ -13,6 +13,7 @@ using Infrastructure.Data.Entities.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Domain.Entities.Chat;
+using Domain.Entities.Notifications;
 
 namespace Infrastructure.Data
 {
@@ -55,6 +56,8 @@ namespace Infrastructure.Data
         public DbSet<ConversationParticipant> ChatConversationParticipants { get; set; }
         public DbSet<ChatMessage> ChatMessages { get; set; }
         public DbSet<ChatUserConnection> ChatUserConnections { get; set; }
+
+        public DbSet<Notification> Notifications { get; set; }
 
 
         //public DbSet<SavedTourGuide> FavoriteTourGuides { get; set; }
