@@ -101,5 +101,12 @@ namespace Infrastructure.Repository.Tours
                     t.TourStops.Any(s => s.PlaceId == placeId))
                 .ToListAsync();
         }
+        public async Task<List<Tour>> GetAllActiveToursAsync()
+        {
+            return await _context.Tours
+                .Include(t => t.TourImages)
+                .Where(t => t.IsActive)
+                .ToListAsync();
+        }
     }
 }

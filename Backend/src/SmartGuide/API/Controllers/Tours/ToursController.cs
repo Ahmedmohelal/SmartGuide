@@ -1,5 +1,6 @@
 ﻿using Application.DTOs.Tour;
 using Application.Services.Interfaces.Tour;
+using Domain.Entities.Tours;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -18,21 +19,7 @@ namespace API.Controllers.Tours
             _tourService = tourService;
         }
 
-        // Get All Tours For TourGide For Him 
-        [Authorize(Roles = "TourGuide")]
-        [HttpGet("my-tours")]
-        public async Task<IActionResult> GetMyTours()
-        {
-            var guideId = User.FindFirstValue("userId")
-                         ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            if (string.IsNullOrWhiteSpace(guideId))
-                return Unauthorized();
-
-            var tours = await _tourService.GetGuideToursAsync(guideId);
-
-            return Ok(tours);
-        }
+        
 
         // Get All Tours For TourGide To The Tourist To See The Tours To Choose One
         [Authorize(Roles = "Tourist")]
@@ -43,7 +30,7 @@ namespace API.Controllers.Tours
             return Ok(tours);
         }
 
-        [Authorize(Roles = "Tourist,TourGuide")]
+        [Authorize(Roles = "Tourist")]
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetTourById(Guid id)
         {
@@ -55,65 +42,17 @@ namespace API.Controllers.Tours
             return Ok(tour);
         }
 
-        [Authorize(Roles = "TourGuide")]
-        [HttpPost("create")]
-        public async Task<IActionResult> CreateTourWithImages(
-        [FromForm] CreateTourRequestDTO request)
+        [Authorize(Roles = "Tourist")]
+        [HttpGet("home")]
+        public async Task<IActionResult> GetHomeTours()
         {
-            var userId = User.FindFirstValue("userId")
-                         ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            if (string.IsNullOrWhiteSpace(userId))
-                return Unauthorized();
-
-            var res = await _tourService.CreateTourAsync(request, userId);
-
-            if (!res.IsSucceded)
-                return BadRequest(res);
-
-            return Ok(res);
+            var result = await _tourService.GetHomeToursAsync();
+            if (result == null)
+            {
+                return NotFound();
+            }
+            return Ok(result);
         }
 
-        [Authorize(Roles = "TourGuide")]
-        [HttpPut("{id:guid}")]
-        public async Task<IActionResult> UpdateTour(
-                                                     Guid id,
-                                                     [FromForm] CreateTourRequestDTO request)
-        {
-            var userId = User.FindFirstValue("userId")
-                         ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            if (string.IsNullOrWhiteSpace(userId))
-                return Unauthorized();
-
-            var res = await _tourService.UpdateTourAsync(id, request, userId);
-
-            if (!res.IsSuccess)
-                return BadRequest(res);
-
-            return Ok(res);
-        }
-        [Authorize(Roles = "TourGuide")]
-        [HttpDelete("{id:guid}")]
-        public async Task<IActionResult> DeleteTour(Guid id)
-        {
-            var userId = User.FindFirstValue("userId")
-                         ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrWhiteSpace(userId))
-                return Unauthorized();
-            var res = await _tourService.DeleteTourAsync(id, userId);
-            if (!res.IsSuccess)
-                return BadRequest(res);
-            return Ok(res);
-
-        }
-
-        [HttpGet("by-place/{placeId}")]
-        public async Task<IActionResult> GetToursByPlace(int placeId)
-        {
-            var tours = await _tourService.GetToursByPlaceAsync(placeId);
-
-            return Ok(tours);
-        }
     }
 }

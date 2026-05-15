@@ -23,6 +23,7 @@ namespace Application.Services.UseCases.Auth
         private readonly ILogger<AuthService> _logger;
         private readonly IAttachmentService _attachmentService;
         private readonly IProfileInitializerService _profileInitializerService;
+        private readonly IImageUrlService _imageUrlService;
 
         public AuthService(
             ITokenService tokenService,
@@ -32,12 +33,14 @@ namespace Application.Services.UseCases.Auth
             IEmailService emailService,
             ILogger<AuthService> logger,
             IAttachmentService attachmentService,
-            IProfileInitializerService profileInitializerService)
+            IProfileInitializerService profileInitializerService,
+            IImageUrlService imageUrlService)
         {
             _tokenService = tokenService;
             _userService = userService;
             _refreshTokenService = refreshTokenService;
             _googleAuthService = googleAuthService;
+            _imageUrlService = imageUrlService;
             _emailService = emailService;
             _logger = logger;
             _attachmentService = attachmentService;
@@ -196,7 +199,8 @@ namespace Application.Services.UseCases.Auth
                 RefreshToken = refreshToken,
                 ExpiresOn = expires,
                 RefreshTokenExpiresOn = refreshExpires,
-                Roles = roles
+                Roles = roles,
+                ProfilePictureUrl = _imageUrlService.ToPublicImageUrl(user.ProfileImage, "profileImages")
             };
         }
 

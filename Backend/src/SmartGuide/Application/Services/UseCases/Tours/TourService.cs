@@ -1,10 +1,12 @@
 ﻿using Application.DTOs.AuthenticationDTOs;
 using Application.DTOs.Tour;
+using Application.Services.Interfaces.Auth;
 using Application.Services.Interfaces.PictureMaker;
 using Application.Services.Interfaces.Tour;
 using Domain.Entities.Tours;
 using Domain.Entities.Tours.Enums;
 using Domain.Interfaces;
+using Microsoft.AspNetCore.Identity;
 using System.Text.Json;
 
 namespace Application.Services.UseCases.Tours
@@ -15,11 +17,15 @@ namespace Application.Services.UseCases.Tours
         private readonly IImageUrlService _imageUrlService;
         private readonly IAttachmentService _attachmentService;
 
-        public TourService(ITourRepository tourRepository, IImageUrlService imageUrlService, IAttachmentService attachmentService)
+        private readonly IUserService _userService;
+
+        public TourService(ITourRepository tourRepository, IImageUrlService imageUrlService, IAttachmentService attachmentService,
+            IUserService userService)
         {
             _tourRepository = tourRepository;
             _imageUrlService = imageUrlService;
             _attachmentService = attachmentService;
+            _userService = userService;
         }
 
 
@@ -33,6 +39,7 @@ namespace Application.Services.UseCases.Tours
                 Title = t.Title,
                 DurationHours = t.DurationHours,
                 Price = t.Price,
+                MaxGroupSize = t.MaxGroupSize,
                 PrimaryImage = _imageUrlService.ToPublicImageUrl(
                     t.TourImages.FirstOrDefault(i => i.IsPrimary)?.ImageUrl,
                     $"ToursImages/{t.Id}"
@@ -415,6 +422,23 @@ namespace Application.Services.UseCases.Tours
             }).ToList();
         }
 
+        public async Task<List<GuideToursHomeDto>> GetHomeToursAsync()
+        {
+            var tours = await _tourRepository.GetAllActiveToursAsync();
+            return tours.Select(t => new GuideToursHomeDto
+            {
+                Id = t.Id,
+                GuideId = t.GuideId,
+                Title = t.Title,
+                DurationHours = t.DurationHours,
+                Price = t.Price,
+                MaxGroupSize = t.MaxGroupSize,
+                PrimaryImage = _imageUrlService.ToPublicImageUrl(
+                    t.TourImages.FirstOrDefault(i => i.IsPrimary)?.ImageUrl,
+                    $"ToursImages/{t.Id}"
+                ) ?? string.Empty
+            }).ToList();
+        }
 
     }
 }
