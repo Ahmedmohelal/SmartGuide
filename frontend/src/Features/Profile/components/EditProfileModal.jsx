@@ -11,7 +11,15 @@ export default function EditProfileModal({ user, onClose, onSave }) {
     profilePicture: null,
   });
 
-  const [profilePicturePreview, setProfilePicturePreview] = useState(user?.profilePicture || null);
+  const [profilePicturePreview, setProfilePicturePreview] = useState(
+    user?.touristImage ||
+      user?.TouristImage ||
+      user?.touristImageUrl ||
+      user?.TouristImageUrl ||
+      user?.profilePicture ||
+      user?.ProfilePicture ||
+      null
+  );
   const [isUploading, setIsUploading] = useState(false);
 
   const handleFileChange = (e) => {

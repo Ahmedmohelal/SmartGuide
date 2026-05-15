@@ -1,4 +1,4 @@
-
+import { motion } from "framer-motion";
 import { hero } from "../../data/homeContent";
 
 /** مسار موجة عضوي (شبه فرشاة/ورق) — يتناسب مع عرض الشاشة */
@@ -31,16 +31,14 @@ export default function HeroSection() {
     >
       {/* صورة الهيرو — object-position يظبط القص لو الصورة طويلة أو بورتريه */}
       <div className="absolute inset-0 z-0">
-        <img
+        <motion.img
           src={hero.image}
           alt=""
-          width={1920}
-          height={1080}
-          decoding="async"
-          fetchPriority="high"
+          initial={{ scale: 1.1 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 8, ease: "easeOut" }}
           className="h-full w-full object-cover object-[center_22%] sm:object-[center_28%] lg:object-center"
         />
-        
       </div>
 
       <div
@@ -50,22 +48,56 @@ export default function HeroSection() {
 
       <div className="home-hero-bottom-fade" aria-hidden />
 
-
-
       <div className="relative z-[3] mx-auto flex min-h-[90vh] max-w-4xl flex-col items-center justify-center px-4 pb-36 pt-28 text-center sm:px-6 sm:pb-40">
-
-        <h1 className="text-4xl font-extrabold leading-tight text-white drop-shadow-md sm:text-5xl md:text-6xl">
-          {hero.title}
+        <h1
+          dir="ltr"
+          className="flex flex-wrap justify-center gap-3 text-4xl font-extrabold leading-tight text-white drop-shadow-md sm:text-5xl md:text-6xl"
+        >
+          {hero.title.split(" ").map((word, index) => (
+            <motion.span
+              key={index}
+              initial={{
+                opacity: 0,
+                y: 40,
+                filter: "blur(10px)",
+              }}
+              animate={{
+                opacity: 1,
+                y: 0,
+                filter: "blur(0px)",
+              }}
+              transition={{
+                duration: 0.6,
+                delay: index * 0.2,
+              }}
+            >
+              {word}
+            </motion.span>
+          ))}
         </h1>
-        <p className="mt-6 max-w-2xl text-base leading-relaxed text-white/95 drop-shadow sm:text-lg">
+        <motion.p
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8, duration: 0.6 }}
+          className="mt-6 max-w-2xl text-base text-white/95 sm:text-lg"
+        >
           {hero.subtitle}
-        </p>
-        <a
+        </motion.p>
+        <motion.a
           href="#featured"
-          className="mt-10 inline-flex rounded-full bg-white px-8 py-3 text-base font-bold text-egypt-teal shadow-lg transition hover:bg-white/95"
+          animate={{
+            y: [0, -6, 0],
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+          whileHover={{ scale: 1.05 }}
+          className="mt-10 inline-flex rounded-full bg-white px-8 py-3 text-base font-bold text-egypt-teal shadow-lg"
         >
           {hero.cta}
-        </a>
+        </motion.a>
       </div>
 
       <div className="home-hero-wave" aria-hidden>

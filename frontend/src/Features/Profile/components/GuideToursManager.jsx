@@ -4,7 +4,6 @@ import {
   AlertTriangle,
   CalendarClock,
   Pencil,
-  Image as ImageIcon,
   PlusCircle,
   Ticket,
   Trash2,
@@ -14,49 +13,45 @@ import {
   createTour,
   deleteTour,
   getMyTours,
+  getTourById,
   updateTour,
 } from "../../../Services/api/tours";
 import {
   extractTourDescription,
-  extractTourImageUrl,
+  extractTourImageUrls,
   extractTourMaxGroupSize,
 } from "../../../Services/utils/tourUtils";
+import {
+  defaultTourExtras,
+  mapTourToEditForm,
+  serializeTourExtras,
+} from "../../../Services/utils/tourJsonUtils";
+import TourExtrasFormSection from "../../../components/tours/TourExtrasFormSection";
+import TourImageCarousel from "../../../components/tours/TourImageCarousel";
+import MultiTourImagePicker from "../../../components/tours/MultiTourImagePicker";
 
-const initialState = {
+const createInitialState = () => ({
   title: "",
   description: "",
   price: "",
   durationHours: "",
   maxGroupSize: "",
-
-  // optional
-  stopsJson: "[]",
-  inclusionsJson: "[]",
-  addOnsJson: "[]",
-
-  imageFile: null,
-};
+  ...defaultTourExtras(),
+  imageFiles: [],
+  existingImageUrls: [],
+});
 
 export default function CreateTour() {
-  const [form, setForm] = useState(initialState);
+  const [form, setForm] = useState(() => createInitialState());
   const [loading, setLoading] = useState(false);
   const [tours, setTours] = useState([]);
   const [toursLoading, setToursLoading] = useState(true);
   const [editingTourId, setEditingTourId] = useState(null);
   const [editLoading, setEditLoading] = useState(false);
+  const [editFormLoading, setEditFormLoading] = useState(false);
   const [deleteLoadingId, setDeleteLoadingId] = useState(null);
   const [pendingDeleteTour, setPendingDeleteTour] = useState(null);
-  const [editForm, setEditForm] = useState({
-    title: "",
-    description: "",
-    price: "",
-    durationHours: "",
-    maxGroupSize: "",
-    stopsJson: "[]",
-    inclusionsJson: "[]",
-    addOnsJson: "[]",
-    imageFile: null,
-  });
+  const [editForm, setEditForm] = useState(() => createInitialState());
 
   const fetchMyTours = async () => {
     try {
@@ -78,6 +73,14 @@ export default function CreateTour() {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
+  const handleImageChange = (imageFiles, existingImageUrls) => {
+    setForm((prev) => ({
+      ...prev,
+      imageFiles,
+      existingImageUrls: existingImageUrls || prev.existingImageUrls || [],
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -96,9 +99,15 @@ export default function CreateTour() {
     setLoading(true);
 
     try {
-      await createTour(form);
+      const { programStops, inclusionLines, addOnRows, ...rest } = form;
+      const extras = serializeTourExtras({
+        programStops,
+        inclusionLines,
+        addOnRows,
+      });
+      await createTour({ ...rest, ...extras });
       toast.success("Tour created successfully!");
-      setForm(initialState);
+      setForm(createInitialState());
       await fetchMyTours();
     } catch (err) {
       toast.error(err?.response?.data?.message || "Something went wrong");
@@ -110,8 +119,7 @@ export default function CreateTour() {
     }
   };
 
-  const getTourImage = (tour) =>
-    extractTourImageUrl(tour) ||
+  const tourFallbackImage =
     "https://images.unsplash.com/photo-1493244040629-496f6d136cc3?auto=format&fit=crop&w=900&q=80";
 
   const getTourId = (tour) => tour?.id || tour?.tourId;
@@ -119,38 +127,43 @@ export default function CreateTour() {
   const getTourDurationHours = (tour) =>
     tour?.durationHours ?? tour?.DurationHours ?? 0;
 
-  const openEditForm = (tour) => {
-    setEditingTourId(getTourId(tour));
-    setEditForm({
-      title: getTourTitle(tour),
-      description: extractTourDescription(tour),
-      price: tour?.price ?? "",
-      durationHours: getTourDurationHours(tour),
-      maxGroupSize: extractTourMaxGroupSize(tour),
-      stopsJson: tour?.stopsJson || "[]",
-      inclusionsJson: tour?.inclusionsJson || "[]",
-      addOnsJson: tour?.addOnsJson || "[]",
-      imageFile: null,
-    });
+  const openEditForm = async (tour) => {
+    const id = getTourId(tour);
+    if (!id) {
+      toast.error("Invalid tour id");
+      return;
+    }
+
+    setEditingTourId(id);
+    setEditFormLoading(true);
+
+    try {
+      const full = await getTourById(id);
+      setEditForm(mapTourToEditForm(full, []));
+    } catch (err) {
+      console.error("Failed to load tour for edit:", err);
+      setEditForm(mapTourToEditForm(tour, []));
+      toast.error("Could not load full tour details");
+    } finally {
+      setEditFormLoading(false);
+    }
   };
 
   const closeEditForm = () => {
     setEditingTourId(null);
-    setEditForm({
-      title: "",
-      description: "",
-      price: "",
-      durationHours: "",
-      maxGroupSize: "",
-      stopsJson: "[]",
-      inclusionsJson: "[]",
-      addOnsJson: "[]",
-      imageFile: null,
-    });
+    setEditForm(createInitialState());
   };
 
   const handleEditChange = (key, value) => {
     setEditForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleEditImageChange = (imageFiles, existingImageUrls) => {
+    setEditForm((prev) => ({
+      ...prev,
+      imageFiles,
+      existingImageUrls: existingImageUrls || prev.existingImageUrls || [],
+    }));
   };
 
   const handleUpdateTour = async (e) => {
@@ -170,7 +183,13 @@ export default function CreateTour() {
 
     setEditLoading(true);
     try {
-      await updateTour(editingTourId, editForm);
+      const { programStops, inclusionLines, addOnRows, ...rest } = editForm;
+      const extras = serializeTourExtras({
+        programStops,
+        inclusionLines,
+        addOnRows,
+      });
+      await updateTour(editingTourId, { ...rest, ...extras });
       toast.success("Tour updated successfully!");
       closeEditForm();
       await fetchMyTours();
@@ -261,42 +280,28 @@ export default function CreateTour() {
             />
           </div>
 
-          <details className="rounded-xl border border-gray-200 bg-gray-50/80 p-4">
-            <summary className="cursor-pointer text-sm font-semibold text-gray-700">
-              Advanced options (JSON)
-            </summary>
-            <div className="mt-3 space-y-3">
-              <textarea
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none min-h-[80px] resize-y bg-white focus:ring-2 focus:ring-egypt-teal/30 focus:border-egypt-teal"
-                placeholder="Stops JSON (optional)"
-                value={form.stopsJson}
-                onChange={(e) => handleChange("stopsJson", e.target.value)}
-              />
-              <textarea
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none min-h-[80px] resize-y bg-white focus:ring-2 focus:ring-egypt-teal/30 focus:border-egypt-teal"
-                placeholder="Inclusions JSON (optional)"
-                value={form.inclusionsJson}
-                onChange={(e) => handleChange("inclusionsJson", e.target.value)}
-              />
-              <textarea
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none min-h-[80px] resize-y bg-white focus:ring-2 focus:ring-egypt-teal/30 focus:border-egypt-teal"
-                placeholder="AddOns JSON (optional)"
-                value={form.addOnsJson}
-                onChange={(e) => handleChange("addOnsJson", e.target.value)}
-              />
-            </div>
-          </details>
+          <TourExtrasFormSection
+            programStops={form.programStops}
+            onChangeProgramStops={(programStops) =>
+              setForm((prev) => ({ ...prev, programStops }))
+            }
+            inclusionLines={form.inclusionLines}
+            onChangeInclusionLines={(inclusionLines) =>
+              setForm((prev) => ({ ...prev, inclusionLines }))
+            }
+            addOnRows={form.addOnRows}
+            onChangeAddOnRows={(addOnRows) =>
+              setForm((prev) => ({ ...prev, addOnRows }))
+            }
+          />
 
-          <label className="flex items-center gap-2 rounded-xl border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-600 bg-gray-50">
-            <ImageIcon size={16} />
-            <span className="font-medium">Upload tour image</span>
-            <input
-              type="file"
-              accept="image/*"
-              className="ml-auto text-xs"
-              onChange={(e) => handleChange("imageFile", e.target.files?.[0])}
-            />
-          </label>
+          <MultiTourImagePicker
+            files={form.imageFiles}
+            existingImageUrls={form.existingImageUrls || []}
+            onChange={handleImageChange}
+            label="Tour images"
+            hint="Choose multiple images"
+          />
 
           <button
             disabled={loading}
@@ -325,10 +330,11 @@ export default function CreateTour() {
                 key={getTourId(tour) || tour.title}
                 className="overflow-hidden rounded-2xl border border-gray-100 shadow-sm bg-white"
               >
-                <img
-                  src={getTourImage(tour)}
+                <TourImageCarousel
+                  images={extractTourImageUrls(tour)}
+                  fallback={tourFallbackImage}
                   alt={getTourTitle(tour) || "Tour"}
-                  className="h-40 w-full object-cover"
+                  className="h-40 w-full"
                 />
                 <div className="p-4">
                   <h4 className="font-bold text-gray-900 line-clamp-1">
@@ -350,7 +356,7 @@ export default function CreateTour() {
                     </div>
                     <div className="flex items-center gap-1">
                       <Users size={14} className="text-egypt-teal" />
-                      <span>{tour.maxGroupSize ?? tour.MaxGroupSize ?? 0}</span>
+                      <span>{extractTourMaxGroupSize(tour)}</span>
                     </div>
                   </div>
 
@@ -386,6 +392,11 @@ export default function CreateTour() {
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="w-full max-w-2xl bg-white rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-bold text-gray-900 mb-4">Edit Tour</h3>
+            {editFormLoading ? (
+              <p className="py-12 text-center text-sm text-slate-500">
+                Loading tour details…
+              </p>
+            ) : (
             <form onSubmit={handleUpdateTour} className="space-y-3">
               <input
                 className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-egypt-teal/30 focus:border-egypt-teal"
@@ -428,18 +439,29 @@ export default function CreateTour() {
                   }
                 />
               </div>
-              <label className="flex items-center gap-2 rounded-xl border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-600 bg-gray-50">
-                <ImageIcon size={16} />
-                <span className="font-medium">Change image (optional)</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="ml-auto text-xs"
-                  onChange={(e) =>
-                    handleEditChange("imageFile", e.target.files?.[0] || null)
-                  }
-                />
-              </label>
+
+              <TourExtrasFormSection
+                programStops={editForm.programStops}
+                onChangeProgramStops={(programStops) =>
+                  setEditForm((prev) => ({ ...prev, programStops }))
+                }
+                inclusionLines={editForm.inclusionLines}
+                onChangeInclusionLines={(inclusionLines) =>
+                  setEditForm((prev) => ({ ...prev, inclusionLines }))
+                }
+                addOnRows={editForm.addOnRows}
+                onChangeAddOnRows={(addOnRows) =>
+                  setEditForm((prev) => ({ ...prev, addOnRows }))
+                }
+              />
+
+              <MultiTourImagePicker
+                files={editForm.imageFiles}
+                existingImageUrls={editForm.existingImageUrls || []}
+                onChange={handleEditImageChange}
+                label="Change tour images"
+                hint="Choose multiple images"
+              />
 
               <div className="flex items-center justify-end gap-2 pt-2">
                 <button
@@ -458,6 +480,7 @@ export default function CreateTour() {
                 </button>
               </div>
             </form>
+            )}
           </div>
         </div>
       )}

@@ -7,12 +7,13 @@ import {
   Clock,
   Users,
 } from "lucide-react";
-import { getMyTours, getToursCatalog } from "../../Services/api/tours";
+import { getHomeTours, getMyTours } from "../../Services/api/tours";
 import {
   extractTourDescription,
-  extractTourImageUrl,
+  extractTourImageUrls,
   extractTourMaxGroupSize,
 } from "../../Services/utils/tourUtils";
+import TourImageCarousel from "../tours/TourImageCarousel";
 
 const FALLBACK_IMG =
   "https://images.unsplash.com/photo-1539768942893-daf53e449371?auto=format&fit=crop&w=900&q=80";
@@ -29,9 +30,7 @@ export default function ToursSliderSection() {
   const [error, setError] = useState(null);
 
   const token =
-    typeof localStorage !== "undefined"
-      ? localStorage.getItem("token")
-      : null;
+    typeof localStorage !== "undefined" ? localStorage.getItem("token") : null;
 
   const role = (
     typeof localStorage !== "undefined"
@@ -52,8 +51,9 @@ export default function ToursSliderSection() {
       setError(null);
 
       try {
-        const isGuide = role === "tourguide";
-        const data = isGuide ? await getMyTours() : await getToursCatalog();
+        const isGuide =
+          role === "tourguide" || role === "guide";
+        const data = isGuide ? await getMyTours() : await getHomeTours();
 
         if (!cancelled) {
           setTours(Array.isArray(data) ? data : []);
@@ -173,10 +173,9 @@ export default function ToursSliderSection() {
               className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4 scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
               {tours.map((tour) => {
-                const img = extractTourImageUrl(tour) || FALLBACK_IMG;
+                const images = extractTourImageUrls(tour);
 
-                const title =
-                  tour?.title ?? tour?.Title ?? "Untitled Tour";
+                const title = tour?.title ?? tour?.Title ?? "Untitled Tour";
 
                 const desc =
                   extractTourDescription(tour) ||
@@ -187,15 +186,18 @@ export default function ToursSliderSection() {
                 return (
                   <Link
                     role="listitem"
-                    key={(tour?.id ?? tour?.Id) ?? title}
+                    key={tour?.id ?? tour?.Id ?? title}
                     to={href}
+                    state={{ tourSummary: tour }}
                     className="group min-w-[280px] max-w-[340px] shrink-0 snap-start overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-md transition hover:border-egypt-teal/40 hover:shadow-lg sm:min-w-[300px]"
                   >
                     <div className="relative aspect-[16/11] overflow-hidden">
-                      <img
-                        src={img}
+                      <TourImageCarousel
+                        images={images}
+                        fallback={FALLBACK_IMG}
                         alt={title}
-                        className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
+                        className="h-full w-full"
+                        imageClassName="transition duration-500 group-hover:scale-[1.04]"
                       />
 
                       <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent opacity-90" />
@@ -214,18 +216,12 @@ export default function ToursSliderSection() {
 
                       <div className="flex flex-wrap gap-2 text-xs text-slate-600">
                         <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 px-2.5 py-1 font-medium text-teal-900">
-                          <Banknote
-                            size={14}
-                            className="text-egypt-teal"
-                          />
+                          <Banknote size={14} className="text-egypt-teal" />
                           {tour?.price ?? tour?.Price ?? "—"} EGP
                         </span>
 
                         <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-800">
-                          <Clock
-                            size={14}
-                            className="text-egypt-teal"
-                          />
+                          <Clock size={14} className="text-egypt-teal" />
                           {tour?.durationHours ??
                             tour?.DurationHours ??
                             "—"}{" "}
@@ -233,13 +229,8 @@ export default function ToursSliderSection() {
                         </span>
 
                         <span className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-800">
-                          <Users
-                            size={14}
-                            className="text-egypt-teal"
-                          />
-                          Up to{" "}
-                          {extractTourMaxGroupSize(tour) || "—"}{" "}
-                          guests
+                          <Users size={14} className="text-egypt-teal" />
+                          Up to {extractTourMaxGroupSize(tour) || "—"} guests
                         </span>
                       </div>
 

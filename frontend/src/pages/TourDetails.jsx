@@ -1,16 +1,22 @@
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   Banknote,
+  ChevronLeft,
+  ChevronRight,
   Clock,
-  ImageIcon,
   MapPinned,
   Package,
   Sparkles,
   Users,
 } from "lucide-react";
-import { getTourById } from "../Services/api/tours";
+import { getHomeTours, getMyTours, getTourById } from "../Services/api/tours";
+import { extractTourProgramSections } from "../Services/utils/tourJsonUtils";
+import {
+  extractTourImageUrls,
+  extractTourMaxGroupSize,
+} from "../Services/utils/tourUtils";
 
 const pick = (...vals) =>
   vals.find((v) => v !== undefined && v !== null && v !== "");
@@ -18,6 +24,7 @@ const pick = (...vals) =>
 export default function TourDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [tour, setTour] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -40,9 +47,36 @@ export default function TourDetails() {
       try {
         setLoading(true);
         const data = await getTourById(id);
+        let summary = location.state?.tourSummary;
+
+        if (!extractTourMaxGroupSize(data) && !extractTourMaxGroupSize(summary)) {
+          try {
+            const role = (localStorage.getItem("userRole") || "").toLowerCase();
+            const isGuide = role === "tourguide" || role === "guide";
+            const list = isGuide ? await getMyTours() : await getHomeTours();
+            summary = list.find(
+              (item) => String(item?.id ?? item?.Id) === String(id)
+            );
+          } catch {
+            summary = null;
+          }
+        }
+
+        const maxGroupSize =
+          extractTourMaxGroupSize(data) || extractTourMaxGroupSize(summary);
+        const imageUrls = extractTourImageUrls(data);
+        const summaryImageUrls = extractTourImageUrls(summary);
+
+        const mergedData = {
+          ...(summary || {}),
+          ...data,
+          images: imageUrls.length > 0 ? imageUrls : summaryImageUrls,
+          maxGroupSize,
+          MaxGroupSize: maxGroupSize,
+        };
 
         if (!cancelled) {
-          setTour(data);
+          setTour(mergedData);
           setActiveImageIdx(0);
         }
       } catch {
@@ -55,22 +89,29 @@ export default function TourDetails() {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, location.state]);
 
   const images = useMemo(() => {
-    if (!tour) return [];
-    const list = Array.isArray(tour.images)
-      ? tour.images
-      : Array.isArray(tour.Images)
-      ? tour.Images
-      : [];
-    return list.filter(Boolean);
+    return extractTourImageUrls(tour);
   }, [tour]);
+
+  const { stops, inclusions, addOns } = useMemo(
+    () => extractTourProgramSections(tour),
+    [tour]
+  );
 
   const hero =
     images.length > 0
       ? images[Math.min(activeImageIdx, images.length - 1)]
       : FALLBACK_HERO;
+
+  const showPreviousImage = () => {
+    setActiveImageIdx((current) => (current - 1 + images.length) % images.length);
+  };
+
+  const showNextImage = () => {
+    setActiveImageIdx((current) => (current + 1) % images.length);
+  };
 
   if (loading) {
     return (
@@ -94,25 +135,7 @@ export default function TourDetails() {
 
   const durationHours = pick(tour.durationHours, tour.DurationHours);
   const price = pick(tour.price, tour.Price);
-  const maxGroupSize = pick(tour.maxGroupSize, tour.MaxGroupSize);
-
-  const stops = Array.isArray(tour.stops)
-    ? tour.stops
-    : Array.isArray(tour.Stops)
-    ? tour.Stops
-    : [];
-
-  const inclusions = Array.isArray(tour.inclusions)
-    ? tour.inclusions
-    : Array.isArray(tour.Inclusions)
-    ? tour.Inclusions
-    : [];
-
-  const addOns = Array.isArray(tour.addOns)
-    ? tour.addOns
-    : Array.isArray(tour.AddOns)
-    ? tour.AddOns
-    : [];
+  const maxGroupSize = extractTourMaxGroupSize(tour);
 
   return (
     <>
@@ -136,12 +159,53 @@ export default function TourDetails() {
           {/* HERO */}
           <header className="grid lg:grid-cols-2 gap-8">
 
-            <div className="rounded-[32px] overflow-hidden shadow-2xl">
+            <div className="relative overflow-hidden rounded-[32px] shadow-2xl">
               <img
                 src={hero}
-                className="w-full h-full object-cover"
+                className="h-full min-h-[360px] w-full object-cover"
                 alt={title}
               />
+              {images.length > 1 ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={showPreviousImage}
+                    className="absolute left-4 top-1/2 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-slate-800 shadow-lg transition hover:bg-white"
+                    aria-label="Previous tour image"
+                  >
+                    <ChevronLeft size={24} />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={showNextImage}
+                    className="absolute right-4 top-1/2 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-slate-800 shadow-lg transition hover:bg-white"
+                    aria-label="Next tour image"
+                  >
+                    <ChevronRight size={24} />
+                  </button>
+                  <div className="absolute bottom-4 left-4 right-4 flex gap-2 overflow-x-auto">
+                    {images.map((image, index) => (
+                      <button
+                        key={`${image}-${index}`}
+                        type="button"
+                        onClick={() => setActiveImageIdx(index)}
+                        className={`h-14 w-20 shrink-0 overflow-hidden rounded-xl border-2 transition ${
+                          index === activeImageIdx
+                            ? "border-white shadow-lg"
+                            : "border-white/40 opacity-75 hover:opacity-100"
+                        }`}
+                        aria-label={`Show tour image ${index + 1}`}
+                      >
+                        <img
+                          src={image}
+                          alt=""
+                          className="h-full w-full object-cover"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </>
+              ) : null}
             </div>
 
             <div className="rounded-[32px] bg-white/50 backdrop-blur-xl p-8 shadow-xl">
@@ -159,12 +223,10 @@ export default function TourDetails() {
                   </span>
                 )}
 
-                {maxGroupSize && (
-                  <span className="px-4 py-2 bg-white/40 rounded-full">
-                    <Users className="inline text-egypt-teal" />{" "}
-                    {maxGroupSize}
-                  </span>
-                )}
+                <span className="px-4 py-2 bg-white/40 rounded-full">
+                  <Users className="inline text-egypt-teal" /> Up to{" "}
+                  {maxGroupSize || "—"} guests
+                </span>
 
                 {price && (
                   <span className="px-4 py-2 bg-egypt-teal text-white rounded-full">
@@ -175,76 +237,86 @@ export default function TourDetails() {
             </div>
           </header>
 
-          {/* CONTENT */}
-          <div className="grid lg:grid-cols-3 gap-8">
-
-            {/* STOPS */}
-            {stops.length > 0 && (
-              <section className="bg-white/50 backdrop-blur-xl p-7 rounded-3xl shadow">
-                <h2 className="text-xl font-bold flex gap-2">
-                  <MapPinned className="text-egypt-teal" />
-                  Program
-                </h2>
-
-                <div className="mt-6 space-y-5">
-                  {stops.map((s, i) => (
-                    <div key={i} className="flex gap-4">
-                      <div className="w-9 h-9 rounded-full bg-egypt-teal text-white flex items-center justify-center">
+          {/* Program · Included · Add-ons (from StopsJson / InclusionsJson / AddOnsJson) */}
+          <div className="grid gap-6 lg:grid-cols-3">
+            <section className="flex flex-col rounded-3xl border border-white/60 bg-white/55 p-7 shadow-lg backdrop-blur-xl">
+              <h2 className="flex items-center gap-2 text-xl font-bold text-slate-900">
+                <MapPinned className="shrink-0 text-egypt-teal" size={22} />
+                Program
+              </h2>
+              <div className="mt-6 flex-1 space-y-5">
+                {stops.length === 0 ? (
+                  <p className="text-sm leading-relaxed text-slate-500">
+                    No program stops listed for this tour yet.
+                  </p>
+                ) : (
+                  stops.map((s, i) => (
+                    <div key={`${s.title}-${i}`} className="flex gap-4">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-egypt-teal text-sm font-bold text-white">
                         {i + 1}
                       </div>
-                      <div>
-                        <p className="font-semibold">{s.title}</p>
-                        <p className="text-sm text-slate-600">
-                          {s.description}
-                        </p>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-slate-900">{s.title}</p>
+                        {s.description ? (
+                          <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                            {s.description}
+                          </p>
+                        ) : null}
                       </div>
                     </div>
-                  ))}
-                </div>
-              </section>
-            )}
+                  ))
+                )}
+              </div>
+            </section>
 
-            {/* INCLUSIONS */}
-            {inclusions.length > 0 && (
-              <section className="bg-white/50 backdrop-blur-xl p-7 rounded-3xl shadow">
-                <h2 className="text-xl font-bold flex gap-2">
-                  <Package className="text-egypt-teal" />
-                  Included
-                </h2>
-
-                <div className="mt-5 grid gap-3">
-                  {inclusions.map((inc, i) => (
-                    <div key={i} className="bg-white/40 p-4 rounded-xl">
-                      {inc.description}
-                    </div>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {/* ADD ONS */}
-            {addOns.length > 0 && (
-              <section className="bg-white/50 backdrop-blur-xl p-7 rounded-3xl shadow">
-                <h2 className="text-xl font-bold flex gap-2">
-                  <Sparkles className="text-egypt-teal" />
-                  Add-ons
-                </h2>
-
-                <div className="mt-5 space-y-3">
-                  {addOns.map((a, i) => (
+            <section className="flex flex-col rounded-3xl border border-white/60 bg-white/55 p-7 shadow-lg backdrop-blur-xl">
+              <h2 className="flex items-center gap-2 text-xl font-bold text-slate-900">
+                <Package className="shrink-0 text-egypt-teal" size={22} />
+                Included
+              </h2>
+              <div className="mt-6 flex-1 space-y-3">
+                {inclusions.length === 0 ? (
+                  <p className="text-sm text-slate-500">
+                    Nothing listed as included yet.
+                  </p>
+                ) : (
+                  inclusions.map((line, i) => (
                     <div
-                      key={i}
-                      className="flex justify-between bg-white/40 p-4 rounded-xl"
+                      key={`${line}-${i}`}
+                      className="rounded-xl border border-slate-100/80 bg-white/70 px-4 py-3 text-sm text-slate-700 shadow-sm"
                     >
-                      <span>{a.title}</span>
-                      <span className="text-egypt-teal font-semibold">
+                      {line}
+                    </div>
+                  ))
+                )}
+              </div>
+            </section>
+
+            <section className="flex flex-col rounded-3xl border border-white/60 bg-white/55 p-7 shadow-lg backdrop-blur-xl">
+              <h2 className="flex items-center gap-2 text-xl font-bold text-slate-900">
+                <Sparkles className="shrink-0 text-egypt-teal" size={22} />
+                Add-ons
+              </h2>
+              <div className="mt-6 flex-1 space-y-3">
+                {addOns.length === 0 ? (
+                  <p className="text-sm text-slate-500">No optional add-ons.</p>
+                ) : (
+                  addOns.map((a, i) => (
+                    <div
+                      key={`${a.title}-${i}`}
+                      className="flex items-center justify-between gap-3 rounded-xl border border-slate-100/80 bg-white/70 px-4 py-3 shadow-sm"
+                    >
+                      <span className="text-sm font-medium text-slate-800">
+                        {a.title}
+                      </span>
+                      <span className="shrink-0 text-sm font-semibold text-egypt-teal">
                         +{a.price} EGP
                       </span>
                     </div>
-                  ))}
-                </div>
-              </section>
-            )}
+                  ))
+                )}
+              </div>
+            </section>
           </div>
         </article>
       </div>

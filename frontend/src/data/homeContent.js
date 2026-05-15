@@ -3,6 +3,7 @@
  */
 import { homeImages } from "../assets/images/homeImages";
 
+
 const [feat1, feat2, feat3, feat4, feat5, feat6, feat7] = homeImages.featured;
 const [newsImg1, newsImg2, newsImg3, newsImg4] = homeImages.news;
 

@@ -21,6 +21,7 @@ import Places from "./pages/Places";
 import PlaceDetails from "./pages/PlaceDetails";
 import SavedPlaces from "./pages/SavedPlaces";
 import SavedGuides from "./pages/SavedGuides";
+import GuideDashboard from "./pages/GuideDashboard";
 
 function App() {
   return (
@@ -53,6 +54,7 @@ function App() {
           <Route path="/places" element={<Places />} />
           <Route path="/saved-places" element={<SavedPlaces />} />
           <Route path="/saved-guides" element={<SavedGuides />} />
+          <Route path="/guide-dashboard" element={<GuideDashboard />} />
 
           <Route path="/places/:id" element={<PlaceDetails />} />
         </Route>

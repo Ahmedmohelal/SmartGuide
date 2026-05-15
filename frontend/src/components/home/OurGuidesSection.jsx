@@ -3,24 +3,40 @@ import { getAllGuides } from "../../Services/api/guideService";
 import { saveGuide, deleteSavedGuide, getSavedGuides } from "../../Services/api/savedGuideService";
 import { isGuide, getToken } from "../../Services/utils/tokenUtils";
 import { Link } from "react-router-dom";
+import {
+  getGuideCity,
+  getGuideImage,
+  getGuideName,
+  getGuideRating,
+} from "../../Services/utils/guideUtils";
 
-const getGuideName = (guide) => {
-  if (guide.firstName && guide.lastName) {
-    return `${guide.firstName} ${guide.lastName}`;
+const guideRowId = (guide) => {
+  if (guide == null) return null;
+  if (typeof guide === "string" || typeof guide === "number") {
+    return String(guide);
   }
-  return guide.name || guide.userName || "Unknown Guide";
-};
-
-const getGuideImage = (guide) => {
-  return guide.profilePicture || guide.image || "/default-avatar.png";
-};
-
-const getGuideRating = (guide) => {
-  return guide.rating || guide.averageRating || "N/A";
-};
-
-const getGuideCity = (guide) => {
-  return guide.city || guide.location || "Egypt";
+  if (typeof guide !== "object") return null;
+  return (
+    guide.id ??
+    guide.Id ??
+    guide.userId ??
+    guide.UserId ??
+    guide.guideId ??
+    guide.GuideId ??
+    guide.tourGuideId ??
+    guide.TourGuideId ??
+    guide.applicationUserId ??
+    guide.ApplicationUserId ??
+    guide.guid ??
+    guide.Guid ??
+    guide.tourGuide?.id ??
+    guide.tourGuide?.Id ??
+    guide.user?.id ??
+    guide.user?.Id ??
+    guide.User?.id ??
+    guide.User?.Id ??
+    null
+  );
 };
 
 export default function OurGuidesSection() {
@@ -44,11 +60,23 @@ export default function OurGuidesSection() {
         const guidesData = results[0];
         const savedData = results[1];
 
-        const guidesList = Array.isArray(guidesData?.data) ? guidesData.data : Array.isArray(guidesData) ? guidesData : [];
+        const guidesList = Array.isArray(guidesData?.data)
+          ? guidesData.data
+          : Array.isArray(guidesData?.items)
+          ? guidesData.items
+          : Array.isArray(guidesData?.Items)
+          ? guidesData.Items
+          : Array.isArray(guidesData?.value)
+          ? guidesData.value
+          : Array.isArray(guidesData?.Value)
+          ? guidesData.Value
+          : Array.isArray(guidesData)
+          ? guidesData
+          : [];
         setGuides(guidesList);
 
         if (isAuthenticated && !isUserGuide && savedData) {
-          const savedItems = Array.isArray(savedData?.data) ? savedData.data : Array.isArray(savedData) ? savedData : [];
+          const savedItems = Array.isArray(savedData) ? savedData : [];
           setSavedGuides(savedItems);
         }
       } catch (error) {
@@ -61,11 +89,11 @@ export default function OurGuidesSection() {
     loadData();
   }, [isAuthenticated, isUserGuide]);
 
-  const isGuideSaved = (guideId) => {
-    return savedGuides.some(savedGuide => 
-      (savedGuide.guideId === guideId || savedGuide.id === guideId)
-    );
-  };
+  const isGuideSaved = (guideId) =>
+    savedGuides.some((savedGuide) => {
+      const sid = savedGuide.guideId ?? savedGuide.id;
+      return sid != null && String(sid) === String(guideId);
+    });
 
   const handleToggleSave = async (guideId) => {
     if (!isAuthenticated) {
@@ -78,14 +106,22 @@ export default function OurGuidesSection() {
     try {
       if (isGuideSaved(guideId)) {
         await deleteSavedGuide(guideId);
-        setSavedGuides(prev => prev.filter(guide => 
-          (guide.guideId !== guideId && guide.id !== guideId)
-        ));
+        setSavedGuides((prev) =>
+          prev.filter(
+            (guide) =>
+              String(guide.guideId ?? guide.id) !== String(guideId)
+          )
+        );
       } else {
         await saveGuide(guideId);
-        const guide = guides.find(g => g.id === guideId);
+        const guide = guides.find(
+          (g) => String(guideRowId(g)) === String(guideId)
+        );
         if (guide) {
-          setSavedGuides(prev => [...prev, { guideId, ...guide }]);
+          setSavedGuides((prev) => [
+            ...prev,
+            { ...guide, guideId: String(guideId), id: String(guideId) },
+          ]);
         }
       }
     } catch (error) {
@@ -127,63 +163,66 @@ export default function OurGuidesSection() {
         </h2>
         <div className="mx-auto mt-4 h-1 w-20 rounded-full bg-egypt-teal" />
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {guides.map((guide) => (
-            <article
-              key={guide.id}
-              className="flex flex-col overflow-hidden rounded-2xl border border-slate-100 bg-slate-50/50 shadow-sm transition hover:shadow-md relative"
-            >
-              {isAuthenticated && !isUserGuide && isGuideSaved(guide.id) && (
-                <div className="absolute top-3 right-3 bg-green-600 text-white px-2 py-1 rounded-full text-xs font-semibold z-10">
-                  SAVED
+          {guides.map((guide) => {
+            const gid = guideRowId(guide);
+            return (
+              <article
+                key={gid != null ? String(gid) : getGuideName(guide)}
+                className="relative flex flex-col overflow-hidden rounded-2xl border border-slate-100 bg-slate-50/50 shadow-sm transition hover:shadow-md"
+              >
+                {isAuthenticated && !isUserGuide && gid != null && isGuideSaved(gid) && (
+                  <div className="absolute top-3 right-3 z-10 rounded-full bg-green-600 px-2 py-1 text-xs font-semibold text-white">
+                    SAVED
+                  </div>
+                )}
+                <div className="aspect-square overflow-hidden">
+                  <img
+                    src={getGuideImage(guide)}
+                    alt={getGuideName(guide)}
+                    className="h-full w-full object-cover transition hover:scale-105"
+                  />
                 </div>
-              )}
-              <div className="aspect-square overflow-hidden">
-                <img
-                  src={getGuideImage(guide)}
-                  alt={getGuideName(guide)}
-                  className="h-full w-full object-cover transition hover:scale-105"
-                />
-              </div>
-              <div className="flex flex-1 flex-col p-5">
-                <h3 className="text-lg font-bold leading-snug text-slate-900">
-                  {getGuideName(guide)}
-                </h3>
-                <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600">
-                  {guide.bio || `Professional tour guide from ${getGuideCity(guide)}`}
-                </p>
-                <div className="mt-2 flex items-center justify-between text-sm text-slate-500">
-                  <span>📍 {getGuideCity(guide)}</span>
-                  <span>⭐ {getGuideRating(guide)}</span>
-                </div>
-                <div className="mt-4 flex gap-2">
-                  <Link
-                    to={`/guides/${guide.id}`}
-                    className="flex-1 text-center text-sm font-bold text-egypt-teal hover:underline border border-egypt-teal rounded-lg py-2 transition"
-                  >
-                    View Profile
-                  </Link>
-                  {isAuthenticated && !isUserGuide && (
-                    <button
-                      onClick={() => handleToggleSave(guide.id)}
-                      disabled={saving === guide.id}
-                      className={`px-3 py-2 text-sm font-bold rounded-lg transition disabled:opacity-60 ${
-                        isGuideSaved(guide.id)
-                          ? "bg-red-600 text-white hover:bg-red-500"
-                          : "bg-egypt-teal text-white hover:bg-egypt-teal/90"
-                      }`}
+                <div className="flex flex-1 flex-col p-5">
+                  <h3 className="text-lg font-bold leading-snug text-slate-900">
+                    {getGuideName(guide)}
+                  </h3>
+                  <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600">
+                    {guide.bio || `Professional tour guide from ${getGuideCity(guide)}`}
+                  </p>
+                  <div className="mt-2 flex items-center justify-between text-sm text-slate-500">
+                    <span>📍 {getGuideCity(guide)}</span>
+                    <span>⭐ {getGuideRating(guide)}</span>
+                  </div>
+                  <div className="mt-4 flex gap-2">
+                    <Link
+                      to={gid != null ? `/guides/${gid}` : "#"}
+                      className="flex-1 rounded-lg border border-egypt-teal py-2 text-center text-sm font-bold text-egypt-teal transition hover:underline"
                     >
-                      {saving === guide.id 
-                        ? "Saving..." 
-                        : isGuideSaved(guide.id) 
-                        ? "Remove" 
-                        : "Save"
-                      }
-                    </button>
-                  )}
+                      View Profile
+                    </Link>
+                    {isAuthenticated && !isUserGuide && gid != null && (
+                      <button
+                        type="button"
+                        onClick={() => handleToggleSave(gid)}
+                        disabled={saving === gid}
+                        className={`rounded-lg px-3 py-2 text-sm font-bold transition disabled:opacity-60 ${
+                          isGuideSaved(gid)
+                            ? "bg-red-600 text-white hover:bg-red-500"
+                            : "bg-egypt-teal text-white hover:bg-egypt-teal/90"
+                        }`}
+                      >
+                        {saving === gid
+                          ? "Saving..."
+                          : isGuideSaved(gid)
+                            ? "Remove"
+                            : "Save"}
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </article>
-          ))}
+              </article>
+            );
+          })}
         </div>
         {guides.length === 0 && (
           <div className="text-center py-12">

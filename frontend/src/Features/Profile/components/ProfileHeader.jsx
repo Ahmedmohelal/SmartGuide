@@ -16,9 +16,15 @@ export default function ProfileHeader({ user: userProp, onEditClick }) {
   // صورة افتراضية لو الـ API مرجعش صورة - نستخدم نفس الطريقة اللي بيستخدمها places
   // Tourists use touristImage, Guides use profilePicture
   const avatarUrl =
-    (role === "tourist" ? user?.touristImage : user?.profilePicture) ||
+    (role === "tourist"
+      ? user?.touristImage || user?.TouristImage || user?.touristImageUrl || user?.TouristImageUrl
+      : user?.profilePicture || user?.ProfilePicture) ||
     user?.touristImage ||
+    user?.TouristImage ||
+    user?.touristImageUrl ||
+    user?.TouristImageUrl ||
     user?.profilePicture ||
+    user?.ProfilePicture ||
     user?.image ||
     user?.imageUrl ||
     user?.ImageUrl ||

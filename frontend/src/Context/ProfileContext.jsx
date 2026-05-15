@@ -9,6 +9,7 @@ import axios from "axios";
 
 const ProfileContext = createContext();
 const BASE_URL = "https://smartguide.runasp.net/api";
+const API_ORIGIN = BASE_URL.replace(/\/api\/?$/i, "");
 
 // ✅ نجيب الـ id من التوكن مباشرة
 const getUserIdFromToken = () => {
@@ -28,6 +29,21 @@ const isTouristRole = (role) => role?.toLowerCase() === "tourist";
 
 const pickFirst = (...values) =>
   values.find((value) => value !== undefined && value !== null && value !== "");
+
+const normalizeImageUrl = (value) => {
+  if (!value || typeof value !== "string") return "";
+  const cleaned = value.replace(/\\/g, "/").trim();
+  if (!cleaned) return "";
+  if (
+    cleaned.startsWith("http://") ||
+    cleaned.startsWith("https://") ||
+    cleaned.startsWith("data:") ||
+    cleaned.startsWith("blob:")
+  ) {
+    return cleaned;
+  }
+  return cleaned.startsWith("/") ? `${API_ORIGIN}${cleaned}` : `${API_ORIGIN}/${cleaned}`;
+};
 
 const asArray = (value) => {
   if (Array.isArray(value)) return value;
@@ -78,6 +94,30 @@ const normalizeProfileData = (rawUser = {}, fallbackUser = {}) => {
     lastName,
     email: pickFirst(rawUser.email, rawUser.Email, fallbackUser.email),
     country: pickFirst(rawUser.country, rawUser.Country, fallbackUser.country),
+    touristImage: normalizeImageUrl(
+      pickFirst(
+        rawUser.touristImage,
+        rawUser.TouristImage,
+        rawUser.touristImageUrl,
+        rawUser.TouristImageUrl,
+        rawUser.imageUrl,
+        rawUser.ImageUrl,
+        fallbackUser.touristImage,
+        fallbackUser.TouristImage
+      )
+    ),
+    profilePicture: normalizeImageUrl(
+      pickFirst(
+        rawUser.profilePicture,
+        rawUser.ProfilePicture,
+        rawUser.profilePictureUrl,
+        rawUser.ProfilePictureUrl,
+        rawUser.imageUrl,
+        rawUser.ImageUrl,
+        fallbackUser.profilePicture,
+        fallbackUser.ProfilePicture
+      )
+    ),
   };
 };
 
@@ -147,7 +187,10 @@ export const ProfileProvider = ({ children }) => {
       
       // Add profile picture if provided
       if (updatedData.profilePicture instanceof File) {
-        formData.append("ProfilePicture", updatedData.profilePicture);
+        formData.append(
+          isTouristRole(role) ? "TouristImage" : "ProfilePicture",
+          updatedData.profilePicture
+        );
       }
 
       const response = await axios.put(endpoint, formData, {

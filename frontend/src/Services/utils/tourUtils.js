@@ -18,36 +18,71 @@ const normalizeImageValue = (value) => {
 };
 
 export const extractTourImageUrl = (tour) => {
-  const candidates = [
-    tour?.primaryImage,
-    tour?.PrimaryImage,
-    tour?.imageUrl,
-    tour?.image,
-    tour?.coverImage,
-    tour?.imagePath,
-    tour?.thumbnail,
-    Array.isArray(tour?.images) ? tour.images[0] : null,
-  ];
+  return extractTourImageUrls(tour)[0] || "";
+};
 
-  for (const candidate of candidates) {
+export const extractTourImageUrls = (tour) => {
+  const source = tour?.data ?? tour?.tour ?? tour?.result ?? tour;
+  const candidates = [
+    source?.images,
+    source?.Images,
+    source?.tourImages,
+    source?.TourImages,
+    source?.imageUrls,
+    source?.ImageUrls,
+    source?.photos,
+    source?.Photos,
+    source?.gallery,
+    source?.Gallery,
+    source?.primaryImage,
+    source?.PrimaryImage,
+    source?.imageUrl,
+    source?.ImageUrl,
+    source?.image,
+    source?.Image,
+    source?.coverImage,
+    source?.CoverImage,
+    source?.imagePath,
+    source?.ImagePath,
+    source?.thumbnail,
+    source?.Thumbnail,
+  ];
+  const urls = [];
+
+  const addCandidate = (candidate) => {
+    if (Array.isArray(candidate)) {
+      candidate.forEach(addCandidate);
+      return;
+    }
+
     if (typeof candidate === "string") {
       const normalized = normalizeImageValue(candidate);
-      if (normalized) return normalized;
+      if (normalized) urls.push(normalized);
+      return;
     }
 
     if (candidate && typeof candidate === "object") {
       const nested =
         candidate.url ||
+        candidate.Url ||
         candidate.path ||
+        candidate.Path ||
         candidate.imageUrl ||
+        candidate.ImageUrl ||
+        candidate.imagePath ||
+        candidate.ImagePath ||
+        candidate.filePath ||
+        candidate.FilePath ||
         candidate.src ||
+        candidate.Src ||
         "";
       const normalizedNested = normalizeImageValue(nested);
-      if (normalizedNested) return normalizedNested;
+      if (normalizedNested) urls.push(normalizedNested);
     }
-  }
+  };
 
-  return "";
+  candidates.forEach(addCandidate);
+  return [...new Set(urls)];
 };
 
 export const extractTourDescription = (tour) =>
@@ -57,9 +92,32 @@ export const extractTourDescription = (tour) =>
   tour?.TourDescription ||
   "";
 
-export const extractTourMaxGroupSize = (tour) =>
-  tour?.maxGroupSize ??
-  tour?.MaxGroupSize ??
-  tour?.maxTourists ??
-  tour?.MaxTourists ??
-  0;
+const positiveNumberLike = (value) => {
+  if (value === undefined || value === null || value === "") return null;
+  const number = Number(value);
+  return Number.isFinite(number) && number > 0 ? value : null;
+};
+
+export const extractTourMaxGroupSize = (tour) => {
+  const source = tour?.data ?? tour?.tour ?? tour?.result ?? tour;
+  const candidates = [
+    source?.maxGroupSize,
+    source?.MaxGroupSize,
+    source?.maximumGroupSize,
+    source?.MaximumGroupSize,
+    source?.groupSize,
+    source?.GroupSize,
+    source?.maxGuests,
+    source?.MaxGuests,
+    source?.guestLimit,
+    source?.GuestLimit,
+    source?.capacity,
+    source?.Capacity,
+    source?.maxTourists,
+    source?.MaxTourists,
+    source?.numberOfTourists,
+    source?.NumberOfTourists,
+  ];
+
+  return candidates.map(positiveNumberLike).find(Boolean) ?? 0;
+};

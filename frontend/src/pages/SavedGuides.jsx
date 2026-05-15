@@ -4,25 +4,14 @@ import {
   getSavedGuides,
   deleteSavedGuide,
 } from "../Services/api/savedGuideService";
+import {
+  getGuideCity,
+  getGuideImage,
+  getGuideName,
+  getGuideRating,
+} from "../Services/utils/guideUtils";
 
-const getGuideName = (guide) => {
-  if (guide.firstName && guide.lastName) {
-    return `${guide.firstName} ${guide.lastName}`;
-  }
-  return guide.name || guide.userName || "Unknown Guide";
-};
-
-const getGuideImage = (guide) => {
-  return guide.profilePicture || guide.image || "/default-avatar.png";
-};
-
-const getGuideRating = (guide) => {
-  return guide.rating || guide.averageRating || "N/A";
-};
-
-const getGuideCity = (guide) => {
-  return guide.city || guide.location || "Egypt";
-};
+const savedRowId = (guide) => guide?.guideId ?? guide?.GuideId ?? guide?.id ?? guide?.Id;
 
 export default function SavedGuides() {
   const [savedGuides, setSavedGuides] = useState([]);
@@ -34,14 +23,7 @@ export default function SavedGuides() {
     const loadSavedGuides = async () => {
       try {
         const data = await getSavedGuides();
-
-        const items = Array.isArray(data?.data)
-          ? data.data
-          : Array.isArray(data)
-          ? data
-          : [];
-
-        setSavedGuides(items);
+        setSavedGuides(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error(
           "Failed to fetch saved guides:",
@@ -70,8 +52,7 @@ export default function SavedGuides() {
 
       setSavedGuides((prev) =>
         prev.filter(
-          (guide) =>
-            guide.guideId !== guideId && guide.id !== guideId
+          (guide) => String(savedRowId(guide)) !== String(guideId)
         )
       );
     } catch (err) {
@@ -130,12 +111,14 @@ export default function SavedGuides() {
         </h1>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {savedGuides.map((guide) => (
+          {savedGuides.map((guide) => {
+            const rid = savedRowId(guide);
+            return (
             <div
-              key={guide.guideId || guide.id}
+              key={rid != null ? String(rid) : getGuideName(guide)}
               className="bg-[#1e293b] rounded-3xl overflow-hidden shadow-lg hover:scale-[1.02] transition duration-300"
             >
-              <Link to={`/guides/${guide.guideId || guide.id}`}>
+              <Link to={rid != null ? `/guides/${rid}` : "#"}>
                 <img
                   src={getGuideImage(guide)}
                   alt={getGuideName(guide)}
@@ -167,21 +150,17 @@ export default function SavedGuides() {
                 </div>
 
                 <button
-                  onClick={() =>
-                    handleRemove(guide.guideId || guide.id)
-                  }
-                  disabled={
-                    deleting === (guide.guideId || guide.id)
-                  }
+                  type="button"
+                  onClick={() => rid != null && handleRemove(rid)}
+                  disabled={rid == null || deleting === rid}
                   className="w-full rounded-xl bg-red-600 px-4 py-3 text-white hover:bg-red-500 disabled:opacity-60 transition"
                 >
-                  {deleting === (guide.guideId || guide.id)
-                    ? "Removing..."
-                    : "Remove"}
+                  {deleting === rid ? "Removing..." : "Remove"}
                 </button>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
