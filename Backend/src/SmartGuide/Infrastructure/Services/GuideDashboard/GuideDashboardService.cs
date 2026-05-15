@@ -68,13 +68,10 @@ namespace Infrastructure.Services.GuideDashboard
             };
         }
 
-        public async Task<GuideDashboardStatisticsDto> GetStatisticsAsync(
-            string guideId)
+        public async Task<GuideDashboardStatisticsDto> GetStatisticsAsync(string guideId)
         {
             var now = DateTime.UtcNow;
-
-            var monthStart =
-                new DateTime(now.Year, now.Month, 1);
+            var monthStart = new DateTime(now.Year, now.Month, 1);
 
             var user = await _context.Users
                 .AsNoTracking()
@@ -96,10 +93,10 @@ namespace Infrastructure.Services.GuideDashboard
                 })
                 .ToListAsync();
 
+            // ✅ Slot-safe projection
             var bookings = await _context.Bookings
                 .AsNoTracking()
                 .Where(b => b.GuideId == guideId)
-                .Include(b => b.Slot)
                 .Select(b => new
                 {
                     b.TourId,
@@ -107,46 +104,42 @@ namespace Infrastructure.Services.GuideDashboard
                     b.Status,
                     b.TotalPrice,
                     b.CreatedAtUtc,
-                    SlotDate = b.Slot.Date,
-                    SlotStart = b.Slot.StartTime
+
+                    SlotDate = b.Slot != null ? (DateOnly?)b.Slot.Date : null,
+                    SlotStart = b.Slot != null ? (TimeOnly?)b.Slot.StartTime : null
                 })
                 .ToListAsync();
 
             var wallet = await _context.GuideWallets
                 .AsNoTracking()
                 .Where(w => w.GuideId == guideId)
-                .Select(w => new
-                {
-                    w.Balance
-                })
+                .Select(w => new { w.Balance })
                 .FirstOrDefaultAsync();
 
-            var activeTours =
-                tours.Count(x => x.IsActive);
+            var activeTours = tours.Count(x => x.IsActive);
+            var totalTours = tours.Count;
 
-            var inactiveTours =
-                tours.Count - activeTours;
+            var cancelledTours = bookings.Count(b => b.Status == BookingStatus.Cancelled);
 
-            var totalTours =
-                tours.Count;
+            var upcomingTours = bookings.Count(b =>
+                b.Status != BookingStatus.Cancelled &&
+                b.SlotDate.HasValue &&
+                b.SlotStart.HasValue &&
+                b.SlotDate.Value.ToDateTime(b.SlotStart.Value) > now
+            );
 
-            var upcomingTours = bookings.Count(
-                b => b.Status != BookingStatus.Cancelled &&
-                     b.SlotDate.ToDateTime(b.SlotStart) > now);
-
-            var cancelledTours = bookings.Count(
-                b => b.Status == BookingStatus.Cancelled);
-
-            var completedTours = bookings.Count(
-                b => b.Status == BookingStatus.Confirmed &&
-                     b.SlotDate.ToDateTime(b.SlotStart) <= now);
+            var completedTours = bookings.Count(b =>
+                b.Status == BookingStatus.Confirmed &&
+                b.SlotDate.HasValue &&
+                b.SlotStart.HasValue &&
+                b.SlotDate.Value.ToDateTime(b.SlotStart.Value) <= now
+            );
 
             var confirmed = bookings
                 .Where(b => b.Status == BookingStatus.Confirmed)
                 .ToList();
 
-            var totalEarnings =
-                confirmed.Sum(x => x.TotalPrice);
+            var totalEarnings = confirmed.Sum(x => x.TotalPrice);
 
             var pendingEarnings = bookings
                 .Where(b => b.Status == BookingStatus.Pending)
@@ -161,25 +154,25 @@ namespace Infrastructure.Services.GuideDashboard
                 WalletBalance = wallet?.Balance ?? 0m,
                 TotalEarnings = totalEarnings,
                 PendingEarnings = pendingEarnings,
+
                 TotalTours = totalTours,
                 ActiveTours = activeTours,
-                InactiveTours = inactiveTours,
+                InactiveTours = totalTours - activeTours,
+
                 UpcomingTours = upcomingTours,
                 CancelledTours = cancelledTours,
                 CompletedTours = completedTours,
+
                 TotalTouristsServed = confirmed.Count,
-                TotalUniqueTourists = confirmed
-                    .Select(x => x.TouristId)
-                    .Distinct()
-                    .Count(),
+                TotalUniqueTourists = confirmed.Select(x => x.TouristId).Distinct().Count(),
+
                 MonthlyRevenue = monthlyRevenue,
+
                 PendingWithdrawals = 0,
-                VerificationStatus =
-                    user?.IsGuideVerified.ToString()
-                    ?? "Unknown",
-                AccountStatus =
-                    user?.GuideAccountStatus.ToString()
-                    ?? "Unknown",
+
+                VerificationStatus = user?.IsGuideVerified.ToString() ?? "Unknown",
+                AccountStatus = user?.GuideAccountStatus.ToString() ?? "Unknown",
+
                 AverageRating = 0,
                 TotalReviews = 0,
                 ReviewsDataAvailable = false
@@ -258,87 +251,111 @@ namespace Infrastructure.Services.GuideDashboard
                 })
                 .ToListAsync();
         }
-
         public async Task<List<GuideTourPerformanceDto>>
-            GetTourPerformanceAsync(
-                string guideId,
-                int take = 10,
-                bool mostPopular = true)
+         GetTourPerformanceAsync(
+             string guideId,
+             int take = 10,
+             bool mostPopular = true)
         {
             take = Math.Clamp(take, 1, 50);
 
-            var tourBase = _context.Tours
+            var tourBase = await _context.Tours
                 .AsNoTracking()
                 .Where(t => t.GuideId == guideId)
                 .Select(t => new
                 {
                     t.Id,
-                    t.Title,
-                    t.MaxGroupSize
-                });
+                    t.Title
+                })
+                .ToListAsync();
 
-            var bookingAgg = _context.Bookings
+            var bookingAgg = await _context.Bookings
                 .AsNoTracking()
                 .Where(b => b.GuideId == guideId)
                 .GroupBy(b => b.TourId)
                 .Select(g => new
                 {
                     TourId = g.Key,
-                    TotalBookings = g.Count(),
-                    ConfirmedBookings = g.Count(
-                        x => x.Status == BookingStatus.Confirmed),
-                    CancelledBookings = g.Count(
-                        x => x.Status == BookingStatus.Cancelled),
-                    Revenue = g.Where(
-                        x => x.Status == BookingStatus.Confirmed)
-                        .Sum(x => x.TotalPrice)
-                });
 
-            var slotAgg = _context.BookingsSlot
+                    TotalBookings = g.Count(),
+
+                    ConfirmedBookings =
+                        g.Count(x =>
+                            x.Status == BookingStatus.Confirmed),
+
+                    CancelledBookings =
+                        g.Count(x =>
+                            x.Status == BookingStatus.Cancelled),
+
+                    Revenue =
+                        g.Where(x =>
+                            x.Status == BookingStatus.Confirmed)
+                        .Sum(x => x.TotalPrice)
+                })
+                .ToListAsync();
+
+            var slotAgg = await _context.BookingsSlot
                 .AsNoTracking()
                 .Where(s => s.GuideId == guideId)
                 .GroupBy(s => s.TourId)
                 .Select(g => new
                 {
                     TourId = g.Key,
-                    TotalCapacity = g.Sum(x => x.Capacity),
-                    TotalBooked = g.Sum(x => x.BookedCount)
-                });
 
-            var rows = await (
-                from t in tourBase
-                join b in bookingAgg
-                    on t.Id equals b.TourId into bjoin
-                from b in bjoin.DefaultIfEmpty()
+                    TotalCapacity =
+                        g.Sum(x => x.Capacity),
 
-                join s in slotAgg
-                    on t.Id equals s.TourId into sjoin
-                from s in sjoin.DefaultIfEmpty()
+                    TotalBooked =
+                        g.Sum(x => x.BookedCount)
+                })
+                .ToListAsync();
 
-                select new GuideTourPerformanceDto
+            var rows = tourBase
+                .Select(t =>
                 {
-                    TourId = t.Id,
-                    Title = t.Title,
-                    TotalBookings =
-                        b == null ? 0 : b.TotalBookings,
-                    ConfirmedBookings =
-                        b == null ? 0 : b.ConfirmedBookings,
-                    CancelledBookings =
-                        b == null ? 0 : b.CancelledBookings,
-                    Revenue =
-                        b == null ? 0m : b.Revenue,
-                    OccupancyRate =
-                        s == null || s.TotalCapacity == 0
-                            ? 0d
-                            : (double)s.TotalBooked /
-                              s.TotalCapacity
-                }).ToListAsync();
+                    var b = bookingAgg
+                        .FirstOrDefault(x => x.TourId == t.Id);
+
+                    var s = slotAgg
+                        .FirstOrDefault(x => x.TourId == t.Id);
+
+                    double occupancy = 0;
+
+                    if (s != null && s.TotalCapacity > 0)
+                    {
+                        occupancy =
+                            (double)s.TotalBooked /
+                            s.TotalCapacity;
+                    }
+
+                    return new GuideTourPerformanceDto
+                    {
+                        TourId = t.Id,
+                        Title = t.Title,
+
+                        TotalBookings =
+                            b?.TotalBookings ?? 0,
+
+                        ConfirmedBookings =
+                            b?.ConfirmedBookings ?? 0,
+
+                        CancelledBookings =
+                            b?.CancelledBookings ?? 0,
+
+                        Revenue =
+                            b?.Revenue ?? 0m,
+
+                        OccupancyRate = occupancy
+                    };
+                })
+                .ToList();
 
             return mostPopular
                 ? rows.OrderByDescending(x => x.TotalBookings)
                     .ThenByDescending(x => x.Revenue)
                     .Take(take)
                     .ToList()
+
                 : rows.OrderBy(x => x.TotalBookings)
                     .ThenBy(x => x.Revenue)
                     .Take(take)
@@ -364,8 +381,7 @@ namespace Infrastructure.Services.GuideDashboard
             };
         }
 
-        public async Task<List<GuideWalletTransactionDto>>
-            GetWalletTransactionsAsync(
+        public async Task<List<GuideWalletTransactionDto>>GetWalletTransactionsAsync(
                 string guideId,
                 int take = 100)
         {
@@ -393,8 +409,7 @@ namespace Infrastructure.Services.GuideDashboard
                 .ToListAsync();
         }
 
-        public async Task<List<GuideRecentActivityDto>>
-            GetRecentActivitiesAsync(
+        public async Task<List<GuideRecentActivityDto>>GetRecentActivitiesAsync(
                 string guideId,
                 int take = 20)
         {
