@@ -10,7 +10,7 @@ import {
 } from "../Services/api/tours";
 import {
   extractTourDescription,
-  extractTourImageUrls,
+  extractTourImageUrl,
   extractTourMaxGroupSize,
 } from "../Services/utils/tourUtils";
 import {
@@ -19,14 +19,13 @@ import {
   serializeTourExtras,
 } from "../Services/utils/tourJsonUtils";
 import TourExtrasFormSection from "../components/tours/TourExtrasFormSection";
-import TourImageCarousel from "../components/tours/TourImageCarousel";
-import MultiTourImagePicker from "../components/tours/MultiTourImagePicker";
 import {
   AlertTriangle,
   CalendarClock,
   DollarSign,
   MapPin,
   Pencil,
+  Image as ImageIcon,
   PlusCircle,
   Ticket,
   Trash2,
@@ -41,8 +40,7 @@ const createInitialState = () => ({
   durationHours: "",
   maxGroupSize: "",
   ...defaultTourExtras(),
-  imageFiles: [],
-  existingImageUrls: [],
+  imageFile: null,
 });
 
 export default function GuideDashboard() {
@@ -121,14 +119,6 @@ export default function GuideDashboard() {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleImageChange = (imageFiles, existingImageUrls) => {
-    setForm((prev) => ({
-      ...prev,
-      imageFiles,
-      existingImageUrls: existingImageUrls || prev.existingImageUrls || [],
-    }));
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -158,26 +148,17 @@ export default function GuideDashboard() {
       await fetchMyTours();
       await fetchDashboard();
     } catch (err) {
-      const body = err.response?.data;
-      const errors = body?.errors;
-
-      if (import.meta.env.DEV && errors) {
-        Object.entries(errors).forEach(([key, msgs]) => {
-          console.log(`${key}:`, Array.isArray(msgs) ? msgs.join(", ") : msgs);
-        });
+      toast.error(err?.response?.data?.message || "Something went wrong");
+      if (import.meta.env.DEV) {
+        console.log("ERROR FULL:", err.response?.data);
       }
-
-      toast.error(
-        body?.message ||
-          (errors && Object.values(errors).flat().join(" ")) ||
-          "Failed to create tour"
-      );
     } finally {
       setFormLoading(false);
     }
   };
 
-  const tourFallbackImage =
+  const getTourImage = (tour) =>
+    extractTourImageUrl(tour) ||
     "https://images.unsplash.com/photo-1493244040629-496f6d136cc3?auto=format&fit=crop&w=900&q=80";
 
   const getTourId = (tour) => tour?.id || tour?.tourId;
@@ -216,14 +197,6 @@ export default function GuideDashboard() {
     setEditForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleEditImageChange = (imageFiles, existingImageUrls) => {
-    setEditForm((prev) => ({
-      ...prev,
-      imageFiles,
-      existingImageUrls: existingImageUrls || prev.existingImageUrls || [],
-    }));
-  };
-
   const handleUpdateTour = async (e) => {
     e.preventDefault();
     if (!editingTourId) return;
@@ -253,20 +226,8 @@ export default function GuideDashboard() {
       await fetchMyTours();
       await fetchDashboard();
     } catch (error) {
-      const body = error.response?.data;
-      const errors = body?.errors;
-
-      if (import.meta.env.DEV && errors) {
-        Object.entries(errors).forEach(([key, msgs]) => {
-          console.log(`${key}:`, Array.isArray(msgs) ? msgs.join(", ") : msgs);
-        });
-      }
-
-      toast.error(
-        body?.message ||
-          (errors && Object.values(errors).flat().join(" ")) ||
-          "Failed to update tour"
-      );
+      toast.error(error?.response?.data?.message || "Failed to update tour");
+      console.error("Update error:", error);
     } finally {
       setEditLoading(false);
     }
@@ -740,13 +701,16 @@ export default function GuideDashboard() {
               }
             />
 
-            <MultiTourImagePicker
-              files={form.imageFiles}
-              existingImageUrls={form.existingImageUrls || []}
-              onChange={handleImageChange}
-              label="Tour images"
-              hint="Choose multiple images"
-            />
+            <label className="flex items-center gap-2 rounded-xl border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-600 bg-gray-50">
+              <ImageIcon size={16} />
+              <span className="font-medium">Upload tour image</span>
+              <input
+                type="file"
+                accept="image/*"
+                className="ml-auto text-xs"
+                onChange={(e) => handleChange("imageFile", e.target.files?.[0])}
+              />
+            </label>
 
             <button
               disabled={formLoading}
@@ -776,11 +740,10 @@ export default function GuideDashboard() {
                   key={getTourId(tour) || tour.title}
                   className="overflow-hidden rounded-2xl border border-slate-100 shadow-sm bg-white"
                 >
-                  <TourImageCarousel
-                    images={extractTourImageUrls(tour)}
-                    fallback={tourFallbackImage}
+                  <img
+                    src={getTourImage(tour)}
                     alt={getTourTitle(tour) || "Tour"}
-                    className="h-40 w-full"
+                    className="h-40 w-full object-cover"
                   />
                   <div className="p-4">
                     <h4 className="font-bold text-slate-900 line-clamp-1">
@@ -803,7 +766,7 @@ export default function GuideDashboard() {
                       <div className="flex items-center gap-1">
                         <Users size={14} className="text-egypt-teal" />
                         <span>
-                          {extractTourMaxGroupSize(tour)}
+                          {tour.maxGroupSize ?? tour.MaxGroupSize ?? 0}
                         </span>
                       </div>
                     </div>
@@ -905,13 +868,18 @@ export default function GuideDashboard() {
                 }
               />
 
-              <MultiTourImagePicker
-                files={editForm.imageFiles}
-                existingImageUrls={editForm.existingImageUrls || []}
-                onChange={handleEditImageChange}
-                label="Change tour images"
-                hint="Choose multiple images"
-              />
+              <label className="flex items-center gap-2 rounded-xl border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-600 bg-gray-50">
+                <ImageIcon size={16} />
+                <span className="font-medium">Change image (optional)</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="ml-auto text-xs"
+                  onChange={(e) =>
+                    handleEditChange("imageFile", e.target.files?.[0] || null)
+                  }
+                />
+              </label>
 
               <div className="flex items-center justify-end gap-2 pt-2">
                 <button

@@ -11,7 +11,7 @@ export default function Navbar() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
-  const { logout } = useProfile();
+  const { logout, user } = useProfile();
   const isLightBackgroundPage =
     location.pathname === "/profile" || location.pathname === "/support";
   const navTextClass =
@@ -63,7 +63,15 @@ export default function Navbar() {
                   : `${navTextClass} hover:bg-white/10 hover:text-egypt-teal`
               }`}
             >
-              <CircleUserRound className="w-9 h-9" strokeWidth={1.5} />
+              {user?.profilePicture || user?.touristImage ? (
+                <img
+                  src={user.profilePicture || user.touristImage}
+                  alt="Profile"
+                  className="w-9 h-9 rounded-full object-cover border-2 border-white/30"
+                />
+              ) : (
+                <CircleUserRound className="w-9 h-9" strokeWidth={1.5} />
+              )}
             </button>
 
             {isProfileOpen && (

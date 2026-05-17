@@ -1,6 +1,5 @@
 import {
   extractTourDescription,
-  extractTourImageUrls,
   extractTourMaxGroupSize,
 } from "./tourUtils";
 
@@ -181,9 +180,6 @@ export const unwrapTourPayload = (raw) => {
 export const mapTourToEditForm = (rawTour, imageFiles = []) => {
   const tour = unwrapTourPayload(rawTour);
 
-  // Extract existing image URLs from tour
-  const existingImageUrls = extractTourImageUrls(tour);
-
   return {
     title: pick(tour?.title, tour?.Title) || "",
     description: extractTourDescription(tour),
@@ -192,7 +188,6 @@ export const mapTourToEditForm = (rawTour, imageFiles = []) => {
     maxGroupSize: extractTourMaxGroupSize(tour),
     ...tourExtrasFromTour(tour),
     imageFiles,
-    existingImageUrls,
     imageFile: imageFiles[0] ?? null,
   };
 };

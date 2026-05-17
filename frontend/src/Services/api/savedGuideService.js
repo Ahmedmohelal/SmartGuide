@@ -1,7 +1,6 @@
 import axios from "axios";
 import { ENDPOINTS } from "../../config/api";
 import { authHeader, getToken } from "../utils/tokenUtils";
-import { hasGuideImage } from "../utils/guideUtils";
 import { getGuideById } from "./guideService";
 
 const requireAuth = () => {
@@ -45,8 +44,6 @@ const lacksDisplayFields = (g) =>
     g.UserName
   );
 
-const needsGuideHydration = (g) => lacksDisplayFields(g) || !hasGuideImage(g);
-
 /** Merge API row with optional nested guide payload; always set id / guideId as strings. */
 const normalizeSavedGuideEntry = (item) => {
   const id = pickGuideId(item);
@@ -62,11 +59,11 @@ const normalizeSavedGuideEntry = (item) => {
 };
 
 const hydrateSavedGuides = async (entries) => {
-  if (!entries.some(needsGuideHydration)) return entries;
+  if (!entries.some(lacksDisplayFields)) return entries;
 
   return Promise.all(
     entries.map(async (g) => {
-      if (!needsGuideHydration(g)) return g;
+      if (!lacksDisplayFields(g)) return g;
       try {
         const raw = await getGuideById(g.guideId);
         const profile = raw?.data ?? raw;

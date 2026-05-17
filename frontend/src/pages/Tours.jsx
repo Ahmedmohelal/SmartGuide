@@ -3,10 +3,9 @@ import { Link } from "react-router-dom";
 import { getHomeTours, getMyTours } from "../Services/api/tours";
 import {
   extractTourDescription,
-  extractTourImageUrls,
+  extractTourImageUrl,
   extractTourMaxGroupSize,
 } from "../Services/utils/tourUtils";
-import TourImageCarousel from "../components/tours/TourImageCarousel";
 
 export default function Tours() {
   const [tours, setTours] = useState([]);
@@ -92,7 +91,7 @@ export default function Tours() {
           {tours.map((tour) => {
             const tid = tour?.id ?? tour?.Id;
             const title = tour?.title ?? tour?.Title ?? "رحلة";
-            const images = extractTourImageUrls(tour);
+            const img = extractTourImageUrl(tour) || fallbackImg;
             const excerpt =
               extractTourDescription(tour)?.slice(0, 100) ||
               "اكتشف التفاصيل من صفحة الرحلة.";
@@ -101,16 +100,11 @@ export default function Tours() {
                 key={tid ?? title}
                 className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-md transition hover:border-egypt-teal/30 hover:shadow-lg"
               >
-                <Link
-                  to={tid ? `/tours/${tid}` : "#"}
-                  state={{ tourSummary: tour }}
-                  className="block"
-                >
-                  <TourImageCarousel
-                    images={images}
-                    fallback={fallbackImg}
-                    alt={title}
-                    className="h-44 w-full"
+                <Link to={tid ? `/tours/${tid}` : "#"} className="block">
+                  <img
+                    src={img}
+                    alt=""
+                    className="h-44 w-full object-cover"
                   />
                   <div className="space-y-2 p-5">
                     <h2 className="line-clamp-2 font-bold text-slate-900">

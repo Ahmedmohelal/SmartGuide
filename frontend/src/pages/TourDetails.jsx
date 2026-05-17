@@ -1,22 +1,17 @@
-import { useLocation, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   Banknote,
-  ChevronLeft,
-  ChevronRight,
   Clock,
   MapPinned,
   Package,
   Sparkles,
   Users,
 } from "lucide-react";
-import { getHomeTours, getMyTours, getTourById } from "../Services/api/tours";
+import { getTourById } from "../Services/api/tours";
 import { extractTourProgramSections } from "../Services/utils/tourJsonUtils";
-import {
-  extractTourImageUrls,
-  extractTourMaxGroupSize,
-} from "../Services/utils/tourUtils";
+import { extractTourMaxGroupSize } from "../Services/utils/tourUtils";
 
 const pick = (...vals) =>
   vals.find((v) => v !== undefined && v !== null && v !== "");
@@ -24,7 +19,6 @@ const pick = (...vals) =>
 export default function TourDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const [tour, setTour] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -47,36 +41,9 @@ export default function TourDetails() {
       try {
         setLoading(true);
         const data = await getTourById(id);
-        let summary = location.state?.tourSummary;
-
-        if (!extractTourMaxGroupSize(data) && !extractTourMaxGroupSize(summary)) {
-          try {
-            const role = (localStorage.getItem("userRole") || "").toLowerCase();
-            const isGuide = role === "tourguide" || role === "guide";
-            const list = isGuide ? await getMyTours() : await getHomeTours();
-            summary = list.find(
-              (item) => String(item?.id ?? item?.Id) === String(id)
-            );
-          } catch {
-            summary = null;
-          }
-        }
-
-        const maxGroupSize =
-          extractTourMaxGroupSize(data) || extractTourMaxGroupSize(summary);
-        const imageUrls = extractTourImageUrls(data);
-        const summaryImageUrls = extractTourImageUrls(summary);
-
-        const mergedData = {
-          ...(summary || {}),
-          ...data,
-          images: imageUrls.length > 0 ? imageUrls : summaryImageUrls,
-          maxGroupSize,
-          MaxGroupSize: maxGroupSize,
-        };
 
         if (!cancelled) {
-          setTour(mergedData);
+          setTour(data);
           setActiveImageIdx(0);
         }
       } catch {
@@ -89,10 +56,16 @@ export default function TourDetails() {
     return () => {
       cancelled = true;
     };
-  }, [id, location.state]);
+  }, [id]);
 
   const images = useMemo(() => {
-    return extractTourImageUrls(tour);
+    if (!tour) return [];
+    const list = Array.isArray(tour.images)
+      ? tour.images
+      : Array.isArray(tour.Images)
+      ? tour.Images
+      : [];
+    return list.filter(Boolean);
   }, [tour]);
 
   const { stops, inclusions, addOns } = useMemo(
@@ -104,14 +77,6 @@ export default function TourDetails() {
     images.length > 0
       ? images[Math.min(activeImageIdx, images.length - 1)]
       : FALLBACK_HERO;
-
-  const showPreviousImage = () => {
-    setActiveImageIdx((current) => (current - 1 + images.length) % images.length);
-  };
-
-  const showNextImage = () => {
-    setActiveImageIdx((current) => (current + 1) % images.length);
-  };
 
   if (loading) {
     return (
@@ -159,53 +124,12 @@ export default function TourDetails() {
           {/* HERO */}
           <header className="grid lg:grid-cols-2 gap-8">
 
-            <div className="relative overflow-hidden rounded-[32px] shadow-2xl">
+            <div className="rounded-[32px] overflow-hidden shadow-2xl">
               <img
                 src={hero}
-                className="h-full min-h-[360px] w-full object-cover"
+                className="w-full h-full object-cover"
                 alt={title}
               />
-              {images.length > 1 ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={showPreviousImage}
-                    className="absolute left-4 top-1/2 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-slate-800 shadow-lg transition hover:bg-white"
-                    aria-label="Previous tour image"
-                  >
-                    <ChevronLeft size={24} />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={showNextImage}
-                    className="absolute right-4 top-1/2 inline-flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white/85 text-slate-800 shadow-lg transition hover:bg-white"
-                    aria-label="Next tour image"
-                  >
-                    <ChevronRight size={24} />
-                  </button>
-                  <div className="absolute bottom-4 left-4 right-4 flex gap-2 overflow-x-auto">
-                    {images.map((image, index) => (
-                      <button
-                        key={`${image}-${index}`}
-                        type="button"
-                        onClick={() => setActiveImageIdx(index)}
-                        className={`h-14 w-20 shrink-0 overflow-hidden rounded-xl border-2 transition ${
-                          index === activeImageIdx
-                            ? "border-white shadow-lg"
-                            : "border-white/40 opacity-75 hover:opacity-100"
-                        }`}
-                        aria-label={`Show tour image ${index + 1}`}
-                      >
-                        <img
-                          src={image}
-                          alt=""
-                          className="h-full w-full object-cover"
-                        />
-                      </button>
-                    ))}
-                  </div>
-                </>
-              ) : null}
             </div>
 
             <div className="rounded-[32px] bg-white/50 backdrop-blur-xl p-8 shadow-xl">
@@ -225,7 +149,7 @@ export default function TourDetails() {
 
                 <span className="px-4 py-2 bg-white/40 rounded-full">
                   <Users className="inline text-egypt-teal" /> Up to{" "}
-                  {maxGroupSize || "—"} guests
+                  {maxGroupSize} guests
                 </span>
 
                 {price && (

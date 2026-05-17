@@ -93,7 +93,12 @@ const normalizeProfileData = (rawUser = {}, fallbackUser = {}) => {
     firstName,
     lastName,
     email: pickFirst(rawUser.email, rawUser.Email, fallbackUser.email),
+    phoneNumber: pickFirst(rawUser.phoneNumber, rawUser.PhoneNumber, rawUser.phone, rawUser.Phone, fallbackUser.phoneNumber),
+    whatsAppNumber: pickFirst(rawUser.whatsAppNumber, rawUser.WhatsAppNumber, rawUser.WhatsAppContact, fallbackUser.whatsAppNumber),
     country: pickFirst(rawUser.country, rawUser.Country, fallbackUser.country),
+    bio: pickFirst(rawUser.bio, rawUser.Bio, fallbackUser.bio),
+    cities: pickFirst(rawUser.cities, rawUser.Cities, fallbackUser.cities),
+    languages: pickFirst(rawUser.languages, rawUser.Languages, fallbackUser.languages),
     touristImage: normalizeImageUrl(
       pickFirst(
         rawUser.touristImage,
@@ -182,8 +187,13 @@ export const ProfileProvider = ({ children }) => {
 
       formData.append("FirstName", updatedData.firstName || "");
       formData.append("LastName", updatedData.lastName || "");
+      formData.append("Email", updatedData.email || "");
+      formData.append("PhoneNumber", updatedData.phoneNumber || "");
       formData.append("Country", updatedData.country || "");
       formData.append("WhatsAppNumber", updatedData.whatsAppNumber || "");
+      formData.append("Bio", updatedData.bio || "");
+      formData.append("Cities", updatedData.cities || "");
+      formData.append("Languages", updatedData.languages || "");
       
       // Add profile picture if provided
       if (updatedData.profilePicture instanceof File) {

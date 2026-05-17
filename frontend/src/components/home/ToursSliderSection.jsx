@@ -10,10 +10,9 @@ import {
 import { getHomeTours, getMyTours } from "../../Services/api/tours";
 import {
   extractTourDescription,
-  extractTourImageUrls,
+  extractTourImageUrl,
   extractTourMaxGroupSize,
 } from "../../Services/utils/tourUtils";
-import TourImageCarousel from "../tours/TourImageCarousel";
 
 const FALLBACK_IMG =
   "https://images.unsplash.com/photo-1539768942893-daf53e449371?auto=format&fit=crop&w=900&q=80";
@@ -173,7 +172,7 @@ export default function ToursSliderSection() {
               className="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4 scroll-smooth [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
               {tours.map((tour) => {
-                const images = extractTourImageUrls(tour);
+                const img = extractTourImageUrl(tour) || FALLBACK_IMG;
 
                 const title = tour?.title ?? tour?.Title ?? "Untitled Tour";
 
@@ -188,16 +187,13 @@ export default function ToursSliderSection() {
                     role="listitem"
                     key={tour?.id ?? tour?.Id ?? title}
                     to={href}
-                    state={{ tourSummary: tour }}
                     className="group min-w-[280px] max-w-[340px] shrink-0 snap-start overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-md transition hover:border-egypt-teal/40 hover:shadow-lg sm:min-w-[300px]"
                   >
                     <div className="relative aspect-[16/11] overflow-hidden">
-                      <TourImageCarousel
-                        images={images}
-                        fallback={FALLBACK_IMG}
+                      <img
+                        src={img}
                         alt={title}
-                        className="h-full w-full"
-                        imageClassName="transition duration-500 group-hover:scale-[1.04]"
+                        className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
                       />
 
                       <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent opacity-90" />

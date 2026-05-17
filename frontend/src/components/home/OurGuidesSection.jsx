@@ -3,12 +3,34 @@ import { getAllGuides } from "../../Services/api/guideService";
 import { saveGuide, deleteSavedGuide, getSavedGuides } from "../../Services/api/savedGuideService";
 import { isGuide, getToken } from "../../Services/utils/tokenUtils";
 import { Link } from "react-router-dom";
-import {
-  getGuideCity,
-  getGuideImage,
-  getGuideName,
-  getGuideRating,
-} from "../../Services/utils/guideUtils";
+
+const getGuideName = (guide) => {
+  if (guide.firstName && guide.lastName) {
+    return `${guide.firstName} ${guide.lastName}`;
+  }
+  if (guide.FirstName && guide.LastName) {
+    return `${guide.FirstName} ${guide.LastName}`;
+  }
+  return guide.name || guide.Name || guide.userName || guide.UserName || "Unknown Guide";
+};
+
+const getGuideImage = (guide) => {
+  return (
+    guide.profilePicture ||
+    guide.ProfilePicture ||
+    guide.image ||
+    guide.Image ||
+    "/default-avatar.png"
+  );
+};
+
+const getGuideRating = (guide) => {
+  return guide.rating || guide.averageRating || guide.AverageRating || "N/A";
+};
+
+const getGuideCity = (guide) => {
+  return guide.city || guide.City || guide.location || guide.Location || "Egypt";
+};
 
 const guideRowId = (guide) => {
   if (guide == null) return null;

@@ -4,6 +4,7 @@ import {
   AlertTriangle,
   CalendarClock,
   Pencil,
+  Image as ImageIcon,
   PlusCircle,
   Ticket,
   Trash2,
@@ -18,7 +19,7 @@ import {
 } from "../../../Services/api/tours";
 import {
   extractTourDescription,
-  extractTourImageUrls,
+  extractTourImageUrl,
   extractTourMaxGroupSize,
 } from "../../../Services/utils/tourUtils";
 import {
@@ -27,8 +28,6 @@ import {
   serializeTourExtras,
 } from "../../../Services/utils/tourJsonUtils";
 import TourExtrasFormSection from "../../../components/tours/TourExtrasFormSection";
-import TourImageCarousel from "../../../components/tours/TourImageCarousel";
-import MultiTourImagePicker from "../../../components/tours/MultiTourImagePicker";
 
 const createInitialState = () => ({
   title: "",
@@ -38,7 +37,6 @@ const createInitialState = () => ({
   maxGroupSize: "",
   ...defaultTourExtras(),
   imageFiles: [],
-  existingImageUrls: [],
 });
 
 export default function CreateTour() {
@@ -71,14 +69,6 @@ export default function CreateTour() {
 
   const handleChange = (key, value) => {
     setForm((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const handleImageChange = (imageFiles, existingImageUrls) => {
-    setForm((prev) => ({
-      ...prev,
-      imageFiles,
-      existingImageUrls: existingImageUrls || prev.existingImageUrls || [],
-    }));
   };
 
   const handleSubmit = async (e) => {
@@ -119,7 +109,8 @@ export default function CreateTour() {
     }
   };
 
-  const tourFallbackImage =
+  const getTourImage = (tour) =>
+    extractTourImageUrl(tour) ||
     "https://images.unsplash.com/photo-1493244040629-496f6d136cc3?auto=format&fit=crop&w=900&q=80";
 
   const getTourId = (tour) => tour?.id || tour?.tourId;
@@ -156,14 +147,6 @@ export default function CreateTour() {
 
   const handleEditChange = (key, value) => {
     setEditForm((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const handleEditImageChange = (imageFiles, existingImageUrls) => {
-    setEditForm((prev) => ({
-      ...prev,
-      imageFiles,
-      existingImageUrls: existingImageUrls || prev.existingImageUrls || [],
-    }));
   };
 
   const handleUpdateTour = async (e) => {
@@ -295,13 +278,19 @@ export default function CreateTour() {
             }
           />
 
-          <MultiTourImagePicker
-            files={form.imageFiles}
-            existingImageUrls={form.existingImageUrls || []}
-            onChange={handleImageChange}
-            label="Tour images"
-            hint="Choose multiple images"
-          />
+          <label className="flex items-center gap-2 rounded-xl border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-600 bg-gray-50">
+            <ImageIcon size={16} />
+            <span className="font-medium">Upload tour image</span>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              className="ml-auto text-xs"
+              onChange={(e) =>
+                handleChange("imageFiles", Array.from(e.target.files || []))
+              }
+            />
+          </label>
 
           <button
             disabled={loading}
@@ -330,11 +319,10 @@ export default function CreateTour() {
                 key={getTourId(tour) || tour.title}
                 className="overflow-hidden rounded-2xl border border-gray-100 shadow-sm bg-white"
               >
-                <TourImageCarousel
-                  images={extractTourImageUrls(tour)}
-                  fallback={tourFallbackImage}
+                <img
+                  src={getTourImage(tour)}
                   alt={getTourTitle(tour) || "Tour"}
-                  className="h-40 w-full"
+                  className="h-40 w-full object-cover"
                 />
                 <div className="p-4">
                   <h4 className="font-bold text-gray-900 line-clamp-1">
@@ -356,7 +344,7 @@ export default function CreateTour() {
                     </div>
                     <div className="flex items-center gap-1">
                       <Users size={14} className="text-egypt-teal" />
-                      <span>{extractTourMaxGroupSize(tour)}</span>
+                      <span>{tour.maxGroupSize ?? tour.MaxGroupSize ?? 0}</span>
                     </div>
                   </div>
 
@@ -455,13 +443,22 @@ export default function CreateTour() {
                 }
               />
 
-              <MultiTourImagePicker
-                files={editForm.imageFiles}
-                existingImageUrls={editForm.existingImageUrls || []}
-                onChange={handleEditImageChange}
-                label="Change tour images"
-                hint="Choose multiple images"
-              />
+              <label className="flex items-center gap-2 rounded-xl border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-600 bg-gray-50">
+                <ImageIcon size={16} />
+                <span className="font-medium">Change image (optional)</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="ml-auto text-xs"
+                  onChange={(e) =>
+                    handleEditChange(
+                      "imageFiles",
+                      Array.from(e.target.files || []),
+                    )
+                  }
+                />
+              </label>
 
               <div className="flex items-center justify-end gap-2 pt-2">
                 <button

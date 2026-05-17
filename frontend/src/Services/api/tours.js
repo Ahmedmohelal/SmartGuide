@@ -105,61 +105,37 @@ const formJsonField = (value, fallback = "[]") => {
     }
   }
   if (Array.isArray(value)) {
-    try {
-      return JSON.stringify(value);
-    } catch {
-      return fallback;
-    }
+    return JSON.stringify(value);
   }
   return fallback;
 };
 
 const collectImageFiles = (data) => {
   const files = [];
-
-  const isFileLike = (value) =>
-    value instanceof File ||
-    (value &&
-      typeof value === "object" &&
-      typeof value.name === "string" &&
-      typeof value.size === "number");
-
-  if (isFileLike(data.imageFile)) {
+  if (data.imageFile instanceof File) {
     files.push(data.imageFile);
   }
-
   if (Array.isArray(data.imageFiles)) {
     data.imageFiles.forEach((f) => {
-      if (isFileLike(f)) files.push(f);
-    });
-  } else if (data.imageFiles && typeof data.imageFiles.length === "number") {
-    Array.from(data.imageFiles).forEach((f) => {
-      if (isFileLike(f)) files.push(f);
+      if (f instanceof File) files.push(f);
     });
   }
-
   return files;
 };
 
 const appendTourFormFields = (formData, data) => {
   formData.append("Title", formText(data.title));
   formData.append("Description", formText(data.description));
-  
-  // Convert numbers to proper numeric format
-  const price = parseFloat(data.price) || 0;
-  const duration = parseFloat(data.durationHours) || 0;
-  const maxGroup = parseFloat(data.maxGroupSize) || 0;
-  
-  formData.append("Price", price.toString());
-  formData.append("DurationHours", duration.toString());
-  formData.append("MaxGroupSize", maxGroup.toString());
+  formData.append("Price", formText(data.price));
+  formData.append("DurationHours", formText(data.durationHours));
+  formData.append("MaxGroupSize", formText(data.maxGroupSize));
 
   formData.append("StopsJson", formJsonField(data.stopsJson));
   formData.append("InclusionsJson", formJsonField(data.inclusionsJson));
   formData.append("AddOnsJson", formJsonField(data.addOnsJson));
 
   collectImageFiles(data).forEach((file) => {
-    formData.append("Images", file, file.name);
+    formData.append("Images", file);
   });
 };
 

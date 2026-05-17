@@ -6,8 +6,13 @@ export default function EditProfileModal({ user, onClose, onSave }) {
   const [formData, setFormData] = useState({
     firstName: user?.firstName || "",
     lastName: user?.lastName || "",
+    email: user?.email || "",
+    phoneNumber: user?.phoneNumber || "",
     whatsAppNumber: user?.whatsAppNumber || "",
     country: user?.country || "",
+    bio: user?.bio || "",
+    cities: user?.cities || "",
+    languages: user?.languages || "",
     profilePicture: null,
   });
 
@@ -70,15 +75,15 @@ const handleSubmit = async (e) => {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" dir="ltr">
-      <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl">
-        <div className="p-6 border-b flex justify-between items-center bg-gray-50">
+      <div className="bg-white rounded-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col">
+        <div className="p-6 border-b flex justify-between items-center bg-gray-50 sticky top-0 z-10">
           <h3 className="text-xl font-bold text-gray-800">Edit Profile</h3>
           <button onClick={onClose} className="p-2 hover:bg-gray-200 rounded-full">
             <X size={20} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 flex-1">
           {/* Profile Picture Section */}
           <div className="flex flex-col items-center pb-6 border-b">
             <div className="relative">
@@ -136,12 +141,75 @@ const handleSubmit = async (e) => {
           </div>
 
           <div>
+            <label className="block text-xs font-bold text-gray-500 mb-1">Email</label>
+            <input
+              type="email"
+              className="w-full p-3 bg-gray-50 border rounded-xl outline-none focus:border-egypt-teal"
+              value={formData.email}
+              onChange={(e) => setFormData({...formData, email: e.target.value})}
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-gray-500 mb-1">Phone Number</label>
+            <input
+              type="tel"
+              className="w-full p-3 bg-gray-50 border rounded-xl outline-none focus:border-egypt-teal"
+              value={formData.phoneNumber}
+              onChange={(e) => setFormData({...formData, phoneNumber: e.target.value})}
+            />
+          </div>
+
+          <div>
             <label className="block text-xs font-bold text-gray-500 mb-1">WhatsApp Number</label>
             <input
               type="text"
               className="w-full p-3 bg-gray-50 border rounded-xl outline-none focus:border-egypt-teal"
               value={formData.whatsAppNumber}
               onChange={(e) => setFormData({...formData, whatsAppNumber: e.target.value})}
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-gray-500 mb-1">Country</label>
+            <input
+              type="text"
+              className="w-full p-3 bg-gray-50 border rounded-xl outline-none focus:border-egypt-teal"
+              value={formData.country}
+              onChange={(e) => setFormData({...formData, country: e.target.value})}
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-gray-500 mb-1">Bio</label>
+            <textarea
+              rows="3"
+              className="w-full p-3 bg-gray-50 border rounded-xl outline-none focus:border-egypt-teal resize-none"
+              placeholder="Tell about yourself..."
+              value={formData.bio}
+              onChange={(e) => setFormData({...formData, bio: e.target.value})}
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-gray-500 mb-1">Cities</label>
+            <input
+              type="text"
+              className="w-full p-3 bg-gray-50 border rounded-xl outline-none focus:border-egypt-teal"
+              placeholder="e.g., Cairo, Alexandria"
+              value={formData.cities}
+              onChange={(e) => setFormData({...formData, cities: e.target.value})}
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-gray-500 mb-1">Languages</label>
+            <input
+              type="text"
+              className="w-full p-3 bg-gray-50 border rounded-xl outline-none focus:border-egypt-teal"
+              placeholder="e.g., Arabic, English, French"
+              value={formData.languages}
+              onChange={(e) => setFormData({...formData, languages: e.target.value})}
             />
           </div>
 
