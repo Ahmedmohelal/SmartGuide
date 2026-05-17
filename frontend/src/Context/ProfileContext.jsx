@@ -6,6 +6,7 @@ import {
   useCallback,
 } from "react";
 import axios from "axios";
+import authService from "../Services/authService";
 
 const ProfileContext = createContext();
 const BASE_URL = "https://smartguide.runasp.net/api";
@@ -223,8 +224,8 @@ export const ProfileProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    localStorage.clear();
+  const logout = async () => {
+    await authService.logout();
     setUser(null);
     window.location.href = "/login";
   };

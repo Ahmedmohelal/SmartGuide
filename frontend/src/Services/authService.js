@@ -1,30 +1,29 @@
-import axios from 'axios';
-
-const BASE_URL = 'https://smartguide.runasp.net/api/Auth';
+import axios from "axios";
+import { ENDPOINTS } from "../config/api";
+import { refreshAccessToken } from "./refreshAuth";
+import {
+  authHeader,
+  clearAuthStorage,
+  persistAuthFromResponse,
+} from "./utils/tokenUtils";
 
 const authService = {
   login: async (userData) => {
-  try {
-    const response = await axios.post(`${BASE_URL}/login`, userData);
-
-    localStorage.setItem("token", response.data.token);
-    localStorage.setItem("userRole", response.data.role);
-
-    return response.data;
-  } catch (error) {
-    throw error.response
-      ? error.response.data
-      : new Error("Network Error");
-  }
-  
+    try {
+      const response = await axios.post(`${ENDPOINTS.AUTH}/login`, userData);
+      persistAuthFromResponse(response.data);
+      return response.data;
+    } catch (error) {
+      throw error.response ? error.response.data : new Error("Network Error");
+    }
   },
-  
 
-  // رجعناها تقبل FormData زي الأول
   register: async (formDataContent) => {
     try {
-      // الـ axios هيظبط الـ Headers لوحده عشان ده FormData
-      const response = await axios.post(`${BASE_URL}/register`, formDataContent);
+      const response = await axios.post(
+        `${ENDPOINTS.AUTH}/register`,
+        formDataContent
+      );
       return response.data;
     } catch (error) {
       const body = error.response?.data;
@@ -44,21 +43,45 @@ const authService = {
   },
 
   googleLogin: async (googleToken) => {
-  try {
-    const response = await axios.post(`${BASE_URL}/google-login`, {
-      idToken: googleToken,
-    
-    });
-    
+    try {
+      const response = await axios.post(`${ENDPOINTS.AUTH}/google-login`, {
+        idToken: googleToken,
+      });
+      return response.data;
+    } catch (error) {
+      console.log("Google Login Error:", error.response);
+      throw error.response?.data?.message || "Google Login Failed";
+    }
+  },
 
-    return response.data;
-  } catch (error) {
-    console.log("Google Login Error:", error.response); // 👈 مهم في الديبج
+  /** POST /api/Auth/refreshtoken — renew access + refresh tokens */
+  refreshToken: async () => {
+    try {
+      const token = await refreshAccessToken();
+      return { token };
+    } catch (error) {
+      throw error.response?.data ?? error;
+    }
+  },
 
-    throw error.response?.data?.message || "Google Login Failed";
-  }
-}
+  logout: async () => {
+    const refreshToken = localStorage.getItem("refreshToken");
+    const token = localStorage.getItem("token");
+
+    try {
+      if (refreshToken && token) {
+        await axios.post(
+          `${ENDPOINTS.AUTH}/logout`,
+          { refreshToken },
+          { headers: authHeader() }
+        );
+      }
+    } catch {
+      // Still clear local session if server logout fails
+    } finally {
+      clearAuthStorage();
+    }
+  },
 };
-
 
 export default authService;
