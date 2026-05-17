@@ -1,6 +1,7 @@
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { GoogleOAuthProvider } from '@react-oauth/google' // 1. استيراد المكتبة
+import './Services/setupAxios'
 import App from './App'
 import './index.css'
 import "sonner/dist/styles.css";
