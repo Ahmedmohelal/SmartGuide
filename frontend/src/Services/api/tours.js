@@ -63,9 +63,12 @@ export const getToursByGuide = async (guideId) => {
 };
 
 export const getToursByPlace = async (placeId) => {
-  const res = await axios.get(`${ENDPOINTS.DASHBOARD_TOUR}/by-place/${placeId}`, {
-    headers: authHeader(),
-  });
+  const res = await axios.get(
+    `${ENDPOINTS.DASHBOARD_TOUR}/by-place/${placeId}`,
+    {
+      headers: authHeader(),
+    },
+  );
   return Array.isArray(res.data) ? res.data : [];
 };
 
@@ -159,9 +162,13 @@ export const updateTour = async (id, data) => {
 
   appendTourFormFields(formData, data);
 
-  const res = await axios.put(`${ENDPOINTS.DASHBOARD_TOUR}/edit/${id}`, formData, {
-    headers: authHeader(),
-  });
+  const res = await axios.put(
+    `${ENDPOINTS.DASHBOARD_TOUR}/edit/${id}`,
+    formData,
+    {
+      headers: authHeader(),
+    },
+  );
 
   return res.data;
 };

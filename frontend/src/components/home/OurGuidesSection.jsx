@@ -209,7 +209,7 @@ export default function OurGuidesSection() {
                     {getGuideName(guide)}
                   </h3>
                   <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600">
-                    {guide.bio || `Professional tour guide from ${getGuideCity(guide)}`}
+                    { `Professional tour guide from ${getGuideCity(guide)}`}
                   </p>
                   <div className="mt-2 flex items-center justify-between text-sm text-slate-500">
                     <span>📍 {getGuideCity(guide)}</span>

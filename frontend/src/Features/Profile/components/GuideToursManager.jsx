@@ -18,9 +18,7 @@ import {
   updateTour,
 } from "../../../Services/api/tours";
 import {
-  extractTourDescription,
   extractTourImageUrl,
-  extractTourMaxGroupSize,
 } from "../../../Services/utils/tourUtils";
 import {
   defaultTourExtras,
@@ -50,6 +48,8 @@ export default function CreateTour() {
   const [deleteLoadingId, setDeleteLoadingId] = useState(null);
   const [pendingDeleteTour, setPendingDeleteTour] = useState(null);
   const [editForm, setEditForm] = useState(() => createInitialState());
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [createStep, setCreateStep] = useState(1);
 
   const fetchMyTours = async () => {
     try {
@@ -71,10 +71,7 @@ export default function CreateTour() {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    // validation (required fields only)
+  const validateStep1 = () => {
     if (
       !form.title ||
       !form.description ||
@@ -82,7 +79,46 @@ export default function CreateTour() {
       !form.durationHours ||
       !form.maxGroupSize
     ) {
-      toast.error("Please fill required fields");
+      toast.error("Please fill all required fields in this step");
+      return false;
+    }
+    return true;
+  };
+
+  const validateStep2 = () => {
+    // Step 2 doesn't require mandatory validation, user can skip
+    return true;
+  };
+
+  const validateStep3 = () => {
+    // Step 3 is optional (images)
+    return true;
+  };
+
+  const handleNextStep = () => {
+    if (createStep === 1 && !validateStep1()) return;
+    if (createStep === 2 && !validateStep2()) return;
+    if (createStep < 3) {
+      setCreateStep(createStep + 1);
+    }
+  };
+
+  const handlePrevStep = () => {
+    if (createStep > 1) {
+      setCreateStep(createStep - 1);
+    }
+  };
+
+  const closeCreateModal = () => {
+    setIsCreateModalOpen(false);
+    setCreateStep(1);
+    setForm(createInitialState());
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validateStep1() || !validateStep2() || !validateStep3()) {
       return;
     }
 
@@ -97,7 +133,7 @@ export default function CreateTour() {
       });
       await createTour({ ...rest, ...extras });
       toast.success("Tour created successfully!");
-      setForm(createInitialState());
+      closeCreateModal();
       await fetchMyTours();
     } catch (err) {
       toast.error(err?.response?.data?.message || "Something went wrong");
@@ -218,87 +254,17 @@ export default function CreateTour() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 md:p-8">
-        <div className="flex items-center gap-2 mb-5">
-          <PlusCircle size={20} className="text-egypt-teal" />
+      <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 md:p-8 flex items-center justify-between">
+        <div className="flex items-center gap-3">
           <h3 className="text-lg font-bold text-gray-900">Create New Tour</h3>
         </div>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-egypt-teal/30 focus:border-egypt-teal"
-            placeholder="Title *"
-            value={form.title}
-            onChange={(e) => handleChange("title", e.target.value)}
-          />
-
-          <textarea
-            className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none min-h-[96px] resize-none focus:ring-2 focus:ring-egypt-teal/30 focus:border-egypt-teal"
-            placeholder="Description *"
-            value={form.description}
-            onChange={(e) => handleChange("description", e.target.value)}
-          />
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <input
-              className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-egypt-teal/30 focus:border-egypt-teal"
-              type="number"
-              placeholder="Price *"
-              value={form.price}
-              onChange={(e) => handleChange("price", e.target.value)}
-            />
-            <input
-              className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-egypt-teal/30 focus:border-egypt-teal"
-              type="number"
-              placeholder="Duration Hours *"
-              value={form.durationHours}
-              onChange={(e) => handleChange("durationHours", e.target.value)}
-            />
-            <input
-              className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-egypt-teal/30 focus:border-egypt-teal"
-              type="number"
-              placeholder="Max Group Size *"
-              value={form.maxGroupSize}
-              onChange={(e) => handleChange("maxGroupSize", e.target.value)}
-            />
-          </div>
-
-          <TourExtrasFormSection
-            programStops={form.programStops}
-            onChangeProgramStops={(programStops) =>
-              setForm((prev) => ({ ...prev, programStops }))
-            }
-            inclusionLines={form.inclusionLines}
-            onChangeInclusionLines={(inclusionLines) =>
-              setForm((prev) => ({ ...prev, inclusionLines }))
-            }
-            addOnRows={form.addOnRows}
-            onChangeAddOnRows={(addOnRows) =>
-              setForm((prev) => ({ ...prev, addOnRows }))
-            }
-          />
-
-          <label className="flex items-center gap-2 rounded-xl border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-600 bg-gray-50">
-            <ImageIcon size={16} />
-            <span className="font-medium">Upload tour image</span>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              className="ml-auto text-xs"
-              onChange={(e) =>
-                handleChange("imageFiles", Array.from(e.target.files || []))
-              }
-            />
-          </label>
-
-          <button
-            disabled={loading}
-            className="w-full md:w-auto px-6 py-2.5 rounded-xl font-semibold text-white bg-egypt-teal hover:bg-teal-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-          >
-            {loading ? "Creating..." : "Create Tour"}
-          </button>
-        </form>
+        <button
+          onClick={() => setIsCreateModalOpen(true)}
+          className="flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white bg-egypt-teal hover:bg-teal-700 hover:shadow-lg transform hover:scale-105 transition-all duration-300 active:scale-95"
+        >
+          <PlusCircle size={20} />
+          Create Tour
+        </button>
       </div>
 
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 md:p-8">
@@ -376,6 +342,225 @@ export default function CreateTour() {
         )}
       </div>
 
+      {isCreateModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+          <div className="w-full max-w-2xl bg-white rounded-2xl p-6 max-h-[90vh] overflow-y-auto shadow-2xl">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-bold text-gray-900">
+                {createStep === 1 && "Basic Information"}
+                {createStep === 2 && "Tour Program"}
+                {createStep === 3 && "Tour Images"}
+              </h3>
+              <div className="text-sm text-gray-500 font-medium">
+                Step {createStep} of 3
+              </div>
+            </div>
+
+            {/* Step Indicator */}
+            <div className="flex items-center gap-2 mb-6">
+              {[1, 2, 3].map((step) => (
+                <div key={step} className="flex-1 flex items-center">
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold transition-all ${
+                      step < createStep
+                        ? "bg-egypt-teal text-white"
+                        : step === createStep
+                          ? "bg-egypt-teal text-white ring-2 ring-egypt-teal/50"
+                          : "bg-gray-200 text-gray-600"
+                    }`}
+                  >
+                    {step < createStep ? "✓" : step}
+                  </div>
+                  {step < 3 && (
+                    <div
+                      className={`flex-1 h-1 mx-2 transition-all ${
+                        step < createStep ? "bg-egypt-teal" : "bg-gray-200"
+                      }`}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Step 1: Basic Information */}
+            {createStep === 1 && (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleNextStep();
+                }}
+                className="space-y-4"
+              >
+                <input
+                  className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-egypt-teal/30 focus:border-egypt-teal"
+                  placeholder="Title *"
+                  value={form.title}
+                  onChange={(e) => handleChange("title", e.target.value)}
+                />
+
+                <textarea
+                  className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none min-h-[96px] resize-none focus:ring-2 focus:ring-egypt-teal/30 focus:border-egypt-teal"
+                  placeholder="Description *"
+                  value={form.description}
+                  onChange={(e) => handleChange("description", e.target.value)}
+                />
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <input
+                    className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-egypt-teal/30 focus:border-egypt-teal"
+                    type="number"
+                    placeholder="Price *"
+                    value={form.price}
+                    onChange={(e) => handleChange("price", e.target.value)}
+                  />
+                  <input
+                    className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-egypt-teal/30 focus:border-egypt-teal"
+                    type="number"
+                    placeholder="Duration Hours *"
+                    value={form.durationHours}
+                    onChange={(e) =>
+                      handleChange("durationHours", e.target.value)
+                    }
+                  />
+                  <input
+                    className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-egypt-teal/30 focus:border-egypt-teal"
+                    type="number"
+                    placeholder="Max Group Size *"
+                    value={form.maxGroupSize}
+                    onChange={(e) =>
+                      handleChange("maxGroupSize", e.target.value)
+                    }
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-4">
+                  <button
+                    type="button"
+                    onClick={closeCreateModal}
+                    className="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 rounded-lg bg-egypt-teal text-white font-semibold hover:bg-teal-700 transition"
+                  >
+                    Next
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* Step 2: Tour Program */}
+            {createStep === 2 && (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleNextStep();
+                }}
+                className="space-y-4"
+              >
+                <TourExtrasFormSection
+                  programStops={form.programStops}
+                  onChangeProgramStops={(programStops) =>
+                    setForm((prev) => ({ ...prev, programStops }))
+                  }
+                  inclusionLines={form.inclusionLines}
+                  onChangeInclusionLines={(inclusionLines) =>
+                    setForm((prev) => ({ ...prev, inclusionLines }))
+                  }
+                  addOnRows={form.addOnRows}
+                  onChangeAddOnRows={(addOnRows) =>
+                    setForm((prev) => ({ ...prev, addOnRows }))
+                  }
+                />
+
+                <div className="flex items-center justify-end gap-2 pt-4">
+                  <button
+                    type="button"
+                    onClick={handlePrevStep}
+                    className="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition"
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 rounded-lg bg-egypt-teal text-white font-semibold hover:bg-teal-700 transition"
+                  >
+                    Next
+                  </button>
+                </div>
+              </form>
+            )}
+
+            {/* Step 3: Tour Images */}
+            {createStep === 3 && (
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <label className="flex items-center gap-2 rounded-xl border border-dashed border-gray-300 px-4 py-6 text-sm text-gray-600 bg-gray-50 hover:bg-gray-100 cursor-pointer transition">
+                  <ImageIcon size={24} className="text-egypt-teal" />
+                  <div>
+                    <span className="font-medium block">
+                      Upload tour images
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      PNG, JPG, GIF up to 10MB
+                    </span>
+                  </div>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={(e) =>
+                      handleChange(
+                        "imageFiles",
+                        Array.from(e.target.files || []),
+                      )
+                    }
+                  />
+                </label>
+
+                {form.imageFiles.length > 0 && (
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+                    <p className="text-sm font-medium text-gray-700 mb-2">
+                      Selected images: {form.imageFiles.length}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {form.imageFiles.map((file, idx) => (
+                        <div
+                          key={idx}
+                          className="text-xs bg-white border border-gray-200 rounded px-2 py-1 text-gray-600"
+                        >
+                          {file.name}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center justify-end gap-2 pt-4">
+                  <button
+                    type="button"
+                    onClick={handlePrevStep}
+                    className="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition"
+                  >
+                    Back
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="px-4 py-2 rounded-lg bg-egypt-teal text-white font-semibold hover:bg-teal-700 disabled:bg-gray-400 transition"
+                  >
+                    {loading ? "Creating..." : "Create Tour"}
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+
       {editingTourId && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="w-full max-w-2xl bg-white rounded-2xl p-6 max-h-[90vh] overflow-y-auto">
@@ -385,98 +570,98 @@ export default function CreateTour() {
                 Loading tour details…
               </p>
             ) : (
-            <form onSubmit={handleUpdateTour} className="space-y-3">
-              <input
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-egypt-teal/30 focus:border-egypt-teal"
-                placeholder="Title *"
-                value={editForm.title}
-                onChange={(e) => handleEditChange("title", e.target.value)}
-              />
-              <textarea
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none min-h-[96px] resize-none focus:ring-2 focus:ring-egypt-teal/30 focus:border-egypt-teal"
-                placeholder="Description *"
-                value={editForm.description}
-                onChange={(e) =>
-                  handleEditChange("description", e.target.value)
-                }
-              />
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <form onSubmit={handleUpdateTour} className="space-y-3">
                 <input
                   className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-egypt-teal/30 focus:border-egypt-teal"
-                  type="number"
-                  placeholder="Price *"
-                  value={editForm.price}
-                  onChange={(e) => handleEditChange("price", e.target.value)}
+                  placeholder="Title *"
+                  value={editForm.title}
+                  onChange={(e) => handleEditChange("title", e.target.value)}
                 />
-                <input
-                  className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-egypt-teal/30 focus:border-egypt-teal"
-                  type="number"
-                  placeholder="Duration Hours *"
-                  value={editForm.durationHours}
+                <textarea
+                  className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none min-h-[96px] resize-none focus:ring-2 focus:ring-egypt-teal/30 focus:border-egypt-teal"
+                  placeholder="Description *"
+                  value={editForm.description}
                   onChange={(e) =>
-                    handleEditChange("durationHours", e.target.value)
+                    handleEditChange("description", e.target.value)
                   }
                 />
-                <input
-                  className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-egypt-teal/30 focus:border-egypt-teal"
-                  type="number"
-                  placeholder="Max Group Size *"
-                  value={editForm.maxGroupSize}
-                  onChange={(e) =>
-                    handleEditChange("maxGroupSize", e.target.value)
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <input
+                    className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-egypt-teal/30 focus:border-egypt-teal"
+                    type="number"
+                    placeholder="Price *"
+                    value={editForm.price}
+                    onChange={(e) => handleEditChange("price", e.target.value)}
+                  />
+                  <input
+                    className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-egypt-teal/30 focus:border-egypt-teal"
+                    type="number"
+                    placeholder="Duration Hours *"
+                    value={editForm.durationHours}
+                    onChange={(e) =>
+                      handleEditChange("durationHours", e.target.value)
+                    }
+                  />
+                  <input
+                    className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-egypt-teal/30 focus:border-egypt-teal"
+                    type="number"
+                    placeholder="Max Group Size *"
+                    value={editForm.maxGroupSize}
+                    onChange={(e) =>
+                      handleEditChange("maxGroupSize", e.target.value)
+                    }
+                  />
+                </div>
+
+                <TourExtrasFormSection
+                  programStops={editForm.programStops}
+                  onChangeProgramStops={(programStops) =>
+                    setEditForm((prev) => ({ ...prev, programStops }))
+                  }
+                  inclusionLines={editForm.inclusionLines}
+                  onChangeInclusionLines={(inclusionLines) =>
+                    setEditForm((prev) => ({ ...prev, inclusionLines }))
+                  }
+                  addOnRows={editForm.addOnRows}
+                  onChangeAddOnRows={(addOnRows) =>
+                    setEditForm((prev) => ({ ...prev, addOnRows }))
                   }
                 />
-              </div>
 
-              <TourExtrasFormSection
-                programStops={editForm.programStops}
-                onChangeProgramStops={(programStops) =>
-                  setEditForm((prev) => ({ ...prev, programStops }))
-                }
-                inclusionLines={editForm.inclusionLines}
-                onChangeInclusionLines={(inclusionLines) =>
-                  setEditForm((prev) => ({ ...prev, inclusionLines }))
-                }
-                addOnRows={editForm.addOnRows}
-                onChangeAddOnRows={(addOnRows) =>
-                  setEditForm((prev) => ({ ...prev, addOnRows }))
-                }
-              />
+                <label className="flex items-center gap-2 rounded-xl border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-600 bg-gray-50">
+                  <ImageIcon size={16} />
+                  <span className="font-medium">Change image (optional)</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="ml-auto text-xs"
+                    onChange={(e) =>
+                      handleEditChange(
+                        "imageFiles",
+                        Array.from(e.target.files || []),
+                      )
+                    }
+                  />
+                </label>
 
-              <label className="flex items-center gap-2 rounded-xl border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-600 bg-gray-50">
-                <ImageIcon size={16} />
-                <span className="font-medium">Change image (optional)</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="ml-auto text-xs"
-                  onChange={(e) =>
-                    handleEditChange(
-                      "imageFiles",
-                      Array.from(e.target.files || []),
-                    )
-                  }
-                />
-              </label>
-
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={closeEditForm}
-                  className="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={editLoading}
-                  className="px-4 py-2 rounded-lg bg-egypt-teal text-white font-semibold hover:bg-teal-700 disabled:bg-gray-400 transition"
-                >
-                  {editLoading ? "Saving..." : "Save changes"}
-                </button>
-              </div>
-            </form>
+                <div className="flex items-center justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={closeEditForm}
+                    className="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={editLoading}
+                    className="px-4 py-2 rounded-lg bg-egypt-teal text-white font-semibold hover:bg-teal-700 disabled:bg-gray-400 transition"
+                  >
+                    {editLoading ? "Saving..." : "Save changes"}
+                  </button>
+                </div>
+              </form>
             )}
           </div>
         </div>

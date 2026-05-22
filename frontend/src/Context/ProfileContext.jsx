@@ -98,8 +98,8 @@ const normalizeProfileData = (rawUser = {}, fallbackUser = {}) => {
     whatsAppNumber: pickFirst(rawUser.whatsAppNumber, rawUser.WhatsAppNumber, rawUser.WhatsAppContact, fallbackUser.whatsAppNumber),
     country: pickFirst(rawUser.country, rawUser.Country, fallbackUser.country),
     bio: pickFirst(rawUser.bio, rawUser.Bio, fallbackUser.bio),
-    cities: pickFirst(rawUser.cities, rawUser.Cities, fallbackUser.cities),
-    languages: pickFirst(rawUser.languages, rawUser.Languages, fallbackUser.languages),
+    cities: asArray(pickFirst(rawUser.cities, rawUser.Cities, fallbackUser.cities)),
+    languages: asArray(pickFirst(rawUser.languages, rawUser.Languages, fallbackUser.languages)),
     touristImage: normalizeImageUrl(
       pickFirst(
         rawUser.touristImage,
@@ -193,8 +193,24 @@ export const ProfileProvider = ({ children }) => {
       formData.append("Country", updatedData.country || "");
       formData.append("WhatsAppNumber", updatedData.whatsAppNumber || "");
       formData.append("Bio", updatedData.bio || "");
-      formData.append("Cities", updatedData.cities || "");
-      formData.append("Languages", updatedData.languages || "");
+      
+      // Handle Cities as array
+      if (Array.isArray(updatedData.cities)) {
+        updatedData.cities.forEach((city) => {
+          formData.append("Cities", city);
+        });
+      } else if (updatedData.cities) {
+        formData.append("Cities", updatedData.cities);
+      }
+      
+      // Handle Languages as array
+      if (Array.isArray(updatedData.languages)) {
+        updatedData.languages.forEach((language) => {
+          formData.append("Languages", language);
+        });
+      } else if (updatedData.languages) {
+        formData.append("Languages", updatedData.languages);
+      }
       
       // Add profile picture if provided
       if (updatedData.profilePicture instanceof File) {

@@ -1,5 +1,71 @@
 import { useState } from "react";
-import { X, Save, Camera, Upload } from "lucide-react";
+import { X, Save, Camera, Upload, Plus, Trash2 } from "lucide-react";
+
+const ArrayInputField = ({ label, placeholder, values, onChange }) => {
+  const [inputValue, setInputValue] = useState("");
+
+  const handleAdd = () => {
+    if (inputValue.trim() && !values.includes(inputValue.trim())) {
+      onChange([...values, inputValue.trim()]);
+      setInputValue("");
+    }
+  };
+
+  const handleRemove = (index) => {
+    onChange(values.filter((_, i) => i !== index));
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAdd();
+    }
+  };
+
+  return (
+    <div>
+      <label className="block text-xs font-bold text-gray-500 mb-1">{label}</label>
+      <div className="space-y-2">
+        <div className="flex gap-2">
+          <input
+            type="text"
+            className="flex-1 p-3 bg-gray-50 border rounded-xl outline-none focus:border-egypt-teal"
+            placeholder={placeholder}
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyPress={handleKeyPress}
+          />
+          <button
+            type="button"
+            onClick={handleAdd}
+            className="p-3 bg-egypt-teal text-white rounded-xl hover:bg-teal-700 transition-colors"
+          >
+            <Plus size={18} />
+          </button>
+        </div>
+        {values.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {values.map((value, index) => (
+              <div
+                key={index}
+                className="flex items-center gap-2 bg-egypt-teal/10 text-egypt-teal px-3 py-1.5 rounded-full"
+              >
+                <span className="text-sm font-medium">{value}</span>
+                <button
+                  type="button"
+                  onClick={() => handleRemove(index)}
+                  className="hover:text-red-500 transition-colors"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 export default function EditProfileModal({ user, onClose, onSave }) {
   // 1. تأكد إن الـ Keys هنا مطابقة للي الباك-إند مستنيه (بص على الـ Get اللي عملناه)
@@ -11,8 +77,8 @@ export default function EditProfileModal({ user, onClose, onSave }) {
     whatsAppNumber: user?.whatsAppNumber || "",
     country: user?.country || "",
     bio: user?.bio || "",
-    cities: user?.cities || "",
-    languages: user?.languages || "",
+    cities: Array.isArray(user?.cities) ? user.cities : (user?.cities ? [user.cities] : []),
+    languages: Array.isArray(user?.languages) ? user.languages : (user?.languages ? [user.languages] : []),
     profilePicture: null,
   });
 
@@ -191,27 +257,19 @@ const handleSubmit = async (e) => {
             />
           </div>
 
-          <div>
-            <label className="block text-xs font-bold text-gray-500 mb-1">Cities</label>
-            <input
-              type="text"
-              className="w-full p-3 bg-gray-50 border rounded-xl outline-none focus:border-egypt-teal"
-              placeholder="e.g., Cairo, Alexandria"
-              value={formData.cities}
-              onChange={(e) => setFormData({...formData, cities: e.target.value})}
-            />
-          </div>
+          <ArrayInputField
+            label="Cities"
+            placeholder="e.g., Cairo"
+            values={formData.cities}
+            onChange={(cities) => setFormData({...formData, cities})}
+          />
 
-          <div>
-            <label className="block text-xs font-bold text-gray-500 mb-1">Languages</label>
-            <input
-              type="text"
-              className="w-full p-3 bg-gray-50 border rounded-xl outline-none focus:border-egypt-teal"
-              placeholder="e.g., Arabic, English, French"
-              value={formData.languages}
-              onChange={(e) => setFormData({...formData, languages: e.target.value})}
-            />
-          </div>
+          <ArrayInputField
+            label="Languages"
+            placeholder="e.g., Arabic"
+            values={formData.languages}
+            onChange={(languages) => setFormData({...formData, languages})}
+          />
 
           <div className="flex gap-3 pt-4">
             <button 

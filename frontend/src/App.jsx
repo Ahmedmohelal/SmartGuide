@@ -22,6 +22,7 @@ import PlaceDetails from "./pages/PlaceDetails";
 import SavedPlaces from "./pages/SavedPlaces";
 import SavedGuides from "./pages/SavedGuides";
 import GuideDashboard from "./pages/GuideDashboard";
+import GuideProfilePublic from "./pages/GuideProfilePublic";
 
 function App() {
   return (
@@ -46,6 +47,7 @@ function App() {
 
           {/* 3. إضافة مسار البروفايل هنا */}
           <Route path="/profile" element={<Profile />} />
+          <Route path="/guides/:id" element={<GuideProfilePublic />} />
           <Route path="/tours" element={<Tours />} />
           <Route path="/tours/:id" element={<TourDetails />} />
 

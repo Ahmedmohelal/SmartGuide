@@ -93,12 +93,12 @@ export default function SavedPlaces() {
 
   if (!savedPlaces.length) {
     return (
-      <div className="min-h-screen bg-[#0f172a] flex flex-col items-center justify-center text-white px-6">
+      <div className="min-h-screen bg-gradient-to-br from-[#0a7462] via-white to-[#e7f0ff] p-10 text-[#004D40] flex flex-col items-center justify-center  px-6">
         <h1 className="text-4xl font-bold mb-4">
           No saved places yet
         </h1>
 
-        <p className="text-gray-300 text-center">
+        <p className="text-gray-500 text-center">
           Save a place from its details page
           to see it here.
         </p>
@@ -107,8 +107,8 @@ export default function SavedPlaces() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0f172a] p-10 text-white">
-      <div className="max-w-6xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-[#0a7462] via-white to-[#e7f0ff] p-10 text-[#004D40]">
+      <div className="max-w-6xl mx-auto m-25">
         <h1 className="text-4xl font-bold mb-10">
           Saved Places
         </h1>
@@ -117,7 +117,7 @@ export default function SavedPlaces() {
           {savedPlaces.map((place) => (
             <div
               key={place.placeId}
-              className="bg-[#1e293b] rounded-3xl overflow-hidden shadow-lg hover:scale-[1.02] transition duration-300"
+              className="bg-white rounded-3xl overflow-hidden shadow-lg hover:scale-[1.02] transition duration-300"
             >
               <Link to={`/places/${place.placeId}`}>
                 <img
@@ -133,7 +133,7 @@ export default function SavedPlaces() {
                     {getPlaceTitle(place)}
                   </h2>
 
-                  <p className="text-gray-300 text-sm line-clamp-3">
+                  <p className="text-gray-400 text-sm line-clamp-3">
                     {getPlaceDescription(place)}
                   </p>
                 </div>

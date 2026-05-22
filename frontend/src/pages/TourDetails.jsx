@@ -63,14 +63,14 @@ export default function TourDetails() {
     const list = Array.isArray(tour.images)
       ? tour.images
       : Array.isArray(tour.Images)
-      ? tour.Images
-      : [];
+        ? tour.Images
+        : [];
     return list.filter(Boolean);
   }, [tour]);
 
   const { stops, inclusions, addOns } = useMemo(
     () => extractTourProgramSections(tour),
-    [tour]
+    [tour],
   );
 
   const hero =
@@ -109,7 +109,6 @@ export default function TourDetails() {
 
       <div className="min-h-screen pt-24 pb-20">
         <article className="mx-auto m-20 max-w-7xl px-4 lg:px-8 space-y-10">
-
           {/* BACK BUTTON */}
           <div>
             <button
@@ -123,7 +122,6 @@ export default function TourDetails() {
 
           {/* HERO */}
           <header className="grid lg:grid-cols-2 gap-8">
-
             <div className="rounded-[32px] overflow-hidden shadow-2xl">
               <img
                 src={hero}
@@ -142,8 +140,8 @@ export default function TourDetails() {
               <div className="mt-8 flex flex-wrap gap-3">
                 {durationHours && (
                   <span className="px-4 py-2 bg-white/40 rounded-full">
-                    <Clock className="inline text-egypt-teal" />{" "}
-                    {durationHours} hrs
+                    <Clock className="inline text-egypt-teal" /> {durationHours}{" "}
+                    hrs
                   </span>
                 )}
 
@@ -180,7 +178,9 @@ export default function TourDetails() {
                         {i + 1}
                       </div>
                       <div className="min-w-0">
-                        <p className="font-semibold text-slate-900">{s.title}</p>
+                        <p className="font-semibold text-slate-900">
+                          {s.title}
+                        </p>
                         {s.description ? (
                           <p className="mt-1 text-sm leading-relaxed text-slate-600">
                             {s.description}

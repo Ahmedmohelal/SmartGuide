@@ -13,7 +13,9 @@ export default function Navbar() {
   const location = useLocation();
   const { logout, user } = useProfile();
   const isLightBackgroundPage =
-    location.pathname === "/profile" || location.pathname === "/support";
+    location.pathname === "/profile" || 
+    location.pathname === "/support" || 
+    location.pathname.startsWith("/guides/");
   const navTextClass =
     !isScrolled && isLightBackgroundPage ? "text-gray-800" : "text-white";
 
@@ -138,7 +140,7 @@ export default function Navbar() {
                 )}
 
                 {isActive && (
-                  <span className="absolute -bottom-4 h-0 w-0 border-l-[6px] border-r-[6px] border-b-[8px] border-l-transparent border-r-transparent border-b-white transition-all duration-300"></span>
+                  <span className="absolute -bottom-4 h-0 w-0 border-l-6 border-r-6 border-b-8 border-l-transparent border-r-transparent border-b-white transition-all duration-300"></span>
                 )}
               </li>
             );

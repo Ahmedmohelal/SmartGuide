@@ -14,7 +14,9 @@ const normalizeImageValue = (value) => {
   ) {
     return cleaned;
   }
-  return cleaned.startsWith("/") ? `${API_ORIGIN}${cleaned}` : `${API_ORIGIN}/${cleaned}`;
+  return cleaned.startsWith("/")
+    ? `${API_ORIGIN}${cleaned}`
+    : `${API_ORIGIN}/${cleaned}`;
 };
 
 export const extractTourImageUrl = (tour) => {

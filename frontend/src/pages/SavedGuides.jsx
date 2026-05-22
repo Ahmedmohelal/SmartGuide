@@ -12,17 +12,33 @@ const getGuideName = (guide) => {
   if (guide.FirstName && guide.LastName) {
     return `${guide.FirstName} ${guide.LastName}`;
   }
-  return guide.name || guide.Name || guide.userName || guide.UserName || "Unknown Guide";
+  return (
+    guide.name ||
+    guide.Name ||
+    guide.userName ||
+    guide.UserName ||
+    "Unknown Guide"
+  );
 };
 
 const getGuideImage = (guide) => {
-  return (
+  const image =
+    guide.profilePictureUrl ||
+    guide.ProfilePictureUrl ||
     guide.profilePicture ||
     guide.ProfilePicture ||
     guide.image ||
-    guide.Image ||
-    "/default-avatar.png"
-  );
+    guide.Image;
+
+  if (!image) {
+    return "/default-avatar.png";
+  }
+
+  if (image.startsWith("http")) {
+    return image;
+  }
+
+  return `https://smartguide.runasp.net${image}`;
 };
 
 const getGuideRating = (guide) => {
@@ -30,10 +46,13 @@ const getGuideRating = (guide) => {
 };
 
 const getGuideCity = (guide) => {
-  return guide.city || guide.City || guide.location || guide.Location || "Egypt";
+  return (
+    guide.city || guide.City || guide.location || guide.Location || "Egypt"
+  );
 };
 
-const savedRowId = (guide) => guide?.guideId ?? guide?.GuideId ?? guide?.id ?? guide?.Id;
+const savedRowId = (guide) =>
+  guide?.guideId ?? guide?.GuideId ?? guide?.id ?? guide?.Id;
 
 export default function SavedGuides() {
   const [savedGuides, setSavedGuides] = useState([]);
@@ -45,12 +64,10 @@ export default function SavedGuides() {
     const loadSavedGuides = async () => {
       try {
         const data = await getSavedGuides();
+        console.log("SAVED GUIDES:", data);
         setSavedGuides(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.error(
-          "Failed to fetch saved guides:",
-          err
-        );
+        console.error("Failed to fetch saved guides:", err);
 
         // Handle 404 error gracefully - the endpoint might not be implemented yet
         if (err.response?.status === 404) {
@@ -73,15 +90,10 @@ export default function SavedGuides() {
       await deleteSavedGuide(guideId);
 
       setSavedGuides((prev) =>
-        prev.filter(
-          (guide) => String(savedRowId(guide)) !== String(guideId)
-        )
+        prev.filter((guide) => String(savedRowId(guide)) !== String(guideId)),
       );
     } catch (err) {
-      console.error(
-        "Failed to remove saved guide:",
-        err
-      );
+      console.error("Failed to remove saved guide:", err);
     } finally {
       setDeleting(null);
     }
@@ -98,13 +110,10 @@ export default function SavedGuides() {
   if (error) {
     return (
       <div className="min-h-screen bg-[#0f172a] p-10 text-white">
-        <h1 className="text-3xl font-bold mb-4">
-          Cannot load saved guides
-        </h1>
+        <h1 className="text-3xl font-bold mb-4">Cannot load saved guides</h1>
 
         <p className="text-gray-300">
-          Please make sure you are logged in
-          and try again.
+          Please make sure you are logged in and try again.
         </p>
       </div>
     );
@@ -112,75 +121,66 @@ export default function SavedGuides() {
 
   if (!savedGuides.length) {
     return (
-      <div className="min-h-screen bg-[#0f172a] flex flex-col items-center justify-center text-white px-6">
-        <h1 className="text-4xl font-bold mb-4">
-          No saved guides yet
-        </h1>
+      <div className="min-h-screen bg-gradient-to-br  from-[#0a7462] via-teal-400 to-teal-100 flex flex-col items-center justify-center text-[#004D40] px-6">
+        <h1 className="text-4xl font-bold mb-4">No saved guides yet</h1>
 
-        <p className="text-gray-300 text-center">
-          Save a guide from the Our Guides section
-          to see it here.
+        <p className="text-gray-500 text-center">
+          Save a guide from the Our Guides section to see it here.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0f172a] p-10 text-white">
-      <div className="max-w-6xl mx-auto">
-        <h1 className="text-4xl font-bold mb-10">
-          Saved Guides
-        </h1>
+    <div className="min-h-screen bg-gradient-to-br from-[#0a7462] via-white to-[#e7f0ff] p-10 text-[#004D40]">
+      <div className="max-w-6xl mx-auto m-25">
+        <h1 className="text-4xl font-bold mb-10">Saved Guides</h1>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {savedGuides.map((guide) => {
             const rid = savedRowId(guide);
             return (
-            <div
-              key={rid != null ? String(rid) : getGuideName(guide)}
-              className="bg-[#1e293b] rounded-3xl overflow-hidden shadow-lg hover:scale-[1.02] transition duration-300"
-            >
-              <Link to={rid != null ? `/guides/${rid}` : "#"}>
-                <img
-                  src={getGuideImage(guide)}
-                  alt={getGuideName(guide)}
-                  className="w-full h-56 object-cover"
-                />
-              </Link>
+              <div
+                key={rid != null ? String(rid) : getGuideName(guide)}
+                className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-lg hover:scale-[1.02] transition duration-300"
+              >
+                <Link to={rid != null ? `/guides/${rid}` : "#"}>
+                  <img
+                    src={getGuideImage(guide)}
+                    alt={getGuideName(guide)}
+                    className="w-full h-56 object-cover"
+                  />
+                </Link>
 
-              <div className="p-5 space-y-4">
-                <div>
-                  <h2 className="text-2xl font-semibold mb-2 line-clamp-1">
-                    {getGuideName(guide)}
-                  </h2>
+                <div className="p-5 space-y-4">
+                  <div>
+                    <h2 className="text-2xl font-semibold mb-2 line-clamp-1">
+                      {getGuideName(guide)}
+                    </h2>
 
-                  {guide.bio && (
-                    <p className="text-gray-300 text-sm line-clamp-3">
-                      {guide.bio}
-                    </p>
-                  )}
+                    {guide.bio && (
+                      <p className="text-gray-300 text-sm line-clamp-3">
+                        {guide.bio}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between text-sm text-gray-400">
+                    <span>{getGuideCity(guide)}</span>
+
+                    <span>⭐ {getGuideRating(guide)}</span>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => rid != null && handleRemove(rid)}
+                    disabled={rid == null || deleting === rid}
+                    className="w-full rounded-xl bg-red-600 px-4 py-3 text-white hover:bg-red-500 disabled:opacity-60 transition"
+                  >
+                    {deleting === rid ? "Removing..." : "Remove"}
+                  </button>
                 </div>
-
-                <div className="flex items-center justify-between text-sm text-gray-400">
-                  <span>
-                    {getGuideCity(guide)}
-                  </span>
-
-                  <span>
-                    ⭐ {getGuideRating(guide)}
-                  </span>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => rid != null && handleRemove(rid)}
-                  disabled={rid == null || deleting === rid}
-                  className="w-full rounded-xl bg-red-600 px-4 py-3 text-white hover:bg-red-500 disabled:opacity-60 transition"
-                >
-                  {deleting === rid ? "Removing..." : "Remove"}
-                </button>
               </div>
-            </div>
             );
           })}
         </div>
