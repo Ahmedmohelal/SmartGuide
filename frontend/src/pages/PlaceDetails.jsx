@@ -108,7 +108,7 @@ export default function PlaceDetails() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0f172a] text-white">
+    <div className="min-h-screen from-[#0a7462] via-white to-[#e7f0ff] text-[#004D40]">
       <img
         src={getPlaceImage(place)}
         alt={getPlaceTitle(place)}
@@ -122,7 +122,7 @@ export default function PlaceDetails() {
               {place.name}
             </h1>
 
-            <div className="flex flex-wrap gap-3 text-gray-300">
+            <div className="flex flex-wrap gap-3 text-gray-500">
               <span>
                 📍 {place.city}
               </span>
@@ -142,7 +142,7 @@ export default function PlaceDetails() {
               <button
                 onClick={handleToggleSaved}
                 disabled={saving}
-                className="rounded-2xl bg-sky-600 px-6 py-3 text-white hover:bg-sky-500 transition disabled:opacity-60"
+                className="rounded-2xl bg-sky-600 px-6 py-3 text-white hover:bg-sky-500 hover:translate-0.5  transition disabled:opacity-60"
               >
                 {saving
                   ? "Saving..."
@@ -153,7 +153,7 @@ export default function PlaceDetails() {
 
               <Link
                 to="/saved-places"
-                className="rounded-2xl border border-white/20 px-6 py-3 text-white hover:border-white transition text-center"
+                className="rounded-2xl border border-sky-600 px-6 py-3 text-sky-600 hover:text-sky-500 hover:translate-0.5 transition text-center"
               >
                 View Saved Places
               </Link>
@@ -161,23 +161,23 @@ export default function PlaceDetails() {
           )}
         </div>
 
-        <div className="bg-[#1e293b] p-8 rounded-3xl">
-          <h2 className="text-3xl font-semibold mb-5">
+        <div className="bg-[#004D40] p-8 rounded-3xl">
+          <h2 className="text-3xl text-white font-semibold mb-5">
             Description
           </h2>
 
-          <p className="text-gray-300 leading-8 text-lg">
+          <p className="text-gray-400 leading-8 text-lg">
             {place.description}
           </p>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-6">
-          <div className="bg-[#1e293b] p-8 rounded-3xl">
-            <h2 className="text-2xl font-semibold mb-6">
+          <div className="bg-[#004D40]  p-8 rounded-3xl">
+            <h2 className="text-2xl text-white font-semibold mb-6">
               Place Information
             </h2>
 
-            <div className="space-y-4 text-gray-300">
+            <div className="space-y-4 text-gray-400">
               <p>
                 <span className="text-white font-medium">
                   Name:
@@ -243,12 +243,12 @@ export default function PlaceDetails() {
             </div>
           </div>
 
-          <div className="bg-[#1e293b] p-8 rounded-3xl">
-            <h2 className="text-2xl font-semibold mb-6">
+          <div className="bg-[#004D40]  p-8 rounded-3xl">
+            <h2 className="text-2xl text-white font-semibold mb-6">
               Historical Background
             </h2>
 
-            <p className="text-gray-300 leading-8">
+            <p className="text-gray-400 leading-8">
               {place.historicalBackground}
             </p>
           </div>

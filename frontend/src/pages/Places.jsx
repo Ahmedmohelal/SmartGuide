@@ -102,11 +102,11 @@ export default function Places() {
 
   return (
     <section id="places">
-      <div className="min-h-screen bg-[#0f172a] p-10">
+      <div className="min-h-screen p-10 bg-gradient-to-br from-[#0a7462] via-white to-[#e7f0ff] ">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-8 mx-auto m-20">
           <div>
             <h1 className="text-4xl font-bold text-white mb-2">Tourist Places</h1>
-            <p className="text-gray-400">Showing {showingFrom}-{showingTo} of {totalCount}</p>
+            
           </div>
 
           <form className="flex items-center gap-2" onSubmit={(e) => {
@@ -135,7 +135,7 @@ export default function Places() {
           <Link
             key={place.id}
             to={`/places/${place.id}`}
-            className="bg-[#1e293b] rounded-2xl overflow-hidden hover:scale-105 transition relative"
+            className="bg-white border border-slate-200 rounded-3xl overflow-hidden hover:scale-105 transition relative"
           >
             {!isGuide() && isPlaceSaved(place.id) && (
               <div className="absolute top-3 right-3 bg-green-600 text-white px-3 py-1 rounded-full text-sm font-semibold z-10">
@@ -149,15 +149,11 @@ export default function Places() {
             />
 
             <div className="p-5">
-              <h2 className="text-white text-2xl font-semibold mb-2">
+              <h2 className="text-[#004D40] text-2xl font-semibold mb-2">
                 {getPlaceTitle(place)}
               </h2>
 
-              {getPlaceDescription(place) && (
-                <p className="text-gray-300 line-clamp-3">
-                  {getPlaceDescription(place)}
-                </p>
-              )}
+              
 
               <div className="flex justify-between mt-4 text-sm text-gray-400">
                 <span>{getPlaceCity(place) || "Egypt"}</span>

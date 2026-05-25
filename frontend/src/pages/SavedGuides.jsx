@@ -121,7 +121,7 @@ export default function SavedGuides() {
 
   if (!savedGuides.length) {
     return (
-      <div className="min-h-screen bg-gradient-to-br  from-[#0a7462] via-teal-400 to-teal-100 flex flex-col items-center justify-center text-[#004D40] px-6">
+      <div className="min-h-screen bg-gradient-to-br  from-[#0a7462] via-white to-[#e7f0ff] p-10 text-[#004D40] flex flex-col items-center justify-center  px-6">
         <h1 className="text-4xl font-bold mb-4">No saved guides yet</h1>
 
         <p className="text-gray-500 text-center">

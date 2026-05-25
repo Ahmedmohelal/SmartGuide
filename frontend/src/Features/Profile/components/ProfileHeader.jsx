@@ -34,11 +34,31 @@ export default function ProfileHeader({ user: userProp, onEditClick }) {
   return (
     <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden mb-8">
       {/* Cover Image */}
-      <div className="h-48 bg-gradient-to-r from-egypt-teal to-blue-500 relative">
-        <button className="absolute bottom-4 right-4 bg-white/20 hover:bg-white/40 p-2 rounded-full backdrop-blur-md transition-all">
-          <Camera size={20} className="text-white" />
-        </button>
-      </div>
+      <div className="h-48 bg-gradient-to-r from-sky-600 to-sky-500 relative overflow-hidden">
+
+  {/* Sun */}
+  <div className="absolute top-6 right-16 w-16 h-16 bg-yellow-300 rounded-full opacity-80 animate-pulse"></div>
+
+  {/* Pyramid 1 */}
+  <div className="absolute bottom-0 right-20 animate-[float_4s_ease-in-out_infinite]">
+    <div className="w-0 h-0 border-l-[70px] border-r-[70px] border-b-[110px]
+      border-l-transparent border-r-transparent border-b-yellow-700">
+    </div>
+  </div>
+
+  {/* Pyramid 2 */}
+  <div className="absolute bottom-0 right-52 animate-[float_5s_ease-in-out_infinite]">
+    <div className="w-0 h-0 border-l-[50px] border-r-[50px] border-b-[85px]
+      border-l-transparent border-r-transparent border-b-yellow-600">
+    </div>
+  </div>
+
+  {/* Sand moving effect */}
+  <div className="absolute bottom-0 w-[200%] h-6 bg-yellow-300 opacity-80
+    animate-[sandMove_10s_linear_infinite]">
+  </div>
+
+</div>
 
       {/* Profile Info Section */}
       <div className="px-8 pb-8">

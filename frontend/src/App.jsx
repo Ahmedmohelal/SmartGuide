@@ -23,6 +23,9 @@ import SavedPlaces from "./pages/SavedPlaces";
 import SavedGuides from "./pages/SavedGuides";
 import GuideDashboard from "./pages/GuideDashboard";
 import GuideProfilePublic from "./pages/GuideProfilePublic";
+import TouristProfilePublic from "./pages/TouristProfilePublic";
+import Chat from "./pages/Chat";
+import Notifications from "./pages/Notifications";
 
 function App() {
   return (
@@ -48,6 +51,10 @@ function App() {
           {/* 3. إضافة مسار البروفايل هنا */}
           <Route path="/profile" element={<Profile />} />
           <Route path="/guides/:id" element={<GuideProfilePublic />} />
+          <Route path="/tourists/:id" element={<TouristProfilePublic />} />
+          <Route path="/chat" element={<Chat />} />
+          <Route path="/chat/:conversationId" element={<Chat />} />
+          <Route path="/notifications" element={<Notifications />} />
           <Route path="/tours" element={<Tours />} />
           <Route path="/tours/:id" element={<TourDetails />} />
 

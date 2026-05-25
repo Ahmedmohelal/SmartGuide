@@ -1,21 +1,26 @@
 import { useState, useEffect } from "react";
 import { navLinks } from "../data/homeContent";
-import { Menu, X, CircleUserRound, User, Settings, Headphones, LogOut } from "lucide-react";
+import { Menu, X, CircleUserRound, User, Settings, Headphones, LogOut, MessageCircle, Bell } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useProfile } from "../Context/ProfileContext";
 import { HashLink } from "react-router-hash-link";
-import { isGuide } from "../Services/utils/tokenUtils";
+import { getToken, isGuide } from "../Services/utils/tokenUtils";
+import { getUnreadNotificationCount } from "../Services/api/notificationService";
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
   const location = useLocation();
   const { logout, user } = useProfile();
   const isLightBackgroundPage =
     location.pathname === "/profile" || 
     location.pathname === "/support" || 
-    location.pathname.startsWith("/guides/");
+    location.pathname.startsWith("/guides/") ||
+    location.pathname.startsWith("/tourists/") ||
+    location.pathname.startsWith("/chat") ||
+    location.pathname.startsWith("/notifications");
   const navTextClass =
     !isScrolled && isLightBackgroundPage ? "text-gray-800" : "text-white";
 
@@ -36,6 +41,38 @@ export default function Navbar() {
     setIsProfileOpen(false);
   }, [location.pathname, location.hash]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadUnreadNotifications = async () => {
+      if (!getToken()) {
+        setUnreadNotifications(0);
+        return;
+      }
+
+      try {
+        const data = await getUnreadNotificationCount();
+        const count =
+          data?.unreadCount ??
+          data?.UnreadCount ??
+          data?.count ??
+          data?.Count ??
+          data?.total ??
+          data?.Total ??
+          (typeof data === "number" ? data : 0);
+        if (!cancelled) setUnreadNotifications(Number(count) || 0);
+      } catch (err) {
+        if (!cancelled) setUnreadNotifications(0);
+      }
+    };
+
+    loadUnreadNotifications();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [location.pathname]);
+
   return (
     <header className="fixed inset-x-0 top-2 z-50 w-full px-4" dir="ltr">
       <nav
@@ -55,6 +92,21 @@ export default function Navbar() {
           >
             {isMobileMenuOpen ? <X className="w-8 h-8" /> : <Menu className="w-8 h-8" />}
           </button>
+
+          <Link
+            to="/notifications"
+            className={`relative hidden items-center justify-center rounded-full p-2 transition md:flex ${
+              navTextClass
+            } hover:bg-white/10 hover:text-egypt-teal`}
+            title="Notifications"
+          >
+            <Bell className="h-7 w-7" strokeWidth={1.6} />
+            {unreadNotifications > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                {unreadNotifications > 9 ? "9+" : unreadNotifications}
+              </span>
+            )}
+          </Link>
 
           <div className="hidden md:block relative">
             <button
@@ -80,6 +132,8 @@ export default function Navbar() {
               <div className="absolute left-1/2 -translate-x-1/2 mt-3 w-56 rounded-xl bg-white/90 shadow-lg ring-1 ring-black ring-opacity-5 overflow-hidden transition-all">
                 <div className="py-2">
                   <Link onClick={() => setIsProfileOpen(false)} to="/profile" className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition"><User className="w-5 h-5" /> My Account</Link>
+                  <Link onClick={() => setIsProfileOpen(false)} to="/notifications" className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition"><Bell className="w-5 h-5" /> Notifications</Link>
+                  <Link onClick={() => setIsProfileOpen(false)} to="/chat" className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition"><MessageCircle className="w-5 h-5" /> Chats</Link>
                   <Link onClick={() => setIsProfileOpen(false)} to="/settings" className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition"><Settings className="w-5 h-5" /> Settings</Link>
                   {!isGuide() && (
                     <>
@@ -195,6 +249,8 @@ export default function Navbar() {
           {/* لينكات البروفايل في الموبايل */}
           <ul className="flex flex-col items-center gap-2 text-sm font-medium text-gray-300">
             <li className="w-full text-center"><Link to="/profile" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-center gap-2 py-3 hover:text-white transition"><User className="w-5 h-5" /> My Account</Link></li>
+            <li className="w-full text-center"><Link to="/notifications" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-center gap-2 py-3 hover:text-white transition"><Bell className="w-5 h-5" /> Notifications{unreadNotifications > 0 ? ` (${unreadNotifications})` : ""}</Link></li>
+            <li className="w-full text-center"><Link to="/chat" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-center gap-2 py-3 hover:text-white transition"><MessageCircle className="w-5 h-5" /> Chats</Link></li>
             <li className="w-full text-center"><Link to="/settings" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-center gap-2 py-3 hover:text-white transition"><Settings className="w-5 h-5" /> Settings</Link></li>
             {!isGuide() && (
               <>

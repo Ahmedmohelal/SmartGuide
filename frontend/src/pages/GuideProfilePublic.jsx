@@ -18,6 +18,7 @@ import {
   deleteSavedGuide,
   getSavedGuides,
 } from "../Services/api/savedGuideService";
+import { createConversation } from "../Services/api/chatService";
 import { getToken, isGuide } from "../Services/utils/tokenUtils";
 
 // Helper functions to handle inconsistent API responses
@@ -98,6 +99,17 @@ const getMaxGroupSize = (tour) => {
   return 10;
 };
 
+const getCreatedConversationId = (conversation) =>
+  (typeof conversation === "string" ? conversation : null) ||
+  conversation?.id ||
+  conversation?.Id ||
+  conversation?.conversationId ||
+  conversation?.ConversationId ||
+  conversation?.data?.id ||
+  conversation?.data?.Id ||
+  conversation?.data?.conversationId ||
+  conversation?.data?.ConversationId;
+
 export default function GuideProfilePublic() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -108,6 +120,7 @@ export default function GuideProfilePublic() {
   const [error, setError] = useState(null);
   const [toursLoading, setToursLoading] = useState(true);
   const [saving, setSaving] = useState(null);
+  const [startingChat, setStartingChat] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [savedGuides, setSavedGuides] = useState([]);
 
@@ -222,8 +235,28 @@ export default function GuideProfilePublic() {
     }
   };
 
-  const handleChatClick = () => {
-    toast.success("Chat feature coming soon!");
+  const handleChatClick = async () => {
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+
+    if (isUserGuide) {
+      toast.error("Guides can only message tourists");
+      return;
+    }
+
+    try {
+      setStartingChat(true);
+      const conversation = await createConversation(id);
+      const newConversationId = getCreatedConversationId(conversation);
+      navigate(newConversationId ? `/chat/${newConversationId}` : "/chat");
+    } catch (err) {
+      console.error("Failed to start chat:", err);
+      toast.error("Couldn't start chat with this guide");
+    } finally {
+      setStartingChat(false);
+    }
   };
 
   if (loading) {
@@ -367,10 +400,11 @@ export default function GuideProfilePublic() {
                   </button>
                   <button
                     onClick={handleChatClick}
+                    disabled={startingChat}
                     className="px-6 py-2 border-2 border-gray-300 text-gray-700 rounded-full font-semibold hover:bg-gray-50 transition flex items-center gap-2"
                   >
                     <MessageCircle size={18} />
-                    Message
+                    {startingChat ? "Opening..." : "Message"}
                   </button>
                 </div>
               </div>
