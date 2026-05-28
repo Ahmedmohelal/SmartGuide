@@ -8,6 +8,7 @@ namespace Domain.Interfaces
     public interface ITourRepository
     {
         public Task<List<Tour>> GetGuideToursAsync(string guideId);
+        public Task<List<Tour>> GetTouristToursAsync(string touristId);
         public Task<Tour?> GetByIdAsync(Guid tourId);
         public Task AddAsync(Tour tour);
 

@@ -55,6 +55,10 @@ namespace Infrastructure.Data.Configurations.Tours
                    .WithOne(a => a.Tour)
                    .HasForeignKey(a => a.TourId)
                    .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasMany(b => b.Bookings)
+                   .WithOne(t => t.Tour)
+                   .HasForeignKey(b => b.TourId);
         }
     }
 }

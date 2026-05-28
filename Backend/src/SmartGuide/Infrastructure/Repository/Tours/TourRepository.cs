@@ -28,7 +28,16 @@ namespace Infrastructure.Repository.Tours
                 .Include(t => t.TourImages)
                 .ToListAsync();
         }
-
+        public async Task<List<Tour>> GetTouristToursAsync(string touristId)
+        {
+            return await _context.Bookings
+        .Where(b => b.TouristId == touristId)
+        .Where(b => b.Tour.IsActive)
+        .Select(b => b.Tour)
+        .Distinct()
+        .Include(t => t.TourImages)
+        .ToListAsync();
+        }
 
         public async Task<Tour?> GetByIdAsync(Guid tourId)
         {

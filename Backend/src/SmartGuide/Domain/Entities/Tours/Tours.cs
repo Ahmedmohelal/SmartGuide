@@ -1,4 +1,5 @@
-﻿using Domain.Entities.Tours;
+﻿using Domain.Entities.Book;
+using Domain.Entities.Tours;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -16,6 +17,7 @@ namespace Domain.Entities.Tours
         public  int  MaxGroupSize { get; set; }
         public  bool IsActive { get; set; }
 
+        public List<Booking> Bookings { get; set; } = new();
         public List<TourStops> TourStops { get; set; } = new();
         public List<TourInclusion> TourInclusions { get; set; } = new();
         public List<TourImage> TourImages { get; set; } = new();

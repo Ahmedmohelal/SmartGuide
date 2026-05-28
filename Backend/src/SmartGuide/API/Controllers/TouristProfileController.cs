@@ -2,6 +2,7 @@ using Application.DTOs.ProfileDTOs;
 using Application.Services.Interfaces.Profiles;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace API.Controllers
 {
@@ -31,6 +32,21 @@ namespace API.Controllers
         public Task<ActionResult<TouristProfileDto>> UpdateProfileByIdAsync(string id, [FromForm] UpdateTouristProfileDto model)
         {
             return UpdateProfileAsync(id, model);
+        }
+
+        [HttpGet("my-tours")]
+        [Authorize(Roles = "Tourist")]
+        public async Task<IActionResult> GetMyTours()
+        {
+            var touristId = User.FindFirstValue("userId")
+                         ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrWhiteSpace(touristId))
+                return Unauthorized();
+
+            var tours = await _touristProfileService.GetTouristToursAsync(touristId);
+
+            return Ok(tours);
         }
     }
 }
