@@ -1,5 +1,6 @@
 using API.Extentions;
 using API.Middleware;
+using API.Middlewares;
 using Application.Services.Interfaces;
 using Application.Settings;
 using Infrastructure.Data;
@@ -82,6 +83,8 @@ app.Use(async (context, next) =>
 
     await next();
 });
+
+app.UseMiddleware<ExceptionMiddleware>();
 app.UseAuthentication();
 app.UseMiddleware<GuideAccessGuardMiddleware>();
 app.UseAuthorization();

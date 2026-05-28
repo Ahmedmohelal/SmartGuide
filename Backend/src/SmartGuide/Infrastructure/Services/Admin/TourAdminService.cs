@@ -1,11 +1,16 @@
-﻿using Application.DTOs.AdminDashboard;
+﻿using Application.Common.Pagination;
+using Application.DTOs.AdminDashboard;
 using Application.DTOs.AuthenticationDTOs;
+using Application.DTOs.Home;
 using Application.Services.Interfaces.Admin;
 using Application.Services.Interfaces.Auth;
 using Application.Services.Interfaces.Notifications;
 using Application.Services.Interfaces.PictureMaker;
 using Domain.Entities.Notifications;
+using Domain.Entities.Tours;
 using Infrastructure.Data;
+using Infrastructure.Services.Admin.Specs;
+using Infrastructure.Services.Home;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
@@ -29,47 +34,96 @@ namespace Infrastructure.Services.Admin
             _imageUrlService = imageUrlService;
             _notificationService = notificationService;
         }
-        public async Task<List<AdminTourDto>> GetAllToursAsync()
+        public async Task<Pagination<AdminTourDto>>
+    GetAllToursAsync(AdminTourSpecParams param)
         {
-            var tours = await _context.Tours
+            var spec =
+                new AdminToursSpecification(
+                    param);
+
+            var countSpec =
+                new AdminToursCountSpecification(
+                    param);
+
+            var toursQuery =
+                SpecificationEvaluator<Tour>
+                    .GetQuery(
+                        _context.Tours
+                            .Include(t => t.TourImages)
+                            .AsQueryable(),
+                        spec);
+
+            var countQuery =
+                SpecificationEvaluator<Tour>
+                    .GetQuery(
+                        _context.Tours.AsQueryable(),
+                        countSpec);
+
+            var tours = await toursQuery
+
                 .AsNoTracking()
-                .Include(t => t.TourImages)
+
                 .ToListAsync();
 
-            var guideIds = tours.Select(t => t.GuideId).Distinct().ToList();
+            var count = await countQuery
+                .CountAsync();
+
+            var guideIds = tours
+
+                .Select(t => t.GuideId)
+
+                .Distinct()
+
+                .ToList();
+
             var guides = await _context.Users
+
                 .AsNoTracking()
-                .Where(u => guideIds.Contains(u.Id))
-                .ToDictionaryAsync(u => u.Id);
 
-            var bookingCounts = await _context.Bookings
-                .AsNoTracking()
-                .GroupBy(b => b.TourId)
-                .Select(g => new { TourId = g.Key, Count = g.Count() })
-                .ToDictionaryAsync(x => x.TourId, x => x.Count);
+                .Where(x => guideIds.Contains(x.Id))
 
-            return tours.Select(t =>
-            {
-                guides.TryGetValue(t.GuideId, out var guide);
-                bookingCounts.TryGetValue(t.Id, out var bookingCount);
+                .ToDictionaryAsync(x => x.Id);
 
-                return new AdminTourDto
+            var mappedTours = tours
+                .Select(t =>
                 {
-                    Id = t.Id,
-                    GuideId = t.GuideId,
-                    GuideName = guide != null
-                        ? $"{guide.FirstName} {guide.LastName}"
-                        : "Unknown",
-                    Title = t.Title,
-                    Price = t.Price,
-                    DurationHours = t.DurationHours,
-                    IsActive = t.IsActive,
-                    PrimaryImage = _imageUrlService.ToPublicImageUrl(
-                        t.TourImages.FirstOrDefault(i => i.IsPrimary)?.ImageUrl,
-                        $"ToursImages/{t.Id}"),
-                    TotalBookings = bookingCount
-                };
-            }).ToList();
+                    guides.TryGetValue(
+                        t.GuideId,
+                        out var guide);
+
+                    return new AdminTourDto
+                    {
+                        Id = t.Id,
+
+                        Title = t.Title,
+
+
+                        Price = t.Price,
+
+                        DurationHours =
+                            t.DurationHours,
+
+                        MaxGroupSize =
+                            t.MaxGroupSize,
+
+                        IsActive =
+                            t.IsActive,
+
+                        GuideId =
+                            t.GuideId,
+
+                        GuideName = guide != null
+                            ? $"{guide.FirstName} {guide.LastName}"
+                            : "Unknown",
+                    };
+
+                }).ToList();
+
+            return new Pagination<AdminTourDto>(
+                param.PageIndex,
+                param.PageSize,
+                count,
+                mappedTours);
         }
 
         public async Task<OperationResultDto> DeactivateTourAsync(Guid tourId)

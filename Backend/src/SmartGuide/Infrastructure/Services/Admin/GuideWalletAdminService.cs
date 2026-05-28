@@ -1,9 +1,13 @@
-﻿using Application.DTOs.AdminDashboard;
+﻿using Application.Common.Pagination;
+using Application.DTOs.AdminDashboard;
 using Application.DTOs.AuthenticationDTOs;
+using Application.DTOs.Home;
 using Application.Services.Interfaces.Admin;
 using Domain.Entities.Wallet;
 using Infrastructure.Data;
 using Infrastructure.Data.Entities.Identity;
+using Infrastructure.Services.Admin.Specs;
+using Infrastructure.Services.Home;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -46,32 +50,86 @@ namespace Infrastructure.Services.Admin
             };
         }
 
-        public async Task<List<GuideWalletTransactionDto>> GetTransactionsAsync(
-            string guideId,
-            int take = 100)
+        public async Task<Pagination<GuideWalletTransactionDto>>GetTransactionsAsync(
+         string guideId,
+         WalletTransactionSpecParams param)
         {
-            take = Math.Clamp(take, 1, 500);
+            var spec =
+                new WalletTransactionsSpecification(
+                    guideId,
+                    param);
 
-            return await _context.GuideWalletTransactions
+            var countSpec =
+                new WalletTransactionsCountSpecification(
+                    guideId,
+                    param);
+
+            var transactionsQuery =
+                SpecificationEvaluator<
+                    GuideWalletTransaction>
+
+                .GetQuery(
+                    _context.GuideWalletTransactions
+                        .AsQueryable(),
+                    spec);
+
+            var countQuery =
+                SpecificationEvaluator<
+                    GuideWalletTransaction>
+
+                .GetQuery(
+                    _context.GuideWalletTransactions
+                        .AsQueryable(),
+                    countSpec);
+
+            var transactions = await transactionsQuery
+
                 .AsNoTracking()
-                .Where(x => x.GuideId == guideId)
-                .OrderByDescending(x => x.CreatedAtUtc)
-                .Take(take)
+
+                .ToListAsync();
+
+            var count = await countQuery
+                .CountAsync();
+
+            var mappedTransactions = transactions
                 .Select(x => new GuideWalletTransactionDto
                 {
                     Id = x.Id,
+
                     GuideId = x.GuideId,
+
                     Type = x.Type.ToString(),
+
                     Status = x.Status.ToString(),
+
                     Amount = x.Amount,
-                    BalanceBefore = x.BalanceBefore,
-                    BalanceAfter = x.BalanceAfter,
-                    ReferenceId = x.ReferenceId,
-                    Notes = x.Notes,
-                    AdminId = x.AdminId,
-                    CreatedAtUtc = x.CreatedAtUtc
-                })
-                .ToListAsync();
+
+                    BalanceBefore =
+                        x.BalanceBefore,
+
+                    BalanceAfter =
+                        x.BalanceAfter,
+
+                    ReferenceId =
+                        x.ReferenceId,
+
+                    Notes =
+                        x.Notes,
+
+                    AdminId =
+                        x.AdminId,
+
+                    CreatedAtUtc =
+                        x.CreatedAtUtc
+
+                }).ToList();
+
+            return new Pagination<
+                GuideWalletTransactionDto>(
+                    param.PageIndex,
+                    param.PageSize,
+                    count,
+                    mappedTransactions);
         }
 
         public async Task<OperationResultDto> AddBalanceAsync(

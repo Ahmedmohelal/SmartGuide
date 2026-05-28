@@ -1,10 +1,11 @@
-﻿using System;
+﻿using Application.Common.Pagination;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace Application.DTOs.Home
 {
-    public class PlaceSpecParams
+    public class PlaceSpecParams : BaseSpecParams
     {
         public string? Search { get; set; }
         public string? City { get; set; }
@@ -12,7 +13,5 @@ namespace Application.DTOs.Home
 
         public string? Sort { get; set; }
 
-        public int PageIndex { get; set; } = 1;
-        public int PageSize { get; set; } = 10;
     }
 }

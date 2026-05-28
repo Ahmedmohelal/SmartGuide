@@ -1,6 +1,8 @@
-﻿using Application.DTOs;
+﻿using Application.Common.Pagination;
+using Application.DTOs;
 using Application.DTOs.AdminDashboard;
 using Application.DTOs.AuthenticationDTOs;
+using Application.DTOs.Home;
 using Application.Helper;
 using Application.Services.Interfaces.Admin;
 using Application.Services.Interfaces.Auth;
@@ -8,6 +10,8 @@ using Application.Services.Interfaces.PictureMaker;
 using Application.Services.UseCases.PictureMaker;
 using Infrastructure.Data;
 using Infrastructure.Data.Entities.Identity;
+using Infrastructure.Services.Admin.Specs;
+using Infrastructure.Services.Home;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -44,29 +48,91 @@ namespace Infrastructure.Services.Admin
             _attachmentService = attachmentService;
             _logger = logger;
         }
-        public async Task<List<AdminUserDto>> GetAllUsersAsync()
+        public async Task<Pagination<AdminUserDto>>
+    GetAllUsersAsync(
+        AdminUserSpecParams specParams)
         {
+            var spec =
+                new AdminUsersSpecification(specParams);
 
-            var users = await _context.Users
+            var countSpec =
+                new AdminUsersCountSpecification(
+                    specParams);
+
+            var usersQuery =
+                SpecificationEvaluator<ApplicationUser>
+                    .GetQuery(
+                        _context.Users.AsQueryable(),
+                        spec);
+
+            var countQuery =
+                SpecificationEvaluator<ApplicationUser>
+                    .GetQuery(
+                        _context.Users.AsQueryable(),
+                        countSpec);
+
+            var users = await usersQuery
+
                 .AsNoTracking()
+
                 .ToListAsync();
 
-            return users.Select(u => new AdminUserDto
-            {
-                Id = u.Id,
-                FirstName = u.FirstName,
-                LastName = u.LastName,
-                Email = u.Email ?? string.Empty,
-                UserName = u.UserName ?? string.Empty,
-                Country = u.Country,
-                Role = u.Role,
-                WhatsAppNumber = u.WhatsAppNumber,
-                ProfileImage = _imageUrlService.ToPublicImageUrl(u.ProfileImage, "profileImages"),
-                GuideLicenseImage = _imageUrlService.ToPublicImageUrl(u.GuideLicenseImage, "licenses"),
-                NationalIdImage = _imageUrlService.ToPublicImageUrl(u.NationalIdImage, "nationalIds"),
-                VerificationStatus = u.IsGuideVerified.ToString(),
-                IsActive = !u.LockoutEnd.HasValue || u.LockoutEnd < DateTimeOffset.UtcNow
-            }).ToList();
+            var count = await countQuery
+                .CountAsync();
+
+            var mappedUsers = users
+                .Select(u => new AdminUserDto
+                {
+                    Id = u.Id,
+
+                    FirstName = u.FirstName,
+
+                    LastName = u.LastName,
+
+                    Email = u.Email ?? string.Empty,
+
+                    UserName = u.UserName ?? string.Empty,
+
+                    Country = u.Country,
+
+                    Role = u.Role,
+
+                    WhatsAppNumber =
+                        u.WhatsAppNumber,
+
+                    ProfileImage =
+                        _imageUrlService
+                            .ToPublicImageUrl(
+                                u.ProfileImage,
+                                "profileImages"),
+
+                    GuideLicenseImage =
+                        _imageUrlService
+                            .ToPublicImageUrl(
+                                u.GuideLicenseImage,
+                                "licenses"),
+
+                    NationalIdImage =
+                        _imageUrlService
+                            .ToPublicImageUrl(
+                                u.NationalIdImage,
+                                "nationalIds"),
+
+                    VerificationStatus =
+                        u.IsGuideVerified.ToString(),
+
+                    IsActive =
+                        !u.LockoutEnd.HasValue
+                        || u.LockoutEnd
+                            < DateTimeOffset.UtcNow
+
+                }).ToList();
+
+            return new Pagination<AdminUserDto>(
+                specParams.PageIndex,
+                specParams.PageSize,
+                count,
+                mappedUsers);
         }
 
         public async Task<AdminUserDto?> GetUserByIdAsync(string userId)

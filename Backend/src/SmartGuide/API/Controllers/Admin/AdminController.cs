@@ -1,5 +1,7 @@
-﻿using Application.DTOs.AdminDashboard;
+﻿using Application.Common.Pagination;
+using Application.DTOs.AdminDashboard;
 using Application.DTOs.AuthenticationDTOs;
+using Application.DTOs.Home;
 using Application.Services.Interfaces.Admin;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -44,10 +46,10 @@ namespace API.Controllers.Admin
         // =========================================================
 
         [HttpGet("users")]
-        [ProducesResponseType(typeof(List<AdminUserDto>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<List<AdminUserDto>>> GetAllUsersAsync()
+        [ProducesResponseType(typeof(Application.DTOs.Home.Pagination<AdminUserDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<Application.DTOs.Home.Pagination<AdminUserDto>>> GetAllUsersAsync([FromQuery] AdminUserSpecParams specParams)
         {
-            var result = await _userAdminService.GetAllUsersAsync();
+            var result = await _userAdminService.GetAllUsersAsync(specParams);
 
             return Ok(result);
         }
@@ -126,19 +128,19 @@ namespace API.Controllers.Admin
         // =========================================================
 
         [HttpGet("guides/pending")]
-        [ProducesResponseType(typeof(List<AdminGuideVerificationDto>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<List<AdminGuideVerificationDto>>> GetPendingGuidesAsync()
+        [ProducesResponseType(typeof(Pagination<AdminGuideVerificationDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<Pagination<AdminGuideVerificationDto>>> GetPendingGuidesAsync([FromQuery]AdminGuideSpecParams param)
         {
-            var result = await _guideAdminService.GetPendingGuidesAsync();
+            var result = await _guideAdminService.GetPendingGuidesAsync(param);
 
             return Ok(result);
         }
 
         [HttpGet("guides")]
-        [ProducesResponseType(typeof(List<AdminGuideVerificationDto>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<List<AdminGuideVerificationDto>>> GetAllGuidesAsync()
+        [ProducesResponseType(typeof(Pagination<AdminGuideVerificationDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<Pagination<AdminGuideVerificationDto>>> GetAllGuidesAsync([FromQuery]AdminGuideSpecParams param)
         {
-            var result = await _guideAdminService.GetAllGuidesAsync();
+            var result = await _guideAdminService.GetAllGuidesAsync(param);
 
             return Ok(result);
         }
@@ -350,16 +352,15 @@ namespace API.Controllers.Admin
         }
 
         [HttpGet("guides/{id}/wallet/transactions")]
-        [ProducesResponseType(typeof(List<GuideWalletTransactionDto>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<List<GuideWalletTransactionDto>>>
+        [ProducesResponseType(typeof(Pagination<GuideWalletTransactionDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<Pagination<GuideWalletTransactionDto>>>
             GetGuideWalletTransactionsAsync(
                 string id,
-                [FromQuery] int take = 100)
+                [FromQuery] WalletTransactionSpecParams param)
         {
             var result =
                 await _guideWalletAdminService
-                    .GetTransactionsAsync(id, take);
-
+                    .GetTransactionsAsync(id, param);
             return Ok(result);
         }
 
@@ -478,10 +479,10 @@ namespace API.Controllers.Admin
         // =========================================================
 
         [HttpGet("tours")]
-        [ProducesResponseType(typeof(List<AdminTourDto>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<List<AdminTourDto>>> GetAllToursAsync()
+        [ProducesResponseType(typeof(Pagination<AdminTourDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<Pagination<AdminTourDto>>> GetAllToursAsync([FromQuery] AdminTourSpecParams param)
         {
-            var result = await _tourAdminService.GetAllToursAsync();
+            var result = await _tourAdminService.GetAllToursAsync(param);
 
             return Ok(result);
         }
@@ -533,16 +534,13 @@ namespace API.Controllers.Admin
         // =========================================================
 
         [HttpGet("bookings")]
-        [ProducesResponseType(typeof(List<AdminBookingDto>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<List<AdminBookingDto>>>
-            GetAllBookingsAsync(
-                [FromQuery] string? status = null,
-                [FromQuery] string? guideId = null)
+        [ProducesResponseType(typeof(Pagination<AdminBookingDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<Pagination<AdminBookingDto>>>
+            GetAllBookingsAsync([FromQuery] AdminBookingSpecParams param)
         {
             var result =
                 await _bookingAdminService
-                    .GetAllBookingsAsync(status, guideId);
-
+                    .GetAllBookingsAsync(param);
             return Ok(result);
         }
 
@@ -613,13 +611,13 @@ namespace API.Controllers.Admin
         // =========================================================
 
         [HttpGet("audit-logs")]
-        [ProducesResponseType(typeof(List<AdminAuditLogDto>), StatusCodes.Status200OK)]
-        public async Task<ActionResult<List<AdminAuditLogDto>>>
+        [ProducesResponseType(typeof(Pagination<AdminAuditLogDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<Pagination<AdminAuditLogDto>>>
             GetAuditLogsAsync(
-                [FromQuery] int take = 100)
+                [FromQuery] AuditLogSpecParams param)
         {
             var result =
-                await _adminAuditService.GetRecentAsync(take);
+                await _adminAuditService.GetRecentAsync(param);
 
             return Ok(result);
         }

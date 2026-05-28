@@ -1,13 +1,17 @@
-﻿using Application.DTOs.AdminDashboard;
+﻿using Application.Common.Pagination;
+using Application.DTOs.AdminDashboard;
 using Application.DTOs.AuthenticationDTOs;
+using Application.DTOs.Home;
 using Application.Services.Interfaces.Admin;
 using Application.Services.Interfaces.Auth;
 using Application.Services.Interfaces.Notifications;
 using Application.Services.Interfaces.PictureMaker;
 using Domain.Entities.Notifications;
 using Infrastructure.Data;
-using Infrastructure.Data.Entities.Identity;
 using Infrastructure.Data.Entities.Enums;
+using Infrastructure.Data.Entities.Identity;
+using Infrastructure.Services.Admin.Specs;
+using Infrastructure.Services.Home;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -43,29 +47,103 @@ namespace Infrastructure.Services.Admin
 
 
 
-        public async Task<List<AdminGuideVerificationDto>> GetPendingGuidesAsync()
+        public async Task<Pagination<AdminGuideVerificationDto>>GetPendingGuidesAsync(AdminGuideSpecParams param)
         {
-            var users = await _context.Users
+            param.VerificationStatus =
+                GuideVerificationStatus.Pending
+                    .ToString();
+
+            var spec =
+                new AdminGuidesSpecification(param);
+
+            var countSpec =
+                new AdminGuidesCountSpecification(
+                    param);
+
+            var usersQuery =
+                SpecificationEvaluator<ApplicationUser>
+                    .GetQuery(
+                        _context.Users
+                            .Include(x => x.TourGuideProfile)
+                            .AsQueryable(),
+                        spec);
+
+            var countQuery =
+                SpecificationEvaluator<ApplicationUser>
+                    .GetQuery(
+                        _context.Users.AsQueryable(),
+                        countSpec);
+
+            var users = await usersQuery
+
                 .AsNoTracking()
                 .Include(u => u.TourGuideProfile)
-                .Where(u =>
-                    u.Role == "TourGuide" &&
-                    (u.IsGuideVerified == GuideVerificationStatus.Pending ||
-                     u.IsGuideVerified == GuideVerificationStatus.NotVerified))
+                .Where(u => u.IsGuideVerified == GuideVerificationStatus.Pending)
                 .ToListAsync();
 
-            return users.Select(u => AdminUserMapper.MapToVerificationDto(u, _imageUrlService)).ToList();
+            var count = await countQuery
+                .CountAsync();
+
+            var mappedUsers = users
+                .Select(u =>
+                    AdminUserMapper.MapToVerificationDto(
+                        u,
+                        _imageUrlService))
+                .ToList();
+
+            return new Pagination<AdminGuideVerificationDto>(
+                param.PageIndex,
+                param.PageSize,
+                count,
+                mappedUsers);
         }
 
-        public async Task<List<AdminGuideVerificationDto>> GetAllGuidesAsync()
+        public async Task<Pagination<AdminGuideVerificationDto>>
+    GetAllGuidesAsync(
+        AdminGuideSpecParams param)
         {
-            var users = await _context.Users
+            var spec =
+                new AdminGuidesSpecification(param);
+
+            var countSpec =
+                new AdminGuidesCountSpecification(
+                    param);
+
+            var usersQuery =
+                SpecificationEvaluator<ApplicationUser>
+                    .GetQuery(
+                        _context.Users
+                            .Include(x => x.TourGuideProfile)
+                            .AsQueryable(),
+                        spec);
+
+            var countQuery =
+                SpecificationEvaluator<ApplicationUser>
+                    .GetQuery(
+                        _context.Users.AsQueryable(),
+                        countSpec);
+
+            var users = await usersQuery
+
                 .AsNoTracking()
-                .Include(u => u.TourGuideProfile)
-                .Where(u => u.Role == "TourGuide")
+
                 .ToListAsync();
 
-            return users.Select(u => AdminUserMapper.MapToVerificationDto(u, _imageUrlService)).ToList();
+            var count = await countQuery
+                .CountAsync();
+
+            var mappedUsers = users
+                .Select(u =>
+                    AdminUserMapper.MapToVerificationDto(
+                        u,
+                        _imageUrlService))
+                .ToList();
+
+            return new Pagination<AdminGuideVerificationDto>(
+                param.PageIndex,
+                param.PageSize,
+                count,
+                mappedUsers);
         }
 
         public async Task<OperationResultDto> ApproveGuideAsync(string guideId)
