@@ -4,16 +4,19 @@ using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace Infrastructure.Migrations
+namespace Infrastructure.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260528120146_AddPlaceRatings")]
+    partial class AddPlaceRatings
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -74,14 +77,8 @@ namespace Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateOnly>("BookingDate")
-                        .HasColumnType("date");
-
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
-
-                    b.Property<TimeOnly>("EndTime")
-                        .HasColumnType("time");
 
                     b.Property<string>("GuideId")
                         .IsRequired()
@@ -98,9 +95,6 @@ namespace Infrastructure.Migrations
 
                     b.Property<Guid>("SlotId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<TimeOnly>("StartTime")
-                        .HasColumnType("time");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -119,6 +113,8 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("GuideId");
+
                     b.HasIndex("SlotId")
                         .HasDatabaseName("IX_Bookings_SlotId");
 
@@ -127,9 +123,6 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("TouristId")
                         .HasDatabaseName("IX_Bookings_TouristId");
-
-                    b.HasIndex("GuideId", "BookingDate")
-                        .HasDatabaseName("IX_Bookings_GuideId_Date");
 
                     b.ToTable("Bookings", (string)null);
                 });

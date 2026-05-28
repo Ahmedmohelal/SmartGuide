@@ -1,8 +1,10 @@
-﻿using Application.DTOs.Home;
+﻿using Application.DTOs.AuthenticationDTOs;
+using Application.DTOs.Home;
+using Application.DTOs.PlaceRatings;
 using Application.Services.Interfaces.Home;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -49,18 +51,59 @@ public class PlacesController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    public async Task<ActionResult<PlaceDetailsDto>> GetPlace(int id)
+    [Authorize]
+    public async Task<ActionResult<PlaceDetailsDto>>
+    GetPlace(int id)
     {
         if (id <= 0)
-            return BadRequest(new { message = "Invalid place id" });
+        {
+            return BadRequest(new
+            {
+                message = "Invalid place id"
+            });
+        }
 
-        
+        var userId =
+            User.FindFirstValue(
+                ClaimTypes.NameIdentifier);
 
-            var result = await _service.GetById(id);
+        var result =
+            await _service.GetById(id, userId);
 
-            if (result == null)
-                return NotFound(new { message = "Place not found" });
+        if (result == null)
+        {
+            return NotFound(new
+            {
+                message = "Place not found"
+            });
+        }
 
-            return Ok(result);
+        return Ok(result);
+    }
+
+    [HttpPost("{placeId}/rate")]
+    [Authorize]
+    public async Task<ActionResult<OperationResultDto>>
+    RatePlace(
+        int placeId,
+        [FromBody] AddPlaceRatingDto dto)
+    {
+        var userId =
+            User.FindFirstValue(
+                ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(userId))
+            return Unauthorized();
+
+        var result =
+            await _service.AddRatingAsync(
+                placeId,
+                userId,
+                dto);
+
+        if (!result.IsSuccess)
+            return BadRequest(result);
+
+        return Ok(result);
     }
 }

@@ -22,6 +22,7 @@ using Infrastructure.Data.Entities.Identity;
 using Infrastructure.Repository.Book;
 using Infrastructure.Repository.Chat;
 using Infrastructure.Repository.Home;
+using Infrastructure.Repository.PlaceRating;
 using Infrastructure.Repository.Profile;
 using Infrastructure.Repository.Tours;
 using Infrastructure.Services.Admin;
@@ -113,7 +114,7 @@ namespace Infrastructure.Settings
             services.AddScoped<ITouristFavoritesRepository<SavedTourGuideDto>, TouristFavoritesRepository>();
             services.AddScoped<IBookingRepository, BookingRepository>();
             services.AddScoped<ITouristFavoritesRepository<SavedTourGuideDto>, TouristFavoritesRepository>();
-            services.AddScoped<IPlaceRepository<Place>, PlaceRepository<Place>>();
+            services.AddScoped<IPlaceRepository<Place>, PlaceRepository>();
 
             //Services
             services.Configure<GoogleAuthOptions>(configuration.GetSection(GoogleAuthOptions.SectionName));
@@ -157,6 +158,7 @@ namespace Infrastructure.Settings
             services.AddScoped<IChatUserReader, ChatUserReader>();
             services.AddSignalR();
             services.AddSingleton<IUserIdProvider, NameIdentifierUserIdProvider>();
+            services.AddScoped<IPlaceRatingRepository, PlaceRatingRepository>();    
 
             return services;
         }
