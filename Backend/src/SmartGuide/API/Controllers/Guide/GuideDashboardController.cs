@@ -1,7 +1,11 @@
-﻿using Application.DTOs.Tour;
+﻿using Application.DTOs.AdminDashboard;
+using Application.DTOs.AuthenticationDTOs;
+using Application.DTOs.GuideDashboard;
+using Application.DTOs.Tour;
 using Application.Services.Interfaces.GuideDashboard;
 using Application.Services.Interfaces.Tour;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
@@ -15,7 +19,8 @@ namespace API.Controllers.Guide
         private readonly IGuideDashboardService _dashboardService;
         private readonly ITourService _tourService;
 
-        public GuideDashboardController(IGuideDashboardService dashboardService ,
+        public GuideDashboardController(
+            IGuideDashboardService dashboardService,
             ITourService tourService)
         {
             _dashboardService = dashboardService;
@@ -23,29 +28,41 @@ namespace API.Controllers.Guide
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetDashboardAsync([FromQuery] int months = 6, [FromQuery] int topTours = 5)
+        public async Task<ActionResult<GuideDashboardResponseDto>> GetDashboardAsync(
+            [FromQuery] int months = 6,
+            [FromQuery] int topTours = 5)
         {
             var guideId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
             if (string.IsNullOrWhiteSpace(guideId))
                 return Unauthorized();
 
-            var result = await _dashboardService.GetDashboardAsync(guideId, months, topTours);
+            var result = await _dashboardService
+                .GetDashboardAsync(guideId, months, topTours);
+
             return Ok(result);
         }
 
         [HttpGet("statistics")]
-        public async Task<IActionResult> GetStatisticsAsync()
+        [ProducesResponseType(typeof(GuideDashboardStatisticsDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<GuideDashboardStatisticsDto>> GetStatisticsAsync()
         {
             var guideId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
             if (string.IsNullOrWhiteSpace(guideId))
                 return Unauthorized();
 
             var result = await _dashboardService.GetStatisticsAsync(guideId);
+
             return Ok(result);
         }
 
         [HttpGet("documents")]
-        public async Task<IActionResult> GetMyDocumentsAsync()
+        [ProducesResponseType(typeof(GuideMyDocumentsDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<GuideMyDocumentsDto>> GetMyDocumentsAsync()
         {
             var guideId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -61,75 +78,114 @@ namespace API.Controllers.Guide
         }
 
         [HttpGet("earnings")]
-        public async Task<IActionResult> GetEarningsTimelineAsync([FromQuery] int months = 12)
+        [ProducesResponseType(typeof(List<GuideMonthlyEarningsPointDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<List<GuideMonthlyEarningsPointDto>>> GetEarningsTimelineAsync(
+            [FromQuery] int months = 12)
         {
             var guideId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
             if (string.IsNullOrWhiteSpace(guideId))
                 return Unauthorized();
 
-            var result = await _dashboardService.GetEarningsTimelineAsync(guideId, months);
+            var result = await _dashboardService
+                .GetEarningsTimelineAsync(guideId, months);
+
             return Ok(result);
         }
 
         [HttpGet("bookings")]
-        public async Task<IActionResult> GetBookingsTimelineAsync([FromQuery] int months = 12)
+        [ProducesResponseType(typeof(List<GuideMonthlyBookingsPointDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<List<GuideMonthlyBookingsPointDto>>> GetBookingsTimelineAsync(
+            [FromQuery] int months = 12)
         {
             var guideId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
             if (string.IsNullOrWhiteSpace(guideId))
                 return Unauthorized();
 
-            var result = await _dashboardService.GetBookingsTimelineAsync(guideId, months);
+            var result = await _dashboardService
+                .GetBookingsTimelineAsync(guideId, months);
+
             return Ok(result);
         }
 
         [HttpGet("tours/performance")]
-        public async Task<IActionResult> GetTourPerformanceAsync([FromQuery] int take = 10, [FromQuery] bool mostPopular = true)
+        [ProducesResponseType(typeof(List<GuideTourPerformanceDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<List<GuideTourPerformanceDto>>> GetTourPerformanceAsync(
+            [FromQuery] int take = 10,
+            [FromQuery] bool mostPopular = true)
         {
             var guideId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
             if (string.IsNullOrWhiteSpace(guideId))
                 return Unauthorized();
 
-            var result = await _dashboardService.GetTourPerformanceAsync(guideId, take, mostPopular);
+            var result = await _dashboardService
+                .GetTourPerformanceAsync(guideId, take, mostPopular);
+
             return Ok(result);
         }
 
         [HttpGet("wallet")]
-        public async Task<IActionResult> GetWalletAsync()
+        [ProducesResponseType(typeof(GuideWalletDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<GuideWalletDto>> GetWalletAsync()
         {
             var guideId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
             if (string.IsNullOrWhiteSpace(guideId))
                 return Unauthorized();
 
             var result = await _dashboardService.GetWalletAsync(guideId);
+
             return Ok(result);
         }
 
         [HttpGet("wallet/transactions")]
-        public async Task<IActionResult> GetWalletTransactionsAsync([FromQuery] int take = 100)
+        [ProducesResponseType(typeof(List<GuideWalletTransactionDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<List<GuideWalletTransactionDto>>> GetWalletTransactionsAsync(
+            [FromQuery] int take = 100)
         {
             var guideId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
             if (string.IsNullOrWhiteSpace(guideId))
                 return Unauthorized();
 
-            var result = await _dashboardService.GetWalletTransactionsAsync(guideId, take);
+            var result = await _dashboardService
+                .GetWalletTransactionsAsync(guideId, take);
+
             return Ok(result);
         }
 
         [HttpGet("activities")]
-        public async Task<IActionResult> GetRecentActivitiesAsync([FromQuery] int take = 20)
+        [ProducesResponseType(typeof(List<GuideRecentActivityDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<List<GuideRecentActivityDto>>> GetRecentActivitiesAsync(
+            [FromQuery] int take = 20)
         {
             var guideId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
             if (string.IsNullOrWhiteSpace(guideId))
                 return Unauthorized();
 
-            var result = await _dashboardService.GetRecentActivitiesAsync(guideId, take);
+            var result = await _dashboardService
+                .GetRecentActivitiesAsync(guideId, take);
+
             return Ok(result);
         }
 
-        // From Tour Controller 
+        // =========================
+        // Tours
+        // =========================
 
         [HttpGet("my-tours")]
-        public async Task<IActionResult> GetMyTours()
+        [ProducesResponseType(typeof(List<TourListItemDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<List<TourListItemDto>>> GetMyTours()
         {
             var guideId = User.FindFirstValue("userId")
                          ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -143,22 +199,28 @@ namespace API.Controllers.Guide
         }
 
         [HttpGet("tour/{id:guid}")]
-        public async Task<IActionResult> GetTourById(Guid id)
+        [ProducesResponseType(typeof(TourDetailsDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<TourDetailsDto>> GetTourById(Guid id)
         {
             var tour = await _tourService.GetTourByIdAsync(id);
+
             if (tour == null)
-            {
                 return NotFound();
-            }
+
             return Ok(tour);
         }
 
         [HttpPost("tour/create")]
-        public async Task<IActionResult> CreateTourWithImages(
-        [FromForm] CreateTourRequestDTO request)
+        [ProducesResponseType(typeof(CreateTourResponseDTO), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(CreateTourResponseDTO), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<CreateTourResponseDTO>> CreateTourWithImages(
+            [FromForm] CreateTourRequestDTO request)
         {
             var userId = User.FindFirstValue("userId")
                          ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+
             if (userId == null)
                 return BadRequest("The User Id Is Null");
 
@@ -174,21 +236,25 @@ namespace API.Controllers.Guide
         }
 
         [HttpGet("tour/by-place/{placeId}")]
-        public async Task<IActionResult> GetToursByPlace(int placeId)
+        [ProducesResponseType(typeof(List<TourCardDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<List<TourCardDto>>> GetToursByPlace(int placeId)
         {
             var tours = await _tourService.GetToursByPlaceAsync(placeId);
 
             if (tours is null || tours.Count == 0)
-                return NotFound("There Is No Tour With This Place ");
+                return NotFound("There Is No Tour With This Place");
 
             return Ok(tours);
         }
 
-
         [HttpPut("tour/edit/{id:guid}")]
-        public async Task<IActionResult> UpdateTour(
-                                                     Guid id,
-                                                     [FromForm] CreateTourRequestDTO request)
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<OperationResultDto>> UpdateTour(
+            Guid id,
+            [FromForm] CreateTourRequestDTO request)
         {
             var userId = User.FindFirstValue("userId")
                          ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -205,18 +271,23 @@ namespace API.Controllers.Guide
         }
 
         [HttpDelete("tour/{id:guid}")]
-        public async Task<IActionResult> DeleteTour(Guid id)
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<OperationResultDto>> DeleteTour(Guid id)
         {
             var userId = User.FindFirstValue("userId")
                          ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+
             if (string.IsNullOrWhiteSpace(userId))
                 return Unauthorized();
+
             var res = await _tourService.DeleteTourAsync(id, userId);
+
             if (!res.IsSuccess)
                 return BadRequest(res);
-            return Ok(res);
 
+            return Ok(res);
         }
     }
-
 }

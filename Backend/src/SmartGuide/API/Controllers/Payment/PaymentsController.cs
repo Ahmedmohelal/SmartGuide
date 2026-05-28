@@ -18,7 +18,7 @@ namespace API.Controllers.Payment
 
         [HttpPost("create-intent")]
         [Authorize(Roles = "Tourist")]
-        public async Task<IActionResult> CreatePaymentIntentAsync(
+        public async Task<ActionResult<PaymentIntentResultDto>> CreatePaymentIntentAsync(
             [FromBody] CreatePaymentIntentDto dto)
         {
             if (!ModelState.IsValid)

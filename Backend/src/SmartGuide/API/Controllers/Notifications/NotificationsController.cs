@@ -1,4 +1,5 @@
-﻿using Application.Services.Interfaces.Notifications;
+﻿using Application.DTOs.Notifications;
+using Application.Services.Interfaces.Notifications;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -19,7 +20,7 @@ namespace API.Controllers.Notifications
         }
         // Called when user opens the app to fetch all notifications from DB
         [HttpGet]
-        public async Task<IActionResult> GetMyNotificationsAsync([FromQuery] int page = 1, [FromQuery] int pageSize = 20,
+        public async Task<ActionResult<NotificationListDto>> GetMyNotificationsAsync([FromQuery] int page = 1, [FromQuery] int pageSize = 20,
            CancellationToken cancellationToken = default)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);

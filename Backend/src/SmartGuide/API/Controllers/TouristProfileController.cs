@@ -1,4 +1,5 @@
 using Application.DTOs.ProfileDTOs;
+using Application.DTOs.Tour;
 using Application.Services.Interfaces.Profiles;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -36,7 +37,7 @@ namespace API.Controllers
 
         [HttpGet("my-tours")]
         [Authorize(Roles = "Tourist")]
-        public async Task<IActionResult> GetMyTours()
+        public async Task<ActionResult<List<TourListItemDto>>> GetMyTours()
         {
             var touristId = User.FindFirstValue("userId")
                          ?? User.FindFirstValue(ClaimTypes.NameIdentifier);

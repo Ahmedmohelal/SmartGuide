@@ -1,4 +1,5 @@
-﻿using Application.DTOs.Saved;
+﻿using Application.DTOs.AuthenticationDTOs;
+using Application.DTOs.Saved;
 using Application.DTOs.Saved;
 using Application.Services.Interfaces.Profiles;
 using Microsoft.AspNetCore.Authorization;
@@ -20,7 +21,7 @@ public class TouristFavoritesController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> SaveAsync([FromBody] SaveTourGuideRequestDto model, CancellationToken cancellationToken)
+    public async Task<ActionResult<OperationResultDto>> SaveAsync([FromBody] SaveTourGuideRequestDto model, CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
@@ -44,7 +45,7 @@ public class TouristFavoritesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetSavedAsync(CancellationToken cancellationToken)
+    public async Task<ActionResult<IReadOnlyList<SavedTourGuideDto>>> GetSavedAsync(CancellationToken cancellationToken)
     {
         // Get UserId By The TOKEN 
         // Instead Of Passing It From The Client Side To Avoid Any Security Issues
@@ -57,7 +58,7 @@ public class TouristFavoritesController : ControllerBase
     }
 
     [HttpDelete("{guideId}")]
-    public async Task<IActionResult> RemoveAsync([FromRoute] string guideId, CancellationToken cancellationToken)
+    public async Task<ActionResult<OperationResultDto>> RemoveAsync([FromRoute] string guideId, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(guideId))
             return BadRequest(new { message = "Guide id is required." });

@@ -20,7 +20,7 @@ namespace API.Controllers
 
 
         [HttpPost("register")]
-        public async Task<IActionResult> RegisterAsync([FromForm] RegisterDto model)
+        public async Task<ActionResult<AuthDto>> RegisterAsync([FromForm] RegisterDto model)
         {
 
             if (!ModelState.IsValid)
@@ -41,7 +41,7 @@ namespace API.Controllers
 
 
         [HttpPost("login")]
-        public async Task<IActionResult> LoginAsync([FromBody] TokenRequestDto model)
+        public async Task<ActionResult<AuthDto>> LoginAsync([FromBody] TokenRequestDto model)
         {
 
             if (!ModelState.IsValid)
@@ -58,7 +58,7 @@ namespace API.Controllers
         }
 
         [HttpPost("refreshtoken")]
-        public async Task<IActionResult> RefreshTokenAsync([FromBody] RefreshTokenRequestDto model)
+        public async Task<ActionResult<AuthDto>> RefreshTokenAsync([FromBody] RefreshTokenRequestDto model)
         {
             if (!ModelState.IsValid || string.IsNullOrWhiteSpace(model.RefreshToken))
                 return BadRequest(new { errorCode = "InvalidRequest", errorMessage = "Refresh token is required." });
