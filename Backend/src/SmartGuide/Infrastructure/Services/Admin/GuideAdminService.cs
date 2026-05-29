@@ -45,111 +45,62 @@ namespace Infrastructure.Services.Admin
             _notificationService = notificationService;
         }
 
-
-
-        public async Task<Pagination<AdminGuideVerificationDto>>GetPendingGuidesAsync(AdminGuideSpecParams param)
+        public async Task<Pagination<AdminGuideVerificationDto>> GetPendingGuidesAsync(AdminGuideSpecParams param)
         {
-            param.VerificationStatus =
-                GuideVerificationStatus.Pending
-                    .ToString();
+            param.VerificationStatus = GuideVerificationStatus.Pending.ToString();
 
-            var spec =
-                new AdminGuidesSpecification(param);
+            var spec = new AdminGuidesSpecification(param);
+            var countSpec = new AdminGuidesCountSpecification(param);
 
-            var countSpec =
-                new AdminGuidesCountSpecification(
-                    param);
+            var usersQuery = SpecificationEvaluator<ApplicationUser>
+                .GetQuery(_context.Users.Include(x => x.TourGuideProfile).AsQueryable(), spec);
 
-            var usersQuery =
-                SpecificationEvaluator<ApplicationUser>
-                    .GetQuery(
-                        _context.Users
-                            .Include(x => x.TourGuideProfile)
-                            .AsQueryable(),
-                        spec);
+            var countQuery = SpecificationEvaluator<ApplicationUser>
+                .GetQuery(_context.Users.AsQueryable(), countSpec);
 
-            var countQuery =
-                SpecificationEvaluator<ApplicationUser>
-                    .GetQuery(
-                        _context.Users.AsQueryable(),
-                        countSpec);
+            var users = await usersQuery.AsNoTracking().ToListAsync();
+            var count = await countQuery.CountAsync();
 
             var users = await usersQuery
 
                 .AsNoTracking()
-                .Include(u => u.TourGuideProfile)
-                .Where(u => u.IsGuideVerified == GuideVerificationStatus.Pending)
+
                 .ToListAsync();
 
             var count = await countQuery
                 .CountAsync();
 
             var mappedUsers = users
-                .Select(u =>
-                    AdminUserMapper.MapToVerificationDto(
-                        u,
-                        _imageUrlService))
+                .Select(u => AdminUserMapper.MapToVerificationDto(u, _imageUrlService))
                 .ToList();
 
-            return new Pagination<AdminGuideVerificationDto>(
-                param.PageIndex,
-                param.PageSize,
-                count,
-                mappedUsers);
+            return new Pagination<AdminGuideVerificationDto>(param.PageIndex, param.PageSize, count, mappedUsers);
         }
 
-        public async Task<Pagination<AdminGuideVerificationDto>>
-    GetAllGuidesAsync(
-        AdminGuideSpecParams param)
+        public async Task<Pagination<AdminGuideVerificationDto>> GetAllGuidesAsync(AdminGuideSpecParams param)
         {
-            var spec =
-                new AdminGuidesSpecification(param);
+            var spec = new AdminGuidesSpecification(param);
+            var countSpec = new AdminGuidesCountSpecification(param);
 
-            var countSpec =
-                new AdminGuidesCountSpecification(
-                    param);
+            var usersQuery = SpecificationEvaluator<ApplicationUser>
+                .GetQuery(_context.Users.Include(x => x.TourGuideProfile).AsQueryable(), spec);
 
-            var usersQuery =
-                SpecificationEvaluator<ApplicationUser>
-                    .GetQuery(
-                        _context.Users
-                            .Include(x => x.TourGuideProfile)
-                            .AsQueryable(),
-                        spec);
+            var countQuery = SpecificationEvaluator<ApplicationUser>
+                .GetQuery(_context.Users.AsQueryable(), countSpec);
 
-            var countQuery =
-                SpecificationEvaluator<ApplicationUser>
-                    .GetQuery(
-                        _context.Users.AsQueryable(),
-                        countSpec);
-
-            var users = await usersQuery
-
-                .AsNoTracking()
-
-                .ToListAsync();
-
-            var count = await countQuery
-                .CountAsync();
+            var users = await usersQuery.AsNoTracking().ToListAsync();
+            var count = await countQuery.CountAsync();
 
             var mappedUsers = users
-                .Select(u =>
-                    AdminUserMapper.MapToVerificationDto(
-                        u,
-                        _imageUrlService))
+                .Select(u => AdminUserMapper.MapToVerificationDto(u, _imageUrlService))
                 .ToList();
 
-            return new Pagination<AdminGuideVerificationDto>(
-                param.PageIndex,
-                param.PageSize,
-                count,
-                mappedUsers);
+            return new Pagination<AdminGuideVerificationDto>(param.PageIndex, param.PageSize, count, mappedUsers);
         }
 
         public async Task<OperationResultDto> ApproveGuideAsync(string guideId)
         {
-            var user = await _context.Users
-                .FirstOrDefaultAsync(x => x.Id == guideId);
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.Id == guideId);
 
             if (user == null)
                 return new OperationResultDto { IsSuccess = false, Message = "Guide not found." };
@@ -264,19 +215,44 @@ namespace Infrastructure.Services.Admin
             return new OperationResultDto { IsSuccess = true, Message = "Guide activated successfully." };
         }
 
+        // -------------------------------------------------------
+        // Suspend: مؤقت — يقدر يرجع بعد ما تتحل المشكلة
+        // -------------------------------------------------------
         public async Task<OperationResultDto> SuspendGuideAsync(string guideId, string adminId, string reason, string? ipAddress)
         {
-            return await ChangeGuideAccessStateAsync(guideId, adminId, reason, ipAddress, GuideAccountStatus.Suspended, "SuspendGuide");
+            return await ChangeGuideAccessStateAsync(
+                guideId,
+                adminId,
+                reason,
+                ipAddress,
+                GuideAccountStatus.Suspended,
+                "SuspendGuide",
+                lockoutDuration: TimeSpan.FromDays(30));   
         }
 
+        
         public async Task<OperationResultDto> BanGuideAsync(string guideId, string adminId, string reason, string? ipAddress)
         {
-            return await ChangeGuideAccessStateAsync(guideId, adminId, reason, ipAddress, GuideAccountStatus.Banned, "BanGuide");
+            return await ChangeGuideAccessStateAsync(
+                guideId,
+                adminId,
+                reason,
+                ipAddress,
+                GuideAccountStatus.Banned,
+                "BanGuide",
+                lockoutDuration: TimeSpan.FromDays(365 * 100)); 
         }
 
         public async Task<OperationResultDto> PutUnderReviewAsync(string guideId, string adminId, string reason, string? ipAddress)
         {
-            return await ChangeGuideAccessStateAsync(guideId, adminId, reason, ipAddress, GuideAccountStatus.UnderReview, "PutGuideUnderReview");
+            return await ChangeGuideAccessStateAsync(
+                guideId,
+                adminId,
+                reason,
+                ipAddress,
+                GuideAccountStatus.UnderReview,
+                "PutGuideUnderReview",
+                lockoutDuration: TimeSpan.FromDays(30));  
         }
 
         public async Task<OperationResultDto> ForceLogoutGuideAsync(string guideId, string adminId, string reason, string? ipAddress)
@@ -290,16 +266,19 @@ namespace Infrastructure.Services.Admin
             await _context.SaveChangesAsync();
 
             await _auditService.WriteAsync(adminId, "ForceLogoutGuide", "Guide", user.Id, reason, ipAddress);
+
             return new OperationResultDto { IsSuccess = true, Message = "Guide logged out from all sessions." };
         }
 
+     
         private async Task<OperationResultDto> ChangeGuideAccessStateAsync(
             string guideId,
             string adminId,
             string reason,
             string? ipAddress,
             GuideAccountStatus targetStatus,
-            string action)
+            string action,
+            TimeSpan lockoutDuration)
         {
             var user = await GetGuideAsync(guideId);
             if (user == null)
@@ -308,7 +287,8 @@ namespace Infrastructure.Services.Admin
             user.GuideAccountStatus = targetStatus;
             user.ForceLogoutRequired = true;
             user.LockoutEnabled = true;
-            user.LockoutEnd = DateTimeOffset.UtcNow.AddYears(100);
+            user.LockoutEnd = DateTimeOffset.UtcNow.Add(lockoutDuration);
+
             await _context.SaveChangesAsync();
 
             var (notifTitle, notifType) = targetStatus switch
@@ -345,9 +325,7 @@ namespace Infrastructure.Services.Admin
         {
             var user = await _context.Users.FirstOrDefaultAsync(x => x.Id == guideId);
             if (user == null || user.Role != "TourGuide")
-            {
                 return null;
-            }
 
             return user;
         }

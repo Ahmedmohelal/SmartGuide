@@ -368,7 +368,7 @@ namespace Infrastructure.Services.Admin
             };
 
             await _context.GuideWallets.AddAsync(wallet);
-
+            await _context.SaveChangesAsync();
             return wallet;
         }
     }

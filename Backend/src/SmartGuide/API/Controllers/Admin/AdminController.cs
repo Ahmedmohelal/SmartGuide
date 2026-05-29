@@ -22,7 +22,8 @@ namespace API.Controllers.Admin
         private readonly IAdminDashboardService _adminService;
         private readonly IGuideWalletAdminService _guideWalletAdminService;
         private readonly IAdminAuditService _adminAuditService;
-
+        private string adminId =>
+            User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         public AdminController(
             IUserAdminService userAdminService,
             IGuideAdminService guideAdminService,
@@ -205,9 +206,7 @@ namespace API.Controllers.Admin
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var adminId =
-                User.FindFirstValue(ClaimTypes.NameIdentifier)
-                ?? string.Empty;
+          
 
             var result =
                 await _guideAdminService.ActivateGuideAsync(
@@ -232,10 +231,7 @@ namespace API.Controllers.Admin
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var adminId =
-                User.FindFirstValue(ClaimTypes.NameIdentifier)
-                ?? string.Empty;
-
+           
             var result =
                 await _guideAdminService.SuspendGuideAsync(
                     id,
@@ -259,9 +255,6 @@ namespace API.Controllers.Admin
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var adminId =
-                User.FindFirstValue(ClaimTypes.NameIdentifier)
-                ?? string.Empty;
 
             var result =
                 await _guideAdminService.BanGuideAsync(
@@ -287,9 +280,6 @@ namespace API.Controllers.Admin
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var adminId =
-                User.FindFirstValue(ClaimTypes.NameIdentifier)
-                ?? string.Empty;
 
             var result =
                 await _guideAdminService.PutUnderReviewAsync(
@@ -315,9 +305,6 @@ namespace API.Controllers.Admin
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var adminId =
-                User.FindFirstValue(ClaimTypes.NameIdentifier)
-                ?? string.Empty;
 
             var result =
                 await _guideAdminService.ForceLogoutGuideAsync(
@@ -374,9 +361,7 @@ namespace API.Controllers.Admin
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var adminId =
-                User.FindFirstValue(ClaimTypes.NameIdentifier)
-                ?? string.Empty;
+          
 
             var result =
                 await _guideWalletAdminService.AddBalanceAsync(
@@ -401,9 +386,6 @@ namespace API.Controllers.Admin
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var adminId =
-                User.FindFirstValue(ClaimTypes.NameIdentifier)
-                ?? string.Empty;
 
             var result =
                 await _guideWalletAdminService.DeductBalanceAsync(
@@ -428,11 +410,7 @@ namespace API.Controllers.Admin
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var adminId =
-                User.FindFirstValue(ClaimTypes.NameIdentifier)
-                ?? string.Empty;
-
-            var result =
+           var result =
                 await _guideWalletAdminService.SetFreezeStateAsync(
                     id,
                     true,
@@ -454,11 +432,7 @@ namespace API.Controllers.Admin
             [FromBody] GuideAccountStatusUpdateDto dto)
         {
             if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            var adminId =
-                User.FindFirstValue(ClaimTypes.NameIdentifier)
-                ?? string.Empty;
+                return BadRequest(ModelState);         
 
             var result =
                 await _guideWalletAdminService.SetFreezeStateAsync(
@@ -544,7 +518,7 @@ namespace API.Controllers.Admin
             return Ok(result);
         }
 
-        [HttpDelete("{bookingId:guid}")]
+        [HttpDelete("bookings/{bookingId:guid}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> CancelBookingAsync(
