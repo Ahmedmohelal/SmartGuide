@@ -3,6 +3,7 @@ using Application.DTOs.Home;
 using Application.DTOs.PlaceRatings;
 using Application.DTOs.SavedPlaces;
 using Application.Services.Interfaces;
+using Application.Services.Interfaces.Cashing;
 using Application.Services.Interfaces.Home;
 using Domain.Entities.Home;
 using Domain.Entities.PlaceRatings;
@@ -16,21 +17,25 @@ namespace Application.Services.UseCases.PlaceModule
 
         private readonly ISavedPlacesRepository<SavedPlaceDto> _savedPlacesRepository;
         private readonly IPlaceRatingRepository _ratingRepo;
+        private readonly IRedisCacheService _cache;
 
         public PlaceService(
             IPlaceRepository<Place> repo,
             ISavedPlacesRepository<SavedPlaceDto> savedPlacesRepository,
-            IPlaceRatingRepository placeRatingRepository)
+            IPlaceRatingRepository placeRatingRepository ,
+            IRedisCacheService cache)
         {
             _repo = repo;
             _savedPlacesRepository = savedPlacesRepository;
             _ratingRepo = placeRatingRepository;
+            _cache = cache;
         }
 
         public async Task<Pagination<PlaceCardDto>> GetPlaces(
             PlaceSpecParams param,
             string? touristUserId)
         {
+
             param ??= new PlaceSpecParams();
 
             if (param.PageSize > 50)

@@ -2,8 +2,8 @@ using Application.DTOs.ProfileDTOs;
 using Application.DTOs.Saved;
 using Application.DTOs.SavedPlaces;
 using Application.Services.Interfaces.Admin;
-using Application.Services.Interfaces.Admin;
 using Application.Services.Interfaces.Auth;
+using Application.Services.Interfaces.Cashing;
 using Application.Services.Interfaces.Chat;
 using Application.Services.Interfaces.GuideDashboard;
 using Application.Services.Interfaces.Notifications;
@@ -27,6 +27,7 @@ using Infrastructure.Repository.Profile;
 using Infrastructure.Repository.Tours;
 using Infrastructure.Services.Admin;
 using Infrastructure.Services.Auth;
+using Infrastructure.Services.Caching;
 using Infrastructure.Services.Chat;
 using Infrastructure.Services.Email;
 using Infrastructure.Services.Files;
@@ -42,6 +43,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using StackExchange.Redis;
+using System.Security.Authentication;
 using System.Text;
 
 namespace Infrastructure.Settings
@@ -52,7 +55,7 @@ namespace Infrastructure.Settings
         {
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
-                    configuration.GetConnectionString("DefaultConnection"),
+                    configuration.GetConnectionString("AhmedDefaultConnection"),
                         sqlOptions => sqlOptions.EnableRetryOnFailure()
             ));
 
@@ -158,7 +161,41 @@ namespace Infrastructure.Settings
             services.AddScoped<IChatUserReader, ChatUserReader>();
             services.AddSignalR();
             services.AddSingleton<IUserIdProvider, NameIdentifierUserIdProvider>();
-            services.AddScoped<IPlaceRatingRepository, PlaceRatingRepository>();    
+            services.AddScoped<IPlaceRatingRepository, PlaceRatingRepository>();
+
+            services.AddSingleton<IConnectionMultiplexer>(sp =>
+            {
+                var config =
+                    sp.GetRequiredService<IConfiguration>();
+
+                var options =
+                    new ConfigurationOptions
+                    {
+                        EndPoints =
+                        {
+                             {
+                                 config["Redis:Host"]!,
+                                 int.Parse(config["Redis:Port"]!)
+                             }
+                        },
+
+                        User =
+                            config["Redis:User"],
+
+                        Password =
+                            config["Redis:Password"],
+
+                        AbortOnConnectFail = false,
+
+                        Ssl = false
+                    };
+
+                return ConnectionMultiplexer
+                    .Connect(options);
+            });
+
+            services.AddScoped<IRedisCacheService,RedisCacheService>();
+
 
             return services;
         }

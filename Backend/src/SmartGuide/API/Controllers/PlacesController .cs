@@ -1,4 +1,5 @@
-﻿using Application.DTOs.AuthenticationDTOs;
+﻿using API.Attributes;
+using Application.DTOs.AuthenticationDTOs;
 using Application.DTOs.Home;
 using Application.DTOs.PlaceRatings;
 using Application.Services.Interfaces.Home;
@@ -17,6 +18,7 @@ public class PlacesController : ControllerBase
         _service = service;
     }
 
+    [RedisCache(300)]
     [HttpGet]
     [Authorize]
     public async Task<ActionResult<Pagination<PlaceCardDto>>> GetPlaces(

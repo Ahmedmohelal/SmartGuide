@@ -1,4 +1,5 @@
-﻿using Application.Common.Pagination;
+﻿using API.Attributes;
+using Application.Common.Pagination;
 using Application.DTOs.AdminDashboard;
 using Application.DTOs.AuthenticationDTOs;
 using Application.DTOs.Home;
@@ -46,6 +47,7 @@ namespace API.Controllers.Admin
         // Users
         // =========================================================
 
+        [RedisCache(300)]
         [HttpGet("users")]
         [ProducesResponseType(typeof(Application.DTOs.Home.Pagination<AdminUserDto>), StatusCodes.Status200OK)]
         public async Task<ActionResult<Application.DTOs.Home.Pagination<AdminUserDto>>> GetAllUsersAsync([FromQuery] AdminUserSpecParams specParams)
@@ -146,6 +148,7 @@ namespace API.Controllers.Admin
             return Ok(result);
         }
 
+        [RedisCache(300)]
         [HttpGet("guides/{guideId}/documents")]
         [ProducesResponseType(typeof(GuideDocumentsDto), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]

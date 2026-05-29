@@ -85,6 +85,7 @@ app.Use(async (context, next) =>
 });
 
 app.UseMiddleware<ExceptionMiddleware>();
+app.UseMiddleware<RedisCacheMiddleware>();
 app.UseAuthentication();
 app.UseMiddleware<GuideAccessGuardMiddleware>();
 app.UseAuthorization();
