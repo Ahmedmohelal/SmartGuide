@@ -129,8 +129,8 @@ export default function Navbar() {
             </button>
 
             {isProfileOpen && (
-              <div className="absolute left-1/2 -translate-x-1/2 mt-3 w-56 rounded-xl bg-white/90 shadow-lg ring-1 ring-black ring-opacity-5 overflow-hidden transition-all">
-                <div className="py-2">
+              <div className="absolute left-1/2 -translate-x-1/2 mt-3 w-56 rounded-xl  bg-white/90 shadow-lg ring-1 ring-black ring-opacity-5 overflow-hidden transition-all">
+                <div className="py-2 ">
                   <Link onClick={() => setIsProfileOpen(false)} to="/profile" className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition"><User className="w-5 h-5" /> My Account</Link>
                   <Link onClick={() => setIsProfileOpen(false)} to="/notifications" className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition"><Bell className="w-5 h-5" /> Notifications</Link>
                   <Link onClick={() => setIsProfileOpen(false)} to="/chat" className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition"><MessageCircle className="w-5 h-5" /> Chats</Link>
@@ -161,7 +161,7 @@ export default function Navbar() {
         {/* ========================================== */}
         {/* 2. المنتصف: لينكات الموقع (تم التعديل هنا) */}
         {/* ========================================== */}
-        <ul className={`hidden flex-1 items-center justify-center gap-6 text-sm font-semibold md:flex ${navTextClass}`}>
+        <ul className={`hidden flex-1 items-center justify-center gap-6 text-xl font-semibold md:flex ${navTextClass}`}>
           {navLinks.map((item) => {
             const isExternalRoute = item.href.startsWith("/");
             const targetPath = isExternalRoute ? item.href : `/home${item.href}`;

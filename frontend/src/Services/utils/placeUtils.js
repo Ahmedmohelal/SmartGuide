@@ -21,11 +21,7 @@ export const getPlaceImage = (place) => {
 };
 
 export const getPlaceRating = (place) =>
-  typeof place?.rating === "number"
-    ? place.rating
-    : place?.rating
-    ? Number(place.rating) || 0
-    : 0;
+  Number(place?.averageRating ?? 0);
 
 export const getPlaceTitle = (place) => place?.name || place?.title || "Untitled Place";
 export const getPlaceDescription = (place) => place?.description || place?.desc || "";

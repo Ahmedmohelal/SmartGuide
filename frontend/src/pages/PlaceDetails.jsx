@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 
-import { getPlaceById } from "../Services/api/placeService";
+import { getPlaceById, ratePlace } from "../Services/api/placeService";
 
 import {
   getSavedPlaces,
@@ -9,10 +9,7 @@ import {
   deleteSavedPlace,
 } from "../Services/api/savedPlaceService";
 
-import {
-  getPlaceImage,
-  getPlaceTitle,
-} from "../Services/utils/placeUtils";
+import { getPlaceImage, getPlaceTitle } from "../Services/utils/placeUtils";
 
 import { getToken, isGuide } from "../Services/utils/tokenUtils";
 
@@ -20,8 +17,18 @@ export default function PlaceDetails() {
   const { id } = useParams();
 
   const [place, setPlace] = useState(null);
+
   const [isSaved, setIsSaved] = useState(false);
+
   const [saving, setSaving] = useState(false);
+
+  const [selectedRating, setSelectedRating] = useState(0);
+
+  const [review, setReview] = useState("");
+
+  const [submittingRating, setSubmittingRating] = useState(false);
+
+  const [hasSubmittedRating, setHasSubmittedRating] = useState(false);
 
   const isAuthenticated = !!getToken();
 
@@ -43,7 +50,12 @@ export default function PlaceDetails() {
     try {
       const data = await getPlaceById(id);
 
-      setPlace(data?.data ?? data);
+      const placeData = data?.data ?? data;
+
+      setPlace(placeData);
+
+      setSelectedRating(placeData?.myRating ?? 0);
+      setHasSubmittedRating(placeData?.myRating !== null);
     } catch (error) {
       console.error(error);
     }
@@ -53,21 +65,13 @@ export default function PlaceDetails() {
     try {
       const data = await getSavedPlaces();
 
-      const savedItems =
-        data?.data ?? data ?? [];
+      const savedItems = data?.data ?? data ?? [];
 
       setIsSaved(
-        savedItems.some(
-          (item) =>
-            String(item.placeId) ===
-            String(id)
-        )
+        savedItems.some((item) => String(item.placeId) === String(id)),
       );
     } catch (error) {
-      console.error(
-        "Failed to fetch saved status:",
-        error
-      );
+      console.error("Failed to fetch saved status:", error);
     }
   };
 
@@ -90,12 +94,33 @@ export default function PlaceDetails() {
 
       await fetchSavedStatus();
     } catch (error) {
-      console.error(
-        "Failed to update saved place:",
-        error
-      );
+      console.error(error);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSubmitRating = async () => {
+    if (!isAuthenticated) {
+      window.location.href = "/login";
+      return;
+    }
+
+    if (!selectedRating) return;
+
+    try {
+      setSubmittingRating(true);
+
+      await ratePlace(place.id, selectedRating, review);
+
+      await fetchPlace();
+
+      setReview("");
+      setHasSubmittedRating(true);
+    } catch (error) {
+      console.error("Failed to submit rating:", error);
+    } finally {
+      setSubmittingRating(false);
     }
   };
 
@@ -118,22 +143,16 @@ export default function PlaceDetails() {
       <div className="max-w-6xl mx-auto p-10 space-y-10">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <h1 className="text-5xl font-bold mb-3">
-              {place.name}
-            </h1>
+            <h1 className="text-5xl font-bold mb-3">{place.name}</h1>
 
             <div className="flex flex-wrap gap-3 text-gray-500">
-              <span>
-                📍 {place.city}
-              </span>
+              <span>📍 {place.city}</span>
 
-              <span>
-                ⭐ {place.rating}
-              </span>
+              <span>⭐ {(place.averageRating ?? 0).toFixed(1)}</span>
 
-              <span>
-                🏛 {place.type}
-              </span>
+              <span>({place.ratingsCount ?? 0} ratings)</span>
+
+              <span>🏛 {place.type}</span>
             </div>
           </div>
 
@@ -142,18 +161,18 @@ export default function PlaceDetails() {
               <button
                 onClick={handleToggleSaved}
                 disabled={saving}
-                className="rounded-2xl bg-sky-600 px-6 py-3 text-white hover:bg-sky-500 hover:translate-0.5  transition disabled:opacity-60"
+                className="rounded-2xl bg-sky-600 px-6 py-3 text-white hover:bg-sky-500 transition disabled:opacity-60"
               >
                 {saving
                   ? "Saving..."
                   : isSaved
-                  ? "Remove from Saved"
-                  : "Save Place"}
+                    ? "Remove from Saved"
+                    : "Save Place"}
               </button>
 
               <Link
                 to="/saved-places"
-                className="rounded-2xl border border-sky-600 px-6 py-3 text-sky-600 hover:text-sky-500 hover:translate-0.5 transition text-center"
+                className="rounded-2xl border border-sky-600 px-6 py-3 text-sky-600 text-center"
               >
                 View Saved Places
               </Link>
@@ -166,92 +185,75 @@ export default function PlaceDetails() {
             Description
           </h2>
 
-          <p className="text-gray-400 leading-8 text-lg">
-            {place.description}
-          </p>
+          <p className="text-gray-400 leading-8 text-lg">{place.description}</p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-6">
-          <div className="bg-[#004D40]  p-8 rounded-3xl">
-            <h2 className="text-2xl text-white font-semibold mb-6">
-              Place Information
-            </h2>
+        <div className="bg-[#004D40] p-8 rounded-3xl">
+          <h2 className="text-3xl text-white font-semibold mb-6">
+            Rate This Place
+          </h2>
 
-            <div className="space-y-4 text-gray-400">
-              <p>
-                <span className="text-white font-medium">
-                  Name:
-                </span>{" "}
-                {place.name}
-              </p>
+          <div className="flex gap-3 mb-6">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <button
+                key={star}
+                onClick={() => setSelectedRating(star)}
+                className={`text-5xl transition-all duration-300 transform hover:scale-125 active:scale-95 ${
+                  star <= selectedRating
+                    ? "text-yellow-400 drop-shadow-[0_0_12px_rgba(250,204,21,0.9)] animate-pulse"
+                    : "text-gray-500 hover:text-yellow-300"
+                }`}
+              >
+                ★
+              </button>
+            ))}
+          </div>
 
-              <p>
-                <span className="text-white font-medium">
-                  Type:
-                </span>{" "}
-                {place.type}
-              </p>
+          <textarea
+            value={review}
+            onChange={(e) => setReview(e.target.value)}
+            placeholder="Write your review..."
+            className="w-full rounded-xl p-4 bg-[#0f172a] text-white outline-none mb-4"
+            rows={4}
+          />
 
-              <p>
-                <span className="text-white font-medium">
-                  City:
-                </span>{" "}
-                {place.city}
-              </p>
+          <button
+            onClick={handleSubmitRating}
+            disabled={submittingRating || !selectedRating}
+            className="bg-sky-600 px-6 py-3 rounded-xl text-white hover:bg-sky-500 transition-all duration-300 hover:scale-105 disabled:opacity-60"
+          >
+            {submittingRating
+              ? "Submitting..."
+              : hasSubmittedRating
+                ? "Update Rating"
+                : "Submit Rating"}
+          </button>
+        </div>
 
-              <p>
-                <span className="text-white font-medium">
-                  Governorate:
-                </span>{" "}
-                {place.governorate}
-              </p>
+        <div className="bg-[#004D40] p-8 rounded-3xl">
+          <h2 className="text-3xl text-white font-semibold mb-6">Reviews</h2>
 
-              <p>
-                <span className="text-white font-medium">
-                  Location:
-                </span>{" "}
-                {place.location}
-              </p>
+          {place.reviews?.length > 0 ? (
+            <div className="space-y-5">
+              {place.reviews.map((item, index) => (
+                <div key={index} className="border-b border-gray-700 pb-4">
+                  <div className="text-yellow-400 text-xl mb-2">
+                    {"★".repeat(item.rating)}
+                  </div>
 
-              <p>
-                <span className="text-white font-medium">
-                  Period:
-                </span>{" "}
-                {place.period}
-              </p>
+                  <p className="text-gray-300 mb-2">
+                    {item.review || "No review text"}
+                  </p>
 
-              <p>
-                <span className="text-white font-medium">
-                  Start Year:
-                </span>{" "}
-                {place.startYear}
-              </p>
-
-              <p>
-                <span className="text-white font-medium">
-                  Created By:
-                </span>{" "}
-                {place.createdBy}
-              </p>
-
-              <p>
-                <span className="text-white font-medium">
-                  Rating:
-                </span>{" "}
-                ⭐ {place.rating}
-              </p>
+                  <p className="text-gray-500 text-sm">
+                    {new Date(item.createdAtUtc).toLocaleDateString()}
+                  </p>
+                </div>
+              ))}
             </div>
-          </div>
-
-          <div className="bg-[#004D40]  p-8 rounded-3xl">
-            <h2 className="text-2xl text-white font-semibold mb-6">
-              Historical Background
-            </h2>
-
-            <p className="text-gray-400 leading-8">
-              {place.historicalBackground}
-            </p>
-          </div>
+          ) : (
+            <p className="text-gray-400">No reviews yet.</p>
+          )}
         </div>
       </div>
     </div>
