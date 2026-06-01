@@ -34,6 +34,34 @@ input, select, textarea {
   outline: none;
 }
 
+.tour-thumbnails {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  overscroll-behavior-x: contain;
+}
+
+.tour-thumbnails::-webkit-scrollbar {
+  display: none;
+}
+
+.tour-description-box {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(0 77 64 / 0.45) transparent;
+}
+
+.tour-description-box::-webkit-scrollbar {
+  width: 6px;
+}
+
+.tour-description-box::-webkit-scrollbar-thumb {
+  background: rgb(0 77 64 / 0.45);
+  border-radius: 999px;
+}
+
+.tour-description-box::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 @keyframes float {
   0%,100%{
     transform: translateY(0px);

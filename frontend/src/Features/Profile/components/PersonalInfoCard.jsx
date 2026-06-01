@@ -21,16 +21,6 @@ export default function PersonalInfoCard() {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="p-2.5 bg-green-50 rounded-2xl">
-            <Phone size={20} className="text-green-500" />
-          </div>
-          <div>
-            <p className="text-[10px] text-gray-400 font-medium tracking-wider">Phone Number</p>
-            <p className="text-sm font-semibold text-gray-700">{user?.phoneNumber || "Not provided"}</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4">
           <div className="p-2.5 bg-blue-50 rounded-2xl">
             <MessageSquare size={20} className="text-blue-500" />
           </div>

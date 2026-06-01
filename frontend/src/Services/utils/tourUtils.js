@@ -24,7 +24,8 @@ export const extractTourImageUrl = (tour) => {
 };
 
 export const extractTourImageUrls = (tour) => {
-  const source = tour?.data ?? tour?.tour ?? tour?.result ?? tour;
+  const source =
+    tour?.data ?? tour?.Data ?? tour?.tour ?? tour?.Tour ?? tour?.result ?? tour?.Result ?? tour?.value ?? tour?.Value ?? tour;
   const candidates = [
     source?.images,
     source?.Images,
@@ -101,16 +102,27 @@ const positiveNumberLike = (value) => {
 };
 
 export const extractTourMaxGroupSize = (tour) => {
-  const source = tour?.data ?? tour?.tour ?? tour?.result ?? tour;
+  const source =
+    tour?.data ?? tour?.Data ?? tour?.tour ?? tour?.Tour ?? tour?.result ?? tour?.Result ?? tour?.value ?? tour?.Value ?? tour;
   const candidates = [
     source?.maxGroupSize,
     source?.MaxGroupSize,
     source?.maximumGroupSize,
     source?.MaximumGroupSize,
+    source?.maxGroup,
+    source?.MaxGroup,
+    source?.maximumGroup,
+    source?.MaximumGroup,
     source?.groupSize,
     source?.GroupSize,
     source?.maxGuests,
     source?.MaxGuests,
+    source?.maximumGuests,
+    source?.MaximumGuests,
+    source?.numberOfGuests,
+    source?.NumberOfGuests,
+    source?.guests,
+    source?.Guests,
     source?.guestLimit,
     source?.GuestLimit,
     source?.capacity,

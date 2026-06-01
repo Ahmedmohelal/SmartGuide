@@ -1,8 +1,10 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeft,
   Banknote,
+  ChevronLeft,
+  ChevronRight,
   Clock,
   MapPinned,
   Package,
@@ -11,7 +13,10 @@ import {
 } from "lucide-react";
 import { getTourById } from "../Services/api/tours";
 import { extractTourProgramSections } from "../Services/utils/tourJsonUtils";
-import { extractTourMaxGroupSize } from "../Services/utils/tourUtils";
+import {
+  extractTourImageUrls,
+  extractTourMaxGroupSize,
+} from "../Services/utils/tourUtils";
 
 const pick = (...vals) =>
   vals.find((v) => v !== undefined && v !== null && v !== "");
@@ -24,6 +29,7 @@ export default function TourDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [activeImageIdx, setActiveImageIdx] = useState(0);
+  const thumbnailsRef = useRef(null);
 
   const FALLBACK_HERO =
     "https://images.unsplash.com/photo-1539768942893-daf53e449371?auto=format&fit=crop&w=1600&q=80";
@@ -60,12 +66,7 @@ export default function TourDetails() {
 
   const images = useMemo(() => {
     if (!tour) return [];
-    const list = Array.isArray(tour.images)
-      ? tour.images
-      : Array.isArray(tour.Images)
-        ? tour.Images
-        : [];
-    return list.filter(Boolean);
+    return extractTourImageUrls(tour);
   }, [tour]);
 
   const { stops, inclusions, addOns } = useMemo(
@@ -77,6 +78,16 @@ export default function TourDetails() {
     images.length > 0
       ? images[Math.min(activeImageIdx, images.length - 1)]
       : FALLBACK_HERO;
+
+  const galleryImages = images.length > 0 ? images : [FALLBACK_HERO];
+  const hasGallery = galleryImages.length > 1;
+
+  const scrollThumbnails = (direction) => {
+    thumbnailsRef.current?.scrollBy({
+      left: direction === "next" ? 150 : -150,
+      behavior: "smooth",
+    });
+  };
 
   if (loading) {
     return (
@@ -135,7 +146,11 @@ export default function TourDetails() {
                 {title}
               </h1>
 
-              <p className="mt-5 text-slate-700">{description}</p>
+              <div className="mt-5 max-h-44 overflow-y-auto rounded-2xl border border-white/60 bg-white/45 p-4 pr-3 text-slate-700 shadow-inner tour-description-box">
+                <p className="whitespace-pre-wrap break-words leading-7">
+                  {description}
+                </p>
+              </div>
 
               <div className="mt-8 flex flex-wrap gap-3">
                 {durationHours && (
@@ -155,6 +170,60 @@ export default function TourDetails() {
                     <Banknote className="inline" /> {price} EGP
                   </span>
                 )}
+              </div>
+
+              <div className="mt-8">
+                <div className="mb-3 flex items-center justify-between gap-4">
+                  <p className="text-sm font-bold uppercase tracking-[0.16em] text-egypt-teal">
+                    Tour Gallery
+                  </p>
+
+                  {hasGallery ? (
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => scrollThumbnails("prev")}
+                        className="grid h-8 w-8 place-items-center rounded-full bg-white/70 text-slate-700 shadow-sm transition hover:bg-white hover:text-egypt-teal"
+                        aria-label="Previous tour photos"
+                      >
+                        <ChevronLeft size={17} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => scrollThumbnails("next")}
+                        className="grid h-8 w-8 place-items-center rounded-full bg-egypt-teal text-white shadow-sm transition hover:bg-egypt-teal-dark"
+                        aria-label="Next tour photos"
+                      >
+                        <ChevronRight size={17} />
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+
+                <div
+                  ref={thumbnailsRef}
+                  className="tour-thumbnails flex gap-3 overflow-x-auto pb-2"
+                >
+                  {galleryImages.map((image, index) => (
+                    <button
+                      key={`${image}-${index}`}
+                      type="button"
+                      onClick={() => setActiveImageIdx(index)}
+                      className={`h-20 w-28 shrink-0 overflow-hidden rounded-2xl border-2 bg-white shadow-sm transition ${
+                        index === activeImageIdx
+                          ? "border-egypt-teal ring-4 ring-egypt-teal/15"
+                          : "border-white/70 opacity-80 hover:opacity-100"
+                      }`}
+                      aria-label={`Show tour photo ${index + 1}`}
+                    >
+                      <img
+                        src={image}
+                        alt={`${title} photo ${index + 1}`}
+                        className="h-full w-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </header>

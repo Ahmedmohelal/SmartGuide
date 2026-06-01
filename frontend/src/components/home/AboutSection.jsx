@@ -1,4 +1,5 @@
 import { Headphones, Users } from "lucide-react";
+import { Link } from "react-router-dom";
 import { about } from "../../data/homeContent";
 
 const bulletIcons = {
@@ -38,12 +39,12 @@ export default function AboutSection() {
               );
             })}
           </ul>
-          <a
-            href="#news"
+          <Link
+            to="/about-us"
             className="mt-10 inline-flex rounded-full bg-egypt-teal px-8 py-3 text-sm font-bold text-white shadow-md transition hover:bg-egypt-teal-dark"
           >
             {about.cta}
-          </a>
+          </Link>
         </div>
       </div>
     </section>

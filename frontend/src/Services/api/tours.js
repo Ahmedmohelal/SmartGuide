@@ -35,14 +35,14 @@ export const getTourById = async (id) => {
       const res = await axios.get(`${ENDPOINTS.DASHBOARD_TOUR}/${id}`, {
         headers: authHeader(),
       });
-      return res.data;
+      return hydrateTourDetailsWithListFields(res.data, id, true);
     } catch (err) {
       const status = err.response?.status;
       if (status === 403 || status === 404) {
         const res = await axios.get(`${ENDPOINTS.TOURS}/${id}`, {
           headers: {},
         });
-        return res.data;
+        return hydrateTourDetailsWithListFields(res.data, id, false);
       }
       throw err;
     }
@@ -51,7 +51,7 @@ export const getTourById = async (id) => {
   const res = await axios.get(`${ENDPOINTS.TOURS}/${id}`, {
     headers: token ? authHeader() : {},
   });
-  return res.data;
+  return hydrateTourDetailsWithListFields(res.data, id, false);
 };
 
 export const getToursByGuide = async (guideId) => {
@@ -87,6 +87,47 @@ export const getMyTours = async () => {
     headers: authHeader(),
   });
   return Array.isArray(res.data) ? res.data : [];
+};
+
+const unwrapTourPayload = (raw) => {
+  if (!raw || typeof raw !== "object") return raw;
+  return raw.data ?? raw.Data ?? raw.tour ?? raw.Tour ?? raw.result ?? raw.Result ?? raw.value ?? raw.Value ?? raw;
+};
+
+const getTourId = (tour) => tour?.id ?? tour?.Id ?? tour?.tourId ?? tour?.TourId;
+
+const getTourListMaxGroupSize = (tour) =>
+  tour?.maxGroupSize ?? tour?.MaxGroupSize ?? null;
+
+const hydrateTourDetailsWithListFields = async (rawTour, id, preferGuideList) => {
+  const tour = unwrapTourPayload(rawTour);
+
+  if (getTourListMaxGroupSize(tour) != null) {
+    return rawTour;
+  }
+
+  const token = getToken();
+  if (!token) return rawTour;
+
+  try {
+    const list = preferGuideList ? await getMyTours() : await getHomeTours();
+    const matchingTour = list.find(
+      (item) => String(getTourId(item)) === String(id)
+    );
+    const maxGroupSize = getTourListMaxGroupSize(matchingTour);
+
+    if (maxGroupSize == null) {
+      return rawTour;
+    }
+
+    return {
+      ...rawTour,
+      maxGroupSize,
+      MaxGroupSize: maxGroupSize,
+    };
+  } catch {
+    return rawTour;
+  }
 };
 
 const formText = (value) => {

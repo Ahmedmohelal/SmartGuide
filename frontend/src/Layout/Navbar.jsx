@@ -12,6 +12,7 @@ export default function Navbar() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [activeSection, setActiveSection] = useState("#hero");
   const location = useLocation();
   const { logout, user } = useProfile();
   const isLightBackgroundPage =
@@ -40,6 +41,43 @@ export default function Navbar() {
   useEffect(() => {
     setIsProfileOpen(false);
   }, [location.pathname, location.hash]);
+
+  useEffect(() => {
+    if (location.pathname !== "/home") {
+      setActiveSection("");
+      return undefined;
+    }
+
+    const sectionIds = navLinks
+      .map((item) => item.href)
+      .filter((href) => href.startsWith("#"))
+      .map((href) => href.slice(1));
+
+    const sections = sectionIds
+      .map((id) => document.getElementById(id))
+      .filter(Boolean);
+
+    if (sections.length === 0) return undefined;
+
+    const updateActiveSection = () => {
+      const navOffset = 130;
+      const current = sections.reduce((active, section) => {
+        const top = section.getBoundingClientRect().top - navOffset;
+        return top <= 0 ? section : active;
+      }, sections[0]);
+
+      setActiveSection(`#${current.id}`);
+    };
+
+    updateActiveSection();
+    window.addEventListener("scroll", updateActiveSection, { passive: true });
+    window.addEventListener("resize", updateActiveSection);
+
+    return () => {
+      window.removeEventListener("scroll", updateActiveSection);
+      window.removeEventListener("resize", updateActiveSection);
+    };
+  }, [location.pathname]);
 
   useEffect(() => {
     let cancelled = false;
@@ -167,7 +205,7 @@ export default function Navbar() {
             const targetPath = isExternalRoute ? item.href : `/home${item.href}`;
             const isActive = isExternalRoute
               ? location.pathname === item.href
-              : location.hash === item.href || (location.hash === "" && item.href === "#hero" && location.pathname === "/home");
+              : location.pathname === "/home" && activeSection === item.href;
 
             return (
               <li key={item.href} className="relative flex flex-col items-center">

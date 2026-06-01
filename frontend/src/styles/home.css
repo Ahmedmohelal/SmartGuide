@@ -66,13 +66,25 @@
   background-size: 48px 84px;
 }
 
+.guides-carousel {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  overscroll-behavior-x: contain;
+}
+
+.guides-carousel::-webkit-scrollbar {
+  display: none;
+}
+
 /* تمرير الأقسام مع شريط تنقل ثابت */
 /* ارتفاع تقريبي للناف الثابت فوق الصفحة */
 #hero,
 #about,
 #featured,
+#guides,
+#tours,
 #news,
 #faq,
 #footer {
-  scroll-margin-top: 5.75rem;
+  scroll-margin-top: 7rem;
 }
