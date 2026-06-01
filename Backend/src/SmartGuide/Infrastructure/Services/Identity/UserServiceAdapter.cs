@@ -59,6 +59,9 @@ namespace Infrastructure.Services.Identity
                 GuideAccountStatus = string.Equals(user.Role, Roles.TourGuide, StringComparison.OrdinalIgnoreCase)
                     ? GuideAccountStatus.Pending
                     : GuideAccountStatus.Active,
+                IsGuideVerified = string.Equals(user.Role, Roles.TourGuide, StringComparison.OrdinalIgnoreCase)
+                    ? GuideVerificationStatus.Pending
+                    : GuideVerificationStatus.NotVerified,
                 GuideLicenseImage = user.GuideLicenseImage,
                 NationalIdImage = user.NationalIdImage,
                 ProfileImage = user.ProfileImage,

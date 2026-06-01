@@ -43,7 +43,10 @@ namespace Infrastructure.Services.Admin
             var users = await _context.Users
                 .AsNoTracking()
                 .Include(u => u.TourGuideProfile)
-                .Where(u => u.IsGuideVerified == GuideVerificationStatus.Pending)
+                .Where(u =>
+                    u.Role == "TourGuide" &&
+                    (u.IsGuideVerified == GuideVerificationStatus.Pending ||
+                     u.IsGuideVerified == GuideVerificationStatus.NotVerified))
                 .ToListAsync();
 
             return users.Select(u => AdminUserMapper.MapToVerificationDto(u, _imageUrlService)).ToList();
