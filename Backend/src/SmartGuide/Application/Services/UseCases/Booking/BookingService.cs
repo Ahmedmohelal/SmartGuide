@@ -60,6 +60,16 @@ namespace Application.Services.UseCases.Booking
                     Message = "Tour does not belong to this guide."
                 };
 
+            var ExistedSlots = await _bookingRepo.GetSlotsByTourAndDateAsync(dto.TourId, dto.Date);
+            if (ExistedSlots.Any(s => (s.StartTime == dto.StartTime && s.EndTime == dto.EndTime)))
+            {
+                return new OperationResultDto
+                {
+                    IsSuccess = false,
+                    Message = "This Already Slot With This Tour."
+                };
+            }
+
             var slot = new BookingSlot
             {
                 Id = Guid.NewGuid(),
