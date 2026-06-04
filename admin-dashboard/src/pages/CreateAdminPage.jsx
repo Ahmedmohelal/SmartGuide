@@ -12,10 +12,12 @@ export default function CreateAdminPage() {
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
+    userName: "",
     email: "",
     password: "",
     confirmPassword: "",
-    role: "SuperAdmin",
+    country: "",
+    whatsAppNumber: "",
   });
 
   const validateForm = () => {
@@ -27,10 +29,19 @@ export default function CreateAdminPage() {
     if (!formData.lastName.trim()) {
       newErrors.lastName = "Last name is required";
     }
+    if (!formData.userName.trim()) {
+      newErrors.userName = "Username is required";
+    }
     if (!formData.email.trim()) {
       newErrors.email = "Email is required";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = "Invalid email format";
+    }
+    if (!formData.country.trim()) {
+      newErrors.country = "Country is required";
+    }
+    if (!formData.whatsAppNumber.trim()) {
+      newErrors.whatsAppNumber = "WhatsApp number is required";
     }
     if (!formData.password) {
       newErrors.password = "Password is required";
@@ -63,20 +74,41 @@ export default function CreateAdminPage() {
     }
 
     setLoading(true);
+
     try {
-      const adminPayload = {
-        firstName: formData.firstName.trim(),
-        lastName: formData.lastName.trim(),
-        email: formData.email.trim(),
-        password: formData.password,
-        role: formData.role,
+      const payload = {
+        FirstName: formData.firstName,
+        LastName: formData.lastName,
+        UserName: formData.userName,
+        Email: formData.email,
+        Password: formData.password,
+        Country: formData.country,
+        WhatsAppNumber: formData.whatsAppNumber,
       };
 
-      await createAdmin(adminPayload);
+      console.log("=== ADMIN PAYLOAD ===");
+      console.log("FirstName:", payload.FirstName);
+      console.log("LastName:", payload.LastName);
+      console.log("UserName:", payload.UserName);
+      console.log("Email:", payload.Email);
+      console.log("Password:", payload.Password);
+      console.log("Country:", payload.Country);
+      console.log("WhatsAppNumber:", payload.WhatsAppNumber);
+      console.log("Full payload:", payload);
+
+      await createAdmin(payload);
+
       toast.success("Admin created successfully!");
       setTimeout(() => navigate("/users"), 1000);
     } catch (err) {
-      const message = err.response?.data?.message || err.message || "Failed to create admin";
+      const message =
+        err.response?.data?.message || err.message || "Failed to create admin";
+
+      console.error("=== CREATE ADMIN ERROR ===");
+      console.error("Status:", err.response?.status);
+      console.error("Message:", message);
+      console.error("Response:", err.response?.data);
+
       toast.error(message);
     } finally {
       setLoading(false);
@@ -104,7 +136,10 @@ export default function CreateAdminPage() {
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* First Name */}
             <div>
-              <label htmlFor="firstName" className="block text-sm font-semibold mb-2">
+              <label
+                htmlFor="firstName"
+                className="block text-sm font-semibold mb-2"
+              >
                 First Name *
               </label>
               <input
@@ -123,7 +158,10 @@ export default function CreateAdminPage() {
 
             {/* Last Name */}
             <div>
-              <label htmlFor="lastName" className="block text-sm font-semibold mb-2">
+              <label
+                htmlFor="lastName"
+                className="block text-sm font-semibold mb-2"
+              >
                 Last Name *
               </label>
               <input
@@ -140,9 +178,34 @@ export default function CreateAdminPage() {
               )}
             </div>
 
+            {/* Username */}
+            <div>
+              <label
+                htmlFor="userName"
+                className="block text-sm font-semibold mb-2"
+              >
+                Username *
+              </label>
+              <input
+                id="userName"
+                type="text"
+                name="userName"
+                value={formData.userName}
+                onChange={handleChange}
+                placeholder="johndoe"
+                className="admin-input"
+              />
+              {errors.userName && (
+                <p className="mt-1 text-xs text-red-500">{errors.userName}</p>
+              )}
+            </div>
+
             {/* Email */}
             <div>
-              <label htmlFor="email" className="block text-sm font-semibold mb-2">
+              <label
+                htmlFor="email"
+                className="block text-sm font-semibold mb-2"
+              >
                 Email *
               </label>
               <input
@@ -154,30 +217,63 @@ export default function CreateAdminPage() {
                 placeholder="john@example.com"
                 className="admin-input"
               />
-              {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
+              {errors.email && (
+                <p className="mt-1 text-xs text-red-500">{errors.email}</p>
+              )}
             </div>
 
-            {/* Role */}
+            {/* Country */}
             <div>
-              <label htmlFor="role" className="block text-sm font-semibold mb-2">
-                Role *
-              </label>
-              <select
-                id="role"
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-                className="admin-input"
+              <label
+                htmlFor="country"
+                className="block text-sm font-semibold mb-2"
               >
-                <option value="SuperAdmin">Super Admin</option>
-                <option value="Admin">Admin</option>
-                <option value="Moderator">Moderator</option>
-              </select>
+                Country *
+              </label>
+              <input
+                id="country"
+                type="text"
+                name="country"
+                value={formData.country}
+                onChange={handleChange}
+                placeholder="Egypt"
+                className="admin-input"
+              />
+              {errors.country && (
+                <p className="mt-1 text-xs text-red-500">{errors.country}</p>
+              )}
+            </div>
+
+            {/* WhatsApp Number */}
+            <div>
+              <label
+                htmlFor="whatsAppNumber"
+                className="block text-sm font-semibold mb-2"
+              >
+                WhatsApp Number *
+              </label>
+              <input
+                id="whatsAppNumber"
+                type="tel"
+                name="whatsAppNumber"
+                value={formData.whatsAppNumber}
+                onChange={handleChange}
+                placeholder="+20 100 000 0000"
+                className="admin-input"
+              />
+              {errors.whatsAppNumber && (
+                <p className="mt-1 text-xs text-red-500">
+                  {errors.whatsAppNumber}
+                </p>
+              )}
             </div>
 
             {/* Password */}
             <div>
-              <label htmlFor="password" className="block text-sm font-semibold mb-2">
+              <label
+                htmlFor="password"
+                className="block text-sm font-semibold mb-2"
+              >
                 Password *
               </label>
               <input
@@ -196,7 +292,10 @@ export default function CreateAdminPage() {
 
             {/* Confirm Password */}
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-semibold mb-2">
+              <label
+                htmlFor="confirmPassword"
+                className="block text-sm font-semibold mb-2"
+              >
                 Confirm Password *
               </label>
               <input
@@ -209,7 +308,9 @@ export default function CreateAdminPage() {
                 className="admin-input"
               />
               {errors.confirmPassword && (
-                <p className="mt-1 text-xs text-red-500">{errors.confirmPassword}</p>
+                <p className="mt-1 text-xs text-red-500">
+                  {errors.confirmPassword}
+                </p>
               )}
             </div>
 

@@ -13,9 +13,13 @@ export default function UsersPage() {
   useEffect(() => {
     (async () => {
       try {
-        const data = await fetchUsers();
-        setUsers(Array.isArray(data) ? data : []);
-      } catch {
+        const response = await fetchUsers();
+
+        console.log("USERS RESPONSE", response);
+
+        setUsers(Array.isArray(response.data) ? response.data : []);
+      } catch (err) {
+        console.error(err);
         toast.error("Failed to load users");
       } finally {
         setLoading(false);
@@ -25,8 +29,14 @@ export default function UsersPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Users" subtitle="All registered accounts on the platform.">
-        <Link to="/create-admin" className="admin-btn admin-btn-primary flex items-center gap-2">
+      <PageHeader
+        title="Users"
+        subtitle="All registered accounts on the platform."
+      >
+        <Link
+          to="/create-admin"
+          className="admin-btn admin-btn-primary flex items-center gap-2"
+        >
           <UserPlus size={18} />
           Create Admin
         </Link>
@@ -46,13 +56,19 @@ export default function UsersPage() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={5} className="text-center! text-(--admin-text-muted)">
+                <td
+                  colSpan={5}
+                  className="text-center! text-(--admin-text-muted)"
+                >
                   Loading…
                 </td>
               </tr>
             ) : users.length === 0 ? (
               <tr>
-                <td colSpan={5} className="text-center! text-(--admin-text-muted)">
+                <td
+                  colSpan={5}
+                  className="text-center! text-(--admin-text-muted)"
+                >
                   No users found.
                 </td>
               </tr>
@@ -64,20 +80,25 @@ export default function UsersPage() {
                   </td>
                   <td>{u.email}</td>
                   <td>
-                    <span className="admin-badge admin-badge-brand">{u.role}</span>
+                    <span className="admin-badge admin-badge-brand">
+                      {u.role}
+                    </span>
                   </td>
                   <td>{u.isActive ? "Yes" : "No"}</td>
                   <td>
-                    <UserActionButtons user={u} onDone={() => {
-                      (async () => {
+                    <UserActionButtons
+                      user={u}
+                      onDone={async () => {
                         try {
-                          const data = await fetchUsers();
-                          setUsers(Array.isArray(data) ? data : []);
+                          const response = await fetchUsers();
+                          setUsers(
+                            Array.isArray(response.data) ? response.data : [],
+                          );
                         } catch {
                           toast.error("Failed to refresh users");
                         }
-                      })();
-                    }} />
+                      }}
+                    />
                   </td>
                 </tr>
               ))

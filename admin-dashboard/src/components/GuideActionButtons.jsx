@@ -112,8 +112,20 @@ export default function GuideActionButtons({ guide, onDone }) {
   const viewDocs = async () => {
     setBusy(true);
     try {
-      setDocs(await fetchGuideDocuments(id));
-    } catch {
+      console.log("Fetching documents for guide ID:", id);
+      console.log("Full guide object:", guide);
+      const docsData = await fetchGuideDocuments(id);
+      console.log("Fetched documents:", docsData);
+      console.log("nationalIdImageUrl:", docsData?.nationalIdImageUrl);
+      console.log("licenseImageUrl:", docsData?.licenseImageUrl);
+      setDocs(docsData);
+      if (!docsData?.nationalIdImageUrl && !docsData?.licenseImageUrl) {
+        console.warn("No document images found in response");
+        toast.error("No verification documents found");
+      }
+    } catch (err) {
+      console.error("Error loading documents:", err);
+      console.error("Error response:", err.response?.data);
       toast.error("Could not load documents");
     } finally {
       setBusy(false);
@@ -268,26 +280,54 @@ export default function GuideActionButtons({ guide, onDone }) {
               </button>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
-              {docs.nationalIdImage ? (
+              {docs.nationalIdImageUrl ? (
                 <div className="rounded-xl border border-(--admin-border) p-2">
                   <p className="mb-2 text-sm font-semibold">National ID</p>
-                  <img
-                    src={docs.nationalIdImage}
-                    alt="ID"
-                    className="max-h-72 w-full rounded-lg object-contain"
-                  />
+                  <div className="bg-gray-100 rounded-lg overflow-hidden">
+                    <img
+                      src={docs.nationalIdImageUrl}
+                      alt="National ID"
+                      className="max-h-72 w-full rounded-lg object-contain"
+                      onError={(e) => {
+                        console.error("Failed to load National ID image:", docs.nationalIdImageUrl);
+                        e.target.style.display = "none";
+                      }}
+                      onLoad={() => console.log("National ID image loaded successfully")}
+                    />
+                  </div>
                 </div>
-              ) : null}
-              {docs.guideLicenseImage ? (
+              ) : (
+                <div className="rounded-xl border border-(--admin-border) p-2">
+                  <p className="mb-2 text-sm font-semibold">National ID</p>
+                  <div className="flex h-72 items-center justify-center rounded-lg bg-gray-100 text-gray-500">
+                    No image provided
+                  </div>
+                </div>
+              )}
+              {docs.licenseImageUrl ? (
                 <div className="rounded-xl border border-(--admin-border) p-2">
                   <p className="mb-2 text-sm font-semibold">License</p>
-                  <img
-                    src={docs.guideLicenseImage}
-                    alt="License"
-                    className="max-h-72 w-full rounded-lg object-contain"
-                  />
+                  <div className="bg-gray-100 rounded-lg overflow-hidden">
+                    <img
+                      src={docs.licenseImageUrl}
+                      alt="Guide License"
+                      className="max-h-72 w-full rounded-lg object-contain"
+                      onError={(e) => {
+                        console.error("Failed to load License image:", docs.licenseImageUrl);
+                        e.target.style.display = "none";
+                      }}
+                      onLoad={() => console.log("License image loaded successfully")}
+                    />
+                  </div>
                 </div>
-              ) : null}
+              ) : (
+                <div className="rounded-xl border border-(--admin-border) p-2">
+                  <p className="mb-2 text-sm font-semibold">License</p>
+                  <div className="flex h-72 items-center justify-center rounded-lg bg-gray-100 text-gray-500">
+                    No image provided
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
