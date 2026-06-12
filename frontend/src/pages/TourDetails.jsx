@@ -172,6 +172,18 @@ export default function TourDetails() {
                 )}
               </div>
 
+              {isTourist() ? (
+                <div className="mt-6">
+                  <button
+                    type="button"
+                    onClick={() => toast.error("please download the mobile app to book this tour")}
+                   className="inline-flex items-center justify-center rounded-2xl bg-egypt-gold px-6 py-3 text-lg font-semibold text-white transition-all duration-300 hover:-translate-y-1 hover:bg-teal-700"
+                  >
+                    Book this tour
+                  </button>
+                </div>
+              ) : null}
+
               <div className="mt-8">
                 <div className="mb-3 flex items-center justify-between gap-4">
                   <p className="text-sm font-bold uppercase tracking-[0.16em] text-egypt-teal">

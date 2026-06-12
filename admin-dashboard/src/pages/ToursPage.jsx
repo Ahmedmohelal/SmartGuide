@@ -209,6 +209,7 @@ export default function ToursPage() {
               </tr>
             ) : (
               tours.map((t) => (
+                console.log("Tour:", t) || true &&
                 <tr key={t.id}>
                   <td>
                     {t.primaryImage ? (

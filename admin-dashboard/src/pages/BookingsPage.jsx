@@ -1,20 +1,20 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import DateFilter from "../components/DateFilter";
 import PageHeader from "../components/PageHeader";
 import { fetchBookings, cancelBooking } from "../services/adminService";
-import { toDateKey, filterBookingsByDay } from "../utils/analytics";
 
 export default function BookingsPage() {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedDate, setSelectedDate] = useState(() => toDateKey(new Date()));
 
   const load = async () => {
     setLoading(true);
     try {
       const data = await fetchBookings();
-      setBookings(Array.isArray(data) ? data : []);
+      const filtered = Array.isArray(data)
+        ? data.filter((b) => b.status?.toLowerCase() !== "cancelled")
+        : [];
+      setBookings(filtered);
     } catch {
       toast.error("Failed to load bookings");
     } finally {
@@ -26,17 +26,11 @@ export default function BookingsPage() {
     load();
   }, []);
 
-  const filtered = useMemo(
-    () => filterBookingsByDay(bookings, selectedDate),
-    [bookings, selectedDate]
-  );
-
   const onCancel = async (id) => {
-    if (!window.confirm("Cancel this booking?")) return;
     try {
       await cancelBooking(id);
+      setBookings((prev) => prev.filter((b) => b.id !== id));
       toast.success("Booking cancelled");
-      load();
     } catch {
       toast.error("Cancel failed");
     }
@@ -46,10 +40,8 @@ export default function BookingsPage() {
     <div className="space-y-6">
       <PageHeader
         title="Bookings"
-        subtitle="Filter by date and manage reservations."
+        subtitle={`${bookings.length} total reservations`}
       />
-
-      <DateFilter value={selectedDate} onChange={setSelectedDate} />
 
       <div className="admin-card admin-table-wrap">
         <table className="admin-table min-w-[900px]">
@@ -70,14 +62,14 @@ export default function BookingsPage() {
                   Loading…
                 </td>
               </tr>
-            ) : filtered.length === 0 ? (
+            ) : bookings.length === 0 ? (
               <tr>
                 <td colSpan={6} className="!text-center text-[var(--admin-text-muted)]">
-                  No bookings on {selectedDate}
+                  No bookings found
                 </td>
               </tr>
             ) : (
-              filtered.map((b) => (
+              bookings.map((b) => (
                 <tr key={b.id}>
                   <td className="font-semibold">{b.tourTitle}</td>
                   <td>{b.touristName}</td>
