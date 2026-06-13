@@ -47,6 +47,7 @@ namespace Infrastructure.Services.Admin
                     .GetQuery(
                         _context.Tours
                             .Include(t => t.TourImages)
+                            .Include(t=>t.Bookings)
                             .AsQueryable(),
                         spec);
 
@@ -95,7 +96,7 @@ namespace Infrastructure.Services.Admin
 
 
                         Price = t.Price,
-
+                        TotalBookings = t.Bookings.Count,
                         DurationHours = t.DurationHours,
 
                         MaxGroupSize = t.MaxGroupSize,
