@@ -24,18 +24,16 @@ namespace Infrastructure.Services.Admin
         private readonly ApplicationDbContext _context;
         private readonly IImageUrlService _imageUrlService;
         private readonly INotificationService _notificationService;
+        private readonly ILogger<TourAdminService> _logger;
 
-        public TourAdminService(
-            ApplicationDbContext context,
-            IImageUrlService imageUrlService,
-            INotificationService notificationService)
+        public TourAdminService(ApplicationDbContext context,IImageUrlService imageUrlService,INotificationService notificationService , ILogger<TourAdminService> logger)
         {
             _context = context;
             _imageUrlService = imageUrlService;
             _notificationService = notificationService;
+            _logger = logger;
         }
-        public async Task<Pagination<AdminTourDto>>
-    GetAllToursAsync(AdminTourSpecParams param)
+        public async Task<Pagination<AdminTourDto>> GetAllToursAsync(AdminTourSpecParams param)
         {
             var spec =
                 new AdminToursSpecification(
@@ -45,16 +43,14 @@ namespace Infrastructure.Services.Admin
                 new AdminToursCountSpecification(
                     param);
 
-            var toursQuery =
-                SpecificationEvaluator<Tour>
+            var toursQuery = SpecificationEvaluator<Tour>
                     .GetQuery(
                         _context.Tours
                             .Include(t => t.TourImages)
                             .AsQueryable(),
                         spec);
 
-            var countQuery =
-                SpecificationEvaluator<Tour>
+            var countQuery = SpecificationEvaluator<Tour>
                     .GetQuery(
                         _context.Tours.AsQueryable(),
                         countSpec);
@@ -130,6 +126,10 @@ namespace Infrastructure.Services.Admin
             if (tour == null)
                 return new OperationResultDto { IsSuccess = false, Message = "Tour not found." };
 
+            if (!tour.IsActive)
+                return await AlreadyDone();
+
+
             tour.IsActive = false;
             await _context.SaveChangesAsync();
 
@@ -149,6 +149,9 @@ namespace Infrastructure.Services.Admin
             if (tour == null)
                 return new OperationResultDto { IsSuccess = false, Message = "Tour not found." };
 
+            if (tour.IsActive)
+                return await AlreadyDone();
+
             tour.IsActive = true;
             await _context.SaveChangesAsync();
 
@@ -167,11 +170,36 @@ namespace Infrastructure.Services.Admin
             var tour = await _context.Tours.FirstOrDefaultAsync(x => x.Id == tourId);
             if (tour == null)
                 return new OperationResultDto { IsSuccess = false, Message = "Tour not found." };
+            try
+            {
+                _context.Tours.Remove(tour);
 
-            tour.IsActive = false;
-            await _context.SaveChangesAsync();
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while deleting the tour with ID {TourId}", tourId);
+
+                throw;
+            }
+
+            await _notificationService.SendAsync(
+                tour.GuideId,
+                "Tour Deleted ",
+                $"Your tour \"{tour.Title}\" has been deleted by the administrator.",
+                NotificationType.TourDeleted,
+                tour.Id.ToString(), "Tour");
+
 
             return new OperationResultDto { IsSuccess = true, Message = "Tour deleted successfully." };
+        }
+        private async static Task<OperationResultDto> AlreadyDone()
+        {
+            return await Task.FromResult(new OperationResultDto
+            {
+                IsSuccess = false,
+                Message = "This action has already been performed on this tour."
+            });
         }
     }
 }

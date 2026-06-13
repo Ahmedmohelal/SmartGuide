@@ -27,8 +27,9 @@ namespace Domain.Entities.Notifications
         // Admin Actions on Tours
         TourDeactivated = 11,
         TourActivated = 12,
+        TourDeleted = 13,
 
         // Favorites
-        GuideSaved = 13
+        GuideSaved = 14
     }
 }

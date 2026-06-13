@@ -34,13 +34,7 @@ namespace Infrastructure.Services.Admin
         private readonly ILogger<UserAdminService> _logger;
 
 
-        public UserAdminService(
-            ApplicationDbContext context,
-            IImageUrlService imageUrlService
-,
-            UserManager<ApplicationUser> userManager,
-            IAttachmentService attachmentService,
-            ILogger<UserAdminService> logger)
+        public UserAdminService(ApplicationDbContext context, IImageUrlService imageUrlService, UserManager<ApplicationUser> userManager, IAttachmentService attachmentService, ILogger<UserAdminService> logger)
         {
             _context = context;
             _imageUrlService = imageUrlService;
@@ -48,19 +42,13 @@ namespace Infrastructure.Services.Admin
             _attachmentService = attachmentService;
             _logger = logger;
         }
-        public async Task<Pagination<AdminUserDto>>
-    GetAllUsersAsync(
-        AdminUserSpecParams specParams)
+        public async Task<Pagination<AdminUserDto>> GetAllUsersAsync(AdminUserSpecParams specParams)
         {
-            var spec =
-                new AdminUsersSpecification(specParams);
+            var spec = new AdminUsersSpecification(specParams);
 
-            var countSpec =
-                new AdminUsersCountSpecification(
-                    specParams);
+            var countSpec = new AdminUsersCountSpecification(specParams);
 
-            var usersQuery =
-                SpecificationEvaluator<ApplicationUser>
+            var usersQuery = SpecificationEvaluator<ApplicationUser>
                     .GetQuery(
                         _context.Users.AsQueryable(),
                         spec);
@@ -167,6 +155,9 @@ namespace Infrastructure.Services.Admin
             if (user == null)
                 return new OperationResultDto { IsSuccess = false, Message = "User not found." };
 
+            if (user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.UtcNow)
+                return await AlreadyDone();
+
             user.LockoutEnd = DateTimeOffset.UtcNow.AddYears(100);
             user.LockoutEnabled = true;
             await _context.SaveChangesAsync();
@@ -179,6 +170,9 @@ namespace Infrastructure.Services.Admin
             var user = await _context.Users.FirstOrDefaultAsync(x => x.Id == userId);
             if (user == null)
                 return new OperationResultDto { IsSuccess = false, Message = "User not found." };
+
+            if (!user.LockoutEnd.HasValue || user.LockoutEnd < DateTimeOffset.UtcNow)
+                return await AlreadyDone();
 
             user.LockoutEnd = null;
             user.LockoutEnabled = false;
@@ -252,7 +246,8 @@ namespace Infrastructure.Services.Admin
                     return new OperationResultDto
                     {
                         IsSuccess = false,
-                        Message = ErrorMessages.UploadFailed };
+                        Message = ErrorMessages.UploadFailed
+                    };
                 }
             }
 
@@ -300,9 +295,18 @@ namespace Infrastructure.Services.Admin
         }
         private async Task DeleteProfileImage(string? profileImage)
         {
-            
+
             if (profileImage != null)
                 await _attachmentService.Delete(profileImage, "profileImages");
+        }
+
+        private async static Task<OperationResultDto> AlreadyDone()
+        {
+            return await Task.FromResult(new OperationResultDto
+            {
+                IsSuccess = false,
+                Message = "This action has already been performed on this user."
+            });
         }
 
     }

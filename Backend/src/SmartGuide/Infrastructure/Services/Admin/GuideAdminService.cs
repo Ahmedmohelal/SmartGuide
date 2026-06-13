@@ -215,9 +215,6 @@ namespace Infrastructure.Services.Admin
             return new OperationResultDto { IsSuccess = true, Message = "Guide activated successfully." };
         }
 
-        // -------------------------------------------------------
-        // Suspend: مؤقت — يقدر يرجع بعد ما تتحل المشكلة
-        // -------------------------------------------------------
         public async Task<OperationResultDto> SuspendGuideAsync(string guideId, string adminId, string reason, string? ipAddress)
         {
             return await ChangeGuideAccessStateAsync(
@@ -227,10 +224,10 @@ namespace Infrastructure.Services.Admin
                 ipAddress,
                 GuideAccountStatus.Suspended,
                 "SuspendGuide",
-                lockoutDuration: TimeSpan.FromDays(30));   
+                lockoutDuration: TimeSpan.FromDays(30));
         }
 
-        
+
         public async Task<OperationResultDto> BanGuideAsync(string guideId, string adminId, string reason, string? ipAddress)
         {
             return await ChangeGuideAccessStateAsync(
@@ -240,7 +237,7 @@ namespace Infrastructure.Services.Admin
                 ipAddress,
                 GuideAccountStatus.Banned,
                 "BanGuide",
-                lockoutDuration: TimeSpan.FromDays(365 * 100)); 
+                lockoutDuration: TimeSpan.FromDays(365 * 100));
         }
 
         public async Task<OperationResultDto> PutUnderReviewAsync(string guideId, string adminId, string reason, string? ipAddress)
@@ -252,7 +249,7 @@ namespace Infrastructure.Services.Admin
                 ipAddress,
                 GuideAccountStatus.UnderReview,
                 "PutGuideUnderReview",
-                lockoutDuration: TimeSpan.FromDays(30));  
+                lockoutDuration: TimeSpan.FromDays(30));
         }
 
         public async Task<OperationResultDto> ForceLogoutGuideAsync(string guideId, string adminId, string reason, string? ipAddress)
@@ -260,6 +257,9 @@ namespace Infrastructure.Services.Admin
             var user = await GetGuideAsync(guideId);
             if (user == null)
                 return new OperationResultDto { IsSuccess = false, Message = "Guide not found." };
+
+            if (user.ForceLogoutRequired)
+                return new OperationResultDto { IsSuccess = false, Message = "Guide is already forced to log out." };
 
             await _refreshTokenService.RevokeAllUserTokensAsync(guideId, CancellationToken.None);
             user.ForceLogoutRequired = true;
@@ -270,7 +270,7 @@ namespace Infrastructure.Services.Admin
             return new OperationResultDto { IsSuccess = true, Message = "Guide logged out from all sessions." };
         }
 
-     
+
         private async Task<OperationResultDto> ChangeGuideAccessStateAsync(
             string guideId,
             string adminId,
@@ -283,6 +283,9 @@ namespace Infrastructure.Services.Admin
             var user = await GetGuideAsync(guideId);
             if (user == null)
                 return new OperationResultDto { IsSuccess = false, Message = "Guide not found." };
+
+
+
 
             user.GuideAccountStatus = targetStatus;
             user.ForceLogoutRequired = true;
@@ -347,6 +350,14 @@ namespace Infrastructure.Services.Admin
                 LicenseImageUrl = _imageUrlService.ToPublicImageUrl(guide.GuideLicenseImage, "licenses"),
                 Status = guide.IsGuideVerified.ToString()
             };
+        }
+        private async static Task<OperationResultDto> AlreadyDone()
+        {
+            return await Task.FromResult(new OperationResultDto
+            {
+                IsSuccess = false,
+                Message = "This action has already been performed on this guide."
+            });
         }
     }
 }
