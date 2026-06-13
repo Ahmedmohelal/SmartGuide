@@ -100,18 +100,16 @@ namespace Infrastructure.Services.Admin
 
                         Price = t.Price,
 
-                        DurationHours =
-                            t.DurationHours,
+                        DurationHours = t.DurationHours,
 
-                        MaxGroupSize =
-                            t.MaxGroupSize,
+                        MaxGroupSize = t.MaxGroupSize,
+                        PrimaryImage = _imageUrlService.ToPublicImageUrl(
+                    t.TourImages.FirstOrDefault(i => i.IsPrimary)?.ImageUrl,
+                    $"ToursImages/{t.Id}"
+                        ) ?? string.Empty,
+                        IsActive = t.IsActive,
 
-                        IsActive =
-                            t.IsActive,
-
-                        GuideId =
-                            t.GuideId,
-
+                        GuideId = t.GuideId,
                         GuideName = guide != null
                             ? $"{guide.FirstName} {guide.LastName}"
                             : "Unknown",
