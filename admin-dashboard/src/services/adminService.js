@@ -23,9 +23,7 @@ export const fetchPendingGuides = () =>
   admin({ url: `${ENDPOINTS.ADMIN}/guides` }).then((r) => {
     const all = r.data?.data || [];
 
-    return all.filter(
-      (g) => g.verificationStatus === "NotVerified"
-    );
+    return all.filter((g) => g.verificationStatus === "NotVerified");
   });
 
 export const fetchAllGuides = () =>
@@ -146,7 +144,7 @@ export const fetchAuditLogs = (take = 100) =>
 export const cancelBooking = (bookingId) =>
   admin({
     method: "delete",
-    url: `${ENDPOINTS.ADMIN}/${bookingId}`,
+    url: `${ENDPOINTS.ADMIN}/bookings/${bookingId}`,
   }).then((r) => r.data);
 
 export const fetchGuideWallet = (guideId) =>
