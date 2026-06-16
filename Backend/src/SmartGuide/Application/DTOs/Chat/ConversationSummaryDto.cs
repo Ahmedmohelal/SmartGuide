@@ -12,6 +12,8 @@ namespace Application.DTOs.Chat
         public string GuideUserId { get; set; } = null!;
         public DateTime CreatedAtUtc { get; set; }
         public DateTime? UpdatedAtUtc { get; set; }
+        public string?  ProfilePictureUrl { get; set; }
+        public string? FullName { get; set; }
         public string? LastMessagePreview { get; set; }
         public DateTime? LastMessageSentAtUtc { get; set; }
         public int UnreadCount { get; set; }
@@ -22,6 +24,7 @@ namespace Application.DTOs.Chat
     {
         public string? OtherPartyUserId { get; set; }
         public string? OtherPartyDisplayName { get; set; }
+        public string? OtherPartyProfilePictureUrl { get; set; }
     }
 
     public class PagedResultDto<T>

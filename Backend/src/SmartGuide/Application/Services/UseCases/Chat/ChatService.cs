@@ -130,18 +130,30 @@ namespace Application.Services.UseCases.Chat
             var ids = list.Select(c => c.Id).ToList();
             var unread = await _messages.GetUnreadCountsAsync(ids, userId, cancellationToken);
 
-            var items = list.Select(c => new ConversationSummaryDto
+
+            var items = (await Task.WhenAll(
+    list.Select(async c => new ConversationSummaryDto
             {
                 Id = c.Id,
                 TouristUserId = c.TouristUserId,
                 GuideUserId = c.GuideUserId,
+        
+                ProfilePictureUrl = c.TouristUserId == userId
+                    ? await _users.GetProfilePictureUrlAsync(c.GuideUserId)
+                    : await _users.GetProfilePictureUrlAsync(c.TouristUserId),
+        
+                FullName = c.TouristUserId == userId
+                    ? await _users.GetFullNameAsync(c.GuideUserId)
+                    : await _users.GetFullNameAsync(c.TouristUserId),
+        
                 CreatedAtUtc = c.CreatedAtUtc,
                 UpdatedAtUtc = c.UpdatedAtUtc,
                 LastMessagePreview = c.LastMessagePreview,
                 LastMessageSentAtUtc = c.LastMessageSentAtUtc,
                 UnreadCount = unread.TryGetValue(c.Id, out var u) ? u : 0,
                 IsMessagingBlocked = c.IsMessagingBlocked
-            }).ToList();
+            })
+        )).ToList();
 
             return ChatActionResult<PagedResultDto<ConversationSummaryDto>>.Ok(new PagedResultDto<ConversationSummaryDto>
             {
@@ -535,7 +547,8 @@ namespace Application.Services.UseCases.Chat
                 UnreadCount = unread.TryGetValue(c.Id, out var u) ? u : 0,
                 IsMessagingBlocked = c.IsMessagingBlocked,
                 OtherPartyUserId = otherPartyId,
-                OtherPartyDisplayName = other?.DisplayName
+                OtherPartyDisplayName = other?.DisplayName,
+                OtherPartyProfilePictureUrl = await _users.GetProfilePictureUrlAsync(otherPartyId, cancellationToken)
             };
         }
 
