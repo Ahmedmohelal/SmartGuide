@@ -1,136 +1,49 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
+import { toast } from "react-hot-toast";
 import {
   Calendar,
   Clock,
-  Banknote,
   Loader,
   AlertCircle,
-  Clock3,
+  Ticket,
+  History,
+  XCircle,
+  Hourglass,
+  CheckCircle2,
+  Ban,
 } from "lucide-react";
-import { getMyBookings, getTourSlots } from "../../../Services/api/bookingService";
-import { getTourById, getHomeTours } from "../../../Services/api/tours";
 import {
-  extractTourDescription,
-  extractTourImageUrl,
-} from "../../../Services/utils/tourUtils";
+  cancelBooking,
+  getMyBookings,
+  getTourSlots,
+} from "../../../Services/api/bookingService";
+import { getTourById, getHomeTours } from "../../../Services/api/tours";
+import { getTourTitleFromBookingItem } from "../../../Services/utils/bookingTourEnrichment";
+import Swal from "sweetalert2";
 
-const FALLBACK_IMG =
-  "https://images.unsplash.com/photo-1539768942893-daf53e449371?auto=format&fit=crop&w=900&q=80";
 
 const pick = (...vals) =>
   vals.find((v) => v !== undefined && v !== null && v !== "");
-
-const formatDate = (date) => {
-  if (!date) return null;
-  const value =
-    typeof date === "string" ? `${date.split("T")[0]}T00:00:00` : date;
-  return new Date(value).toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-};
-
-const formatTime = (time) => {
-  if (!time) return null;
-  const raw = String(time);
-  const [hours, minutes] = raw.split(":");
-  const value = new Date();
-  value.setHours(Number(hours), Number(minutes), 0);
-  return value.toLocaleTimeString("en-US", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
-
-const getStatusBadge = (status) => {
-  const normalized = String(status || "").toLowerCase();
-  const statusMap = {
-    confirmed: { label: "Confirmed", color: "bg-green-100 text-green-800" },
-    pending: { label: "Pending", color: "bg-yellow-100 text-yellow-800" },
-    rejected: { label: "Rejected", color: "bg-red-100 text-red-800" },
-    cancelled: { label: "Cancelled", color: "bg-red-100 text-red-800" },
-  };
-  return (
-    statusMap[normalized] || {
-      label: status || "Unknown",
-      color: "bg-gray-100 text-gray-800",
-    }
-  );
-};
 
 const getBookingTourId = (booking) =>
   pick(booking.tourId, booking.TourId);
 
 const getBookingSlot = (booking) => booking.slot || booking.Slot || {};
 
-const getBookingKey = (booking) => {
-  const slot = getBookingSlot(booking);
-  const slotId = pick(slot.id, slot.Id);
-  if (slotId) return `slot:${slotId}`;
+const getBookingStatus = (booking) =>
+  String(pick(booking.status, booking.Status) || "unknown").toLowerCase();
 
-  const tourId = getBookingTourId(booking);
-  const slotDate = pick(slot.date, slot.Date);
-  const startTime = pick(slot.startTime, slot.StartTime);
-  if (tourId && slotDate && startTime) {
-    return `tour:${tourId}:${slotDate}:${startTime}`;
-  }
-
-  const id = pick(booking.id, booking.Id);
-  return id ? `booking:${id}` : null;
-};
-
-const STATUS_PRIORITY = {
-  confirmed: 4,
-  pending: 3,
-  rejected: 2,
-  cancelled: 1,
-};
-
-const pickPreferredBooking = (current, next) => {
-  const currentStatus =
-    STATUS_PRIORITY[String(pick(current.status, current.Status)).toLowerCase()] ??
-    0;
-  const nextStatus =
-    STATUS_PRIORITY[String(pick(next.status, next.Status)).toLowerCase()] ?? 0;
-
-  if (nextStatus !== currentStatus) {
-    return nextStatus > currentStatus ? next : current;
-  }
-
-  const currentCreated = new Date(
-    pick(current.createdAtUtc, current.CreatedAtUtc) || 0,
-  ).getTime();
-  const nextCreated = new Date(
-    pick(next.createdAtUtc, next.CreatedAtUtc) || 0,
-  ).getTime();
-
-  return nextCreated >= currentCreated ? next : current;
-};
-
-const dedupeBookings = (bookings) => {
-  const seenIds = new Set();
-  const uniqueById = bookings.filter((booking) => {
+const dedupeBookingsById = (bookings) => {
+  const seen = new Set();
+  return bookings.filter((booking) => {
     const id = pick(booking.id, booking.Id);
     if (!id) return true;
     const key = String(id);
-    if (seenIds.has(key)) return false;
-    seenIds.add(key);
+    if (seen.has(key)) return false;
+    seen.add(key);
     return true;
   });
-
-  const bySlot = new Map();
-
-  uniqueById.forEach((booking) => {
-    const key = getBookingKey(booking);
-    if (!key) return;
-
-    const existing = bySlot.get(key);
-    bySlot.set(key, existing ? pickPreferredBooking(existing, booking) : booking);
-  });
-
-  return [...bySlot.values()];
 };
 
 const slotIdMatches = (slot, targetId) =>
@@ -140,9 +53,7 @@ async function resolveTourIdBySlot(slotId, slotDate, tours) {
   if (!slotId || !slotDate) return null;
 
   const dateKey =
-    typeof slotDate === "string"
-      ? slotDate.split("T")[0]
-      : slotDate;
+    typeof slotDate === "string" ? slotDate.split("T")[0] : slotDate;
 
   for (const tour of tours) {
     const tourId = pick(tour.id, tour.Id);
@@ -240,6 +151,7 @@ async function loadToursForBookings(bookings) {
     const bookingId = pick(booking.id, booking.Id);
     const tourId =
       getBookingTourId(booking) || tourIdByBooking.get(bookingId) || null;
+
     return {
       booking,
       tourId,
@@ -248,10 +160,179 @@ async function loadToursForBookings(bookings) {
   });
 }
 
+const getSlotDateKey = (slotDate) => {
+  if (!slotDate) return null;
+  return typeof slotDate === "string"
+    ? slotDate.split("T")[0]
+    : String(slotDate);
+};
+
+const formatSlotDate = (slotDate) => getSlotDateKey(slotDate) || "N/A";
+
+const formatSlotTimeRange = (startTime, endTime) => {
+  const start = startTime ? String(startTime) : "";
+  const end = endTime ? String(endTime) : "";
+  if (start && end) return `${start} - ${end}`;
+  return start || end || "N/A";
+};
+
+const getBookingSlotStart = (booking) => {
+  const slot = getBookingSlot(booking);
+  const dateKey = getSlotDateKey(pick(slot.date, slot.Date));
+  const startTime = pick(slot.startTime, slot.StartTime);
+
+  if (!dateKey) return null;
+
+  if (startTime) {
+    const [hours, minutes, seconds = "0"] = String(startTime).split(":");
+    const value = new Date(`${dateKey}T00:00:00`);
+    value.setHours(Number(hours), Number(minutes), Number(seconds), 0);
+    return value;
+  }
+
+  return new Date(`${dateKey}T00:00:00`);
+};
+
+const isUpcomingBooking = (item) => {
+  const status = getBookingStatus(item.booking);
+  if (status === "cancelled" || status === "rejected") return false;
+
+  const slotStart = getBookingSlotStart(item.booking);
+  if (!slotStart) return true;
+
+  return slotStart >= new Date();
+};
+
+const canCancelBooking = (item) => {
+  const status = getBookingStatus(item.booking);
+  return (
+    isUpcomingBooking(item) &&
+    (status === "pending" || status === "confirmed")
+  );
+};
+
+const getStatusTheme = (status) => {
+  switch (status) {
+    case "confirmed":
+      return {
+        label: "Confirmed",
+        barClass: "bg-emerald-500",
+        icon: CheckCircle2,
+      };
+    case "pending":
+      return {
+        label: "Pending",
+        barClass: "bg-amber-500",
+        icon: Hourglass,
+      };
+    case "cancelled":
+      return {
+        label: "Cancelled",
+        barClass: "bg-red-500",
+        icon: XCircle,
+      };
+    case "rejected":
+      return {
+        label: "Rejected",
+        barClass: "bg-red-500",
+        icon: Ban,
+      };
+    default:
+      return {
+        label: status || "Unknown",
+        barClass: "bg-slate-500",
+        icon: AlertCircle,
+      };
+  }
+};
+
+function BookingCard({ item, onCancel, cancellingId }) {
+  const booking = item.booking;
+  const bookingId = pick(booking.id, booking.Id);
+  const slot = getBookingSlot(booking);
+  const slotDate = pick(slot.date, slot.Date);
+  const startTime = pick(slot.startTime, slot.StartTime);
+  const endTime = pick(slot.endTime, slot.EndTime);
+  const totalPrice = pick(booking.totalPrice, booking.TotalPrice) ?? 0;
+  const paymentMethod =
+    pick(booking.paymentMethod, booking.PaymentMethod) || "Online";
+  const status = getBookingStatus(booking);
+  const statusTheme = getStatusTheme(status);
+  const StatusIcon = statusTheme.icon;
+  const title = getTourTitleFromBookingItem(item);
+  const tourId = item.tourId || getBookingTourId(booking);
+  const showCancel = canCancelBooking(item);
+  const isCancelling = cancellingId === bookingId;
+
+  const cardBody = (
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div
+        className={`flex items-center justify-between px-4 py-3 text-white ${statusTheme.barClass}`}
+      >
+        <div className="flex items-center gap-2 font-semibold">
+          <StatusIcon size={18} />
+          <span>{statusTheme.label}</span>
+        </div>
+        <span className="text-xs font-medium text-white/90">{paymentMethod}</span>
+      </div>
+
+      <div className="space-y-4 p-4">
+        {tourId ? (
+          <Link
+            to={`/tours/${tourId}`}
+            className="block text-base font-bold text-slate-900 hover:text-egypt-teal"
+          >
+            {title}
+          </Link>
+        ) : (
+          <p className="text-base font-bold text-slate-900">{title}</p>
+        )}
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700">
+            <Calendar size={16} className="shrink-0 text-egypt-teal" />
+            <span>{formatSlotDate(slotDate)}</span>
+          </div>
+          <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700">
+            <Clock size={16} className="shrink-0 text-egypt-teal" />
+            <span>{formatSlotTimeRange(startTime, endTime)}</span>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between border-t border-slate-100 pt-4">
+          <span className="text-sm font-medium text-slate-500">Total Price</span>
+          <span className="rounded-full bg-emerald-50 px-4 py-1.5 text-sm font-bold text-emerald-700">
+            {Number(totalPrice).toLocaleString("en-US", {
+              style: "currency",
+              currency: "EGP",
+            })}
+          </span>
+        </div>
+
+        {showCancel && (
+          <button
+            type="button"
+            onClick={() => onCancel(bookingId)}
+            disabled={isCancelling}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-red-500 bg-white px-4 py-3 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <XCircle size={18} />
+            {isCancelling ? "Cancelling..." : "Cancel Booking"}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+
+  return <div key={bookingId}>{cardBody}</div>;
+}
+
 export default function TouristTrips() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState("upcoming");
+  const [cancellingId, setCancellingId] = useState(null);
 
   useEffect(() => {
     fetchBookings();
@@ -262,7 +343,7 @@ export default function TouristTrips() {
       setLoading(true);
       setError(null);
       const data = await getMyBookings();
-      const bookings = dedupeBookings(Array.isArray(data) ? data : []);
+      const bookings = dedupeBookingsById(Array.isArray(data) ? data : []);
       const enriched = await loadToursForBookings(bookings);
       setItems(enriched);
     } catch (err) {
@@ -272,6 +353,71 @@ export default function TouristTrips() {
       setLoading(false);
     }
   };
+
+  const handleCancelBooking = async (bookingId) => {
+    if (!bookingId) return;
+  
+    const result = await Swal.fire({
+      title: "Cancel Booking?",
+      text: "Are you sure you want to cancel this booking?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, Cancel",
+      cancelButtonText: "No",
+      confirmButtonColor: "#d33",
+    });
+  
+    if (!result.isConfirmed) return;
+  
+    try {
+      setCancellingId(bookingId);
+  
+      const response = await cancelBooking(bookingId);
+  
+      toast.success(
+        response?.message ||
+          response?.Message ||
+          "Booking cancelled successfully."
+      );
+  
+      await fetchBookings();
+      setActiveTab("past");
+    } catch (err) {
+      toast.error(
+        err.response?.data?.message ||
+          err.response?.data?.Message ||
+          "Failed to cancel booking."
+      );
+    } finally {
+      setCancellingId(null);
+    }
+  };
+
+  const upcomingItems = useMemo(
+    () =>
+      items
+        .filter(isUpcomingBooking)
+        .sort(
+          (a, b) =>
+            (getBookingSlotStart(a.booking)?.getTime() || 0) -
+            (getBookingSlotStart(b.booking)?.getTime() || 0),
+        ),
+    [items],
+  );
+
+  const pastItems = useMemo(
+    () =>
+      items
+        .filter((item) => !isUpcomingBooking(item))
+        .sort(
+          (a, b) =>
+            (getBookingSlotStart(b.booking)?.getTime() || 0) -
+            (getBookingSlotStart(a.booking)?.getTime() || 0),
+        ),
+    [items],
+  );
+
+  const visibleItems = activeTab === "upcoming" ? upcomingItems : pastItems;
 
   if (loading) {
     return (
@@ -301,121 +447,57 @@ export default function TouristTrips() {
   return (
     <div className="space-y-6">
       <div>
-        <h3 className="text-xl font-bold text-gray-900 mb-2">My Booked Tours</h3>
+        <h3 className="text-xl font-bold text-gray-900 mb-2">My Trips</h3>
         <p className="text-gray-600 text-sm">
           {items.length} {items.length === 1 ? "booking" : "bookings"}
         </p>
       </div>
 
-      {items.length === 0 ? (
-        <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
-          <p className="text-gray-600">You have not booked any tours yet.</p>
+      <div className="grid grid-cols-2 gap-3 rounded-2xl bg-slate-100 p-1">
+        <button
+          type="button"
+          onClick={() => setActiveTab("upcoming")}
+          className={`flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition ${
+            activeTab === "upcoming"
+              ? "bg-white text-egypt-teal shadow-sm"
+              : "text-slate-600 hover:text-slate-900"
+          }`}
+        >
+          <Ticket size={18} />
+          Upcoming
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("past")}
+          className={`flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-semibold transition ${
+            activeTab === "past"
+              ? "bg-white text-egypt-teal shadow-sm"
+              : "text-slate-600 hover:text-slate-900"
+          }`}
+        >
+          <History size={18} />
+          Past
+        </button>
+      </div>
+
+      {visibleItems.length === 0 ? (
+        <div className="text-center py-12 bg-gray-50 rounded-2xl border border-gray-200">
+          <p className="text-gray-600">
+            {activeTab === "upcoming"
+              ? "You have no upcoming bookings."
+              : "You have no past bookings."}
+          </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6">
-          {items.map(({ booking, tour, tourId: resolvedTourId }) => {
-            const id = pick(booking.id, booking.Id);
-            const tourId = resolvedTourId || getBookingTourId(booking);
-            const slot = booking.slot || booking.Slot || {};
-            const slotDate = pick(slot.date, slot.Date);
-            const startTime = pick(slot.startTime, slot.StartTime);
-            const endTime = pick(slot.endTime, slot.EndTime);
-            const totalPrice = pick(booking.totalPrice, booking.TotalPrice);
-            const status = getStatusBadge(pick(booking.status, booking.Status));
-
-            const title =
-              pick(tour?.title, tour?.Title, booking.tourTitle, booking.TourTitle) ||
-              "Tour";
-            const description =
-              extractTourDescription(tour) ||
-              "Your booked tour experience in Egypt.";
-            const image = extractTourImageUrl(tour) || FALLBACK_IMG;
-            const duration =
-              pick(tour?.durationHours, tour?.DurationHours) ?? null;
-            const tourPrice = pick(tour?.price, tour?.Price);
-            const displayPrice = totalPrice ?? tourPrice;
-
-            const cardContent = (
-              <>
-                <div className="relative aspect-[16/9] sm:aspect-[21/9] overflow-hidden sm:w-64 shrink-0">
-                  <img
-                    src={image}
-                    alt={title}
-                    className="h-full w-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                </div>
-
-                <div className="flex-1 p-5 sm:p-6 flex flex-col gap-3">
-                  <div className="flex justify-between items-start gap-3">
-                    <h4 className="font-bold text-lg text-gray-900">{title}</h4>
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${status.color}`}
-                    >
-                      {status.label}
-                    </span>
-                  </div>
-
-                  <p className="text-sm text-gray-600 line-clamp-2">{description}</p>
-
-                  <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-gray-700">
-                    {slotDate && (
-                      <span className="inline-flex items-center gap-2">
-                        <Calendar size={16} className="text-egypt-teal shrink-0" />
-                        {formatDate(slotDate)}
-                      </span>
-                    )}
-
-                    {(startTime || endTime) && (
-                      <span className="inline-flex items-center gap-2">
-                        <Clock size={16} className="text-egypt-teal shrink-0" />
-                        {startTime && formatTime(startTime)}
-                        {startTime && endTime && " – "}
-                        {endTime && formatTime(endTime)}
-                      </span>
-                    )}
-
-                    {duration != null && (
-                      <span className="inline-flex items-center gap-2">
-                        <Clock3 size={16} className="text-egypt-teal shrink-0" />
-                        {duration} hrs
-                      </span>
-                    )}
-
-                    {displayPrice !== undefined && (
-                      <span className="inline-flex items-center gap-2 font-semibold text-egypt-teal">
-                        <Banknote size={16} className="shrink-0" />
-                        {Number(displayPrice).toLocaleString("en-US")} EGP
-                      </span>
-                    )}
-                  </div>
-
-                  {tourId && (
-                    <span className="text-sm font-semibold text-egypt-teal mt-auto">
-                      View tour details →
-                    </span>
-                  )}
-                </div>
-              </>
-            );
-
-            return tourId ? (
-              <Link
-                key={id}
-                to={`/tours/${tourId}`}
-                className="flex flex-col sm:flex-row overflow-hidden bg-white border border-gray-200 rounded-xl hover:shadow-lg transition-shadow group"
-              >
-                {cardContent}
-              </Link>
-            ) : (
-              <div
-                key={id}
-                className="flex flex-col sm:flex-row overflow-hidden bg-white border border-gray-200 rounded-xl"
-              >
-                {cardContent}
-              </div>
-            );
-          })}
+        <div className="grid grid-cols-1 gap-4">
+          {visibleItems.map((item) => (
+            <BookingCard
+              key={pick(item.booking.id, item.booking.Id)}
+              item={item}
+              onCancel={handleCancelBooking}
+              cancellingId={cancellingId}
+            />
+          ))}
         </div>
       )}
     </div>

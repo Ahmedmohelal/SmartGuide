@@ -103,7 +103,7 @@ export const updateBooking = async (bookingId, updateData) => {
 export const cancelBooking = async (bookingId) => {
   try {
     const response = await axios.delete(
-      `${API_BASE}/bookings/${bookingId}`,
+      `${API_BASE}/Bookings/${bookingId}`,
       { headers: authHeader() }
     );
 
