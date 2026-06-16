@@ -131,29 +131,58 @@ namespace Application.Services.UseCases.Chat
             var unread = await _messages.GetUnreadCountsAsync(ids, userId, cancellationToken);
 
 
-            var items = (await Task.WhenAll(
-    list.Select(async c => new ConversationSummaryDto
+            //        var items = (await Task.WhenAll(
+            //list.Select(async c => new ConversationSummaryDto
+            //        {
+            //            Id = c.Id,
+            //            TouristUserId = c.TouristUserId,
+            //            GuideUserId = c.GuideUserId,
+
+            //            ProfilePictureUrl = c.TouristUserId == userId
+            //                ? await _users.GetProfilePictureUrlAsync(c.GuideUserId)
+            //                : await _users.GetProfilePictureUrlAsync(c.TouristUserId),
+
+            //            FullName = c.TouristUserId == userId
+            //                ? await _users.GetFullNameAsync(c.GuideUserId)
+            //                : await _users.GetFullNameAsync(c.TouristUserId),
+
+            //            CreatedAtUtc = c.CreatedAtUtc,
+            //            UpdatedAtUtc = c.UpdatedAtUtc,
+            //            LastMessagePreview = c.LastMessagePreview,
+            //            LastMessageSentAtUtc = c.LastMessageSentAtUtc,
+            //            UnreadCount = unread.TryGetValue(c.Id, out var u) ? u : 0,
+            //            IsMessagingBlocked = c.IsMessagingBlocked
+            //        })
+            //    )).ToList();
+
+            var items = new List<ConversationSummaryDto>();
+
+            foreach (var c in list)
             {
-                Id = c.Id,
-                TouristUserId = c.TouristUserId,
-                GuideUserId = c.GuideUserId,
-        
-                ProfilePictureUrl = c.TouristUserId == userId
-                    ? await _users.GetProfilePictureUrlAsync(c.GuideUserId)
-                    : await _users.GetProfilePictureUrlAsync(c.TouristUserId),
-        
-                FullName = c.TouristUserId == userId
-                    ? await _users.GetFullNameAsync(c.GuideUserId)
-                    : await _users.GetFullNameAsync(c.TouristUserId),
-        
-                CreatedAtUtc = c.CreatedAtUtc,
-                UpdatedAtUtc = c.UpdatedAtUtc,
-                LastMessagePreview = c.LastMessagePreview,
-                LastMessageSentAtUtc = c.LastMessageSentAtUtc,
-                UnreadCount = unread.TryGetValue(c.Id, out var u) ? u : 0,
-                IsMessagingBlocked = c.IsMessagingBlocked
-            })
-        )).ToList();
+                var otherUserId =
+                    c.TouristUserId == userId
+                    ? c.GuideUserId
+                    : c.TouristUserId;
+
+                var fullName = await _users.GetFullNameAsync(otherUserId);
+
+                var photo = await _users.GetProfilePictureUrlAsync(otherUserId);
+
+                items.Add(new ConversationSummaryDto
+                {
+                    Id = c.Id,
+                    FullName = fullName,
+                    ProfilePictureUrl = photo,
+                    TouristUserId = c.TouristUserId,
+                    GuideUserId = c.GuideUserId,
+                    CreatedAtUtc = c.CreatedAtUtc,
+                    UpdatedAtUtc = c.UpdatedAtUtc,
+                    LastMessagePreview = c.LastMessagePreview,
+                    LastMessageSentAtUtc = c.LastMessageSentAtUtc,
+                    UnreadCount = unread.TryGetValue(c.Id, out var u) ? u : 0,
+                    IsMessagingBlocked = c.IsMessagingBlocked
+                });
+            }
 
             return ChatActionResult<PagedResultDto<ConversationSummaryDto>>.Ok(new PagedResultDto<ConversationSummaryDto>
             {

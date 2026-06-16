@@ -48,6 +48,7 @@ namespace Infrastructure.Services.Chat
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
                 return null;
+
             var photo = _imageUrlService.ToPublicImageUrl(user.ProfileImage, "profileImages");
             if (photo != null)
                 return photo;
