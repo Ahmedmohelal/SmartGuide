@@ -17,6 +17,9 @@ import {
   extractTourImageUrls,
   extractTourMaxGroupSize,
 } from "../Services/utils/tourUtils";
+import TourSlotsManager from "../components/tours/TourSlotsManager";
+
+
 
 const pick = (...vals) =>
   vals.find((v) => v !== undefined && v !== null && v !== "");
@@ -30,6 +33,7 @@ export default function TourDetails() {
   const [error, setError] = useState(null);
   const [activeImageIdx, setActiveImageIdx] = useState(0);
   const thumbnailsRef = useRef(null);
+  const slotsSectionRef = useRef(null);
 
   const FALLBACK_HERO =
     "https://images.unsplash.com/photo-1539768942893-daf53e449371?auto=format&fit=crop&w=1600&q=80";
@@ -113,6 +117,22 @@ export default function TourDetails() {
   const price = pick(tour.price, tour.Price);
   const maxGroupSize = extractTourMaxGroupSize(tour);
 
+  const isTourist = () => {
+    const role = localStorage.getItem("userRole");
+    return role?.toLowerCase() === "tourist";
+  };
+
+  const getUserRole = () => {
+    return localStorage.getItem("userRole");
+  };
+
+  const scrollToAvailableSlots = () => {
+    slotsSectionRef.current?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  };
+
   return (
     <>
       {/* 🔥 FIXED BACKGROUND LAYER */}
@@ -176,8 +196,8 @@ export default function TourDetails() {
                 <div className="mt-6">
                   <button
                     type="button"
-                    onClick={() => toast.error("please download the mobile app to book this tour")}
-                   className="inline-flex items-center justify-center rounded-2xl bg-egypt-gold px-6 py-3 text-lg font-semibold text-white transition-all duration-300 hover:-translate-y-1 hover:bg-teal-700"
+                    onClick={scrollToAvailableSlots}
+                    className="inline-flex items-center justify-center rounded-2xl bg-egypt-gold px-6 py-3 text-lg font-semibold text-white transition-all duration-300 hover:-translate-y-1 hover:bg-teal-700"
                   >
                     Book this tour
                   </button>
@@ -322,6 +342,11 @@ export default function TourDetails() {
                 )}
               </div>
             </section>
+          </div>
+
+          {/* Tour Slots Manager */}
+          <div ref={slotsSectionRef} id="available-slots">
+            <TourSlotsManager tourId={id} userRole={getUserRole()} />
           </div>
         </article>
       </div>

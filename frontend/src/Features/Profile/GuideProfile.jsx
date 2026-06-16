@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { toast } from "react-hot-toast";
 import { useProfile } from "../../Context/ProfileContext";
 import ProfileHeader from "./components/ProfileHeader";
@@ -23,6 +23,15 @@ import {
   getGuideDashboard,
   getGuideDashboardDocuments,
 } from "../../Services/api/guideService";
+import { getGuideBookings } from "../../Services/api/bookingService";
+import {
+  enrichBookingsWithTours,
+  formatBookingDate,
+  formatBookingTime,
+  getBookingSlot,
+  getTourTitleFromBookingItem,
+  pick,
+} from "../../Services/utils/bookingTourEnrichment";
 import {
   createTour,
   deleteTour,
@@ -58,6 +67,8 @@ export default function GuideProfile() {
   const { user, loading, error, updateProfileData } = useProfile();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [dashboardData, setDashboardData] = useState(null);
+  const [guideBookings, setGuideBookings] = useState([]);
+  const [bookingsLoading, setBookingsLoading] = useState(true);
   const [documents, setDocuments] = useState(null);
   const [docsLoading, setDocsLoading] = useState(true);
   const [docsError, setDocsError] = useState(null);
@@ -74,6 +85,26 @@ export default function GuideProfile() {
   const [editForm, setEditForm] = useState(() => createInitialState());
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [createStep, setCreateStep] = useState(1);
+
+  const fetchGuideBookings = async () => {
+    try {
+      setBookingsLoading(true);
+      const [bookings, myTours] = await Promise.all([
+        getGuideBookings(),
+        getMyTours(),
+      ]);
+      const enriched = await enrichBookingsWithTours(
+        Array.isArray(bookings) ? bookings : [],
+        Array.isArray(myTours) ? myTours : [],
+      );
+      setGuideBookings(enriched);
+    } catch (err) {
+      console.error("Failed to load guide bookings:", err);
+      setGuideBookings([]);
+    } finally {
+      setBookingsLoading(false);
+    }
+  };
 
   const fetchDashboard = async () => {
     try {
@@ -112,6 +143,7 @@ export default function GuideProfile() {
 
   useEffect(() => {
     fetchDashboard();
+    fetchGuideBookings();
     fetchMyTours();
     fetchDashboardDocuments();
   }, []);
@@ -192,6 +224,7 @@ export default function GuideProfile() {
       closeCreateModal();
       await fetchMyTours();
       await fetchDashboard();
+      await fetchGuideBookings();
     } catch (err) {
       const body = err.response?.data;
       const errors = body?.errors;
@@ -287,6 +320,7 @@ export default function GuideProfile() {
       closeEditForm();
       await fetchMyTours();
       await fetchDashboard();
+      await fetchGuideBookings();
     } catch (error) {
       toast.error(error?.response?.data?.message || "Failed to update tour");
       console.error("Update error:", error);
@@ -319,6 +353,7 @@ export default function GuideProfile() {
       if (editingTourId === id) closeEditForm();
       await fetchMyTours();
       await fetchDashboard();
+      await fetchGuideBookings();
     } catch (error) {
       toast.error(error?.response?.data?.message || "Failed to delete tour");
       console.error("Delete error:", error);
@@ -327,6 +362,98 @@ export default function GuideProfile() {
       setDeleteLoadingId(null);
     }
   };
+
+  const dashboardStatistics =
+    dashboardData?.statistics || dashboardData?.Statistics || {};
+
+  const monthlyEarnings =
+    dashboardData?.monthlyEarnings || dashboardData?.MonthlyEarnings || [];
+
+  const topTours =
+    dashboardData?.mostPopularTours || dashboardData?.MostPopularTours || [];
+
+  const formatMonthLabel = (item) => {
+    const month = item.month ?? item.Month;
+    const year = item.year ?? item.Year;
+    if (month && year) {
+      return new Date(year, month - 1).toLocaleString("en-US", {
+        month: "short",
+        year: "numeric",
+      });
+    }
+    return "N/A";
+  };
+
+  const recentGuideBookings = useMemo(
+    () =>
+      [...guideBookings]
+        .sort((a, b) => {
+          const dateA = new Date(
+            pick(
+              a.booking?.createdAtUtc,
+              a.booking?.CreatedAtUtc,
+            ) || 0,
+          ).getTime();
+          const dateB = new Date(
+            pick(
+              b.booking?.createdAtUtc,
+              b.booking?.CreatedAtUtc,
+            ) || 0,
+          ).getTime();
+          return dateB - dateA;
+        })
+        .slice(0, 5),
+    [guideBookings],
+  );
+
+  const activeTopTours = useMemo(() => {
+    const activeTourIds = new Set(
+      tours.map((tour) => String(getTourId(tour))).filter(Boolean),
+    );
+
+    return topTours.filter((tour) =>
+      activeTourIds.has(String(tour.tourId ?? tour.TourId)),
+    );
+  }, [topTours, tours]);
+
+  const stats = [
+    {
+      label: "Total Tours",
+      value: toursLoading ? "..." : tours.length,
+      icon: MapPin,
+      color: "bg-teal-50 text-teal-900",
+      iconColor: "text-egypt-teal",
+    },
+    {
+      label: "Total Bookings",
+      value: bookingsLoading ? "..." : guideBookings.length,
+      icon: CalendarDays,
+      color: "bg-blue-50 text-blue-900",
+      iconColor: "text-blue-600",
+    },
+    {
+      label: "Total Revenue",
+      value: `${
+        dashboardStatistics.totalEarnings ??
+        dashboardStatistics.TotalEarnings ??
+        0
+      } EGP`,
+      icon: DollarSign,
+      color: "bg-green-50 text-green-900",
+      iconColor: "text-green-600",
+    },
+    {
+      label: "Total Tourists",
+      value:
+        dashboardStatistics.totalUniqueTourists ??
+        dashboardStatistics.TotalUniqueTourists ??
+        user?.touristsCount ??
+        0,
+      icon: Users,
+      color: "bg-purple-50 text-purple-900",
+      iconColor: "text-purple-600",
+    },
+  ];
 
   if (loading) {
     return (
@@ -349,37 +476,6 @@ export default function GuideProfile() {
       </div>
     );
   }
-
-  const stats = [
-    {
-      label: "Total Tours",
-      value: dashboardData?.totalTours || user?.completedTours || 0,
-      icon: MapPin,
-      color: "bg-teal-50 text-teal-900",
-      iconColor: "text-egypt-teal",
-    },
-    {
-      label: "Total Bookings",
-      value: dashboardData?.totalBookings || 0,
-      icon: CalendarDays,
-      color: "bg-blue-50 text-blue-900",
-      iconColor: "text-blue-600",
-    },
-    {
-      label: "Total Revenue",
-      value: `${dashboardData?.totalRevenue || 0} EGP`,
-      icon: DollarSign,
-      color: "bg-green-50 text-green-900",
-      iconColor: "text-green-600",
-    },
-    {
-      label: "Total Tourists",
-      value: dashboardData?.totalTourists || user?.touristsCount || 0,
-      icon: Users,
-      color: "bg-purple-50 text-purple-900",
-      iconColor: "text-purple-600",
-    },
-  ];
 
   const scrollToVerificationDocs = () => {
     document.getElementById("verification-docs")?.scrollIntoView({
@@ -461,17 +557,21 @@ export default function GuideProfile() {
                 </div>
               </div>
 
-              {dashboardData?.monthlyRevenue &&
-              dashboardData.monthlyRevenue.length > 0 ? (
+              {monthlyEarnings.length > 0 ? (
                 <div className="space-y-4">
-                  {dashboardData.monthlyRevenue.map((item) => (
-                    <div key={item.month} className="space-y-2">
+                  {monthlyEarnings.map((item) => {
+                    const revenue =
+                      item.earnings ?? item.Earnings ?? 0;
+                    const label = formatMonthLabel(item);
+
+                    return (
+                    <div key={label} className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
                         <span className="font-medium text-slate-700">
-                          {item.month}
+                          {label}
                         </span>
                         <span className="font-bold text-slate-900">
-                          {item.revenue} EGP
+                          {revenue} EGP
                         </span>
                       </div>
                       <div className="h-3 w-full overflow-hidden rounded-full bg-slate-100">
@@ -479,10 +579,10 @@ export default function GuideProfile() {
                           className="h-full rounded-full bg-egypt-teal transition-all duration-500"
                           style={{
                             width: `${Math.min(
-                              (item.revenue /
+                              (revenue /
                                 Math.max(
-                                  ...dashboardData.monthlyRevenue.map(
-                                    (m) => m.revenue,
+                                  ...monthlyEarnings.map(
+                                    (m) => m.earnings ?? m.Earnings ?? 0,
                                   ),
                                 )) *
                                 100,
@@ -492,7 +592,8 @@ export default function GuideProfile() {
                         />
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <p className="text-center text-slate-500">
@@ -507,7 +608,7 @@ export default function GuideProfile() {
                 Top Tours
               </h2>
 
-              {dashboardData?.topTours && dashboardData.topTours.length > 0 ? (
+              {activeTopTours.length > 0 ? (
                 <div className="overflow-x-auto">
                   <table className="w-full">
                     <thead>
@@ -522,27 +623,31 @@ export default function GuideProfile() {
                           Revenue
                         </th>
                         <th className="pb-3 text-left text-sm font-semibold text-slate-700">
-                          Rating
+                          Occupancy
                         </th>
                       </tr>
                     </thead>
                     <tbody>
-                      {dashboardData.topTours.map((tour, index) => (
+                      {activeTopTours.map((tour, index) => (
                         <tr
-                          key={tour.id || index}
+                          key={tour.tourId || tour.TourId || index}
                           className="border-b border-slate-50 last:border-0"
                         >
                           <td className="py-4 text-sm font-medium text-slate-900">
                             {tour.title || tour.Title || "Untitled Tour"}
                           </td>
                           <td className="py-4 text-sm text-slate-600">
-                            {tour.bookings || 0}
+                            {tour.totalBookings ?? tour.TotalBookings ?? 0}
                           </td>
                           <td className="py-4 text-sm font-semibold text-slate-900">
-                            {tour.revenue || 0} EGP
+                            {tour.revenue ?? tour.Revenue ?? 0} EGP
                           </td>
                           <td className="py-4 text-sm text-slate-600">
-                            {tour.rating || "N/A"}
+                            {Math.round(
+                              (tour.occupancyRate ?? tour.OccupancyRate ?? 0) *
+                                100,
+                            )}
+                            %
                           </td>
                         </tr>
                       ))}
@@ -562,41 +667,66 @@ export default function GuideProfile() {
                 Recent Bookings
               </h2>
 
-              {dashboardData?.recentBookings &&
-              dashboardData.recentBookings.length > 0 ? (
+              {bookingsLoading ? (
+                <p className="text-center text-slate-500">
+                  Loading recent bookings...
+                </p>
+              ) : recentGuideBookings.length > 0 ? (
                 <div className="space-y-4">
-                  {dashboardData.recentBookings.map((booking, index) => (
+                  {recentGuideBookings.map((item) => {
+                    const booking = item.booking;
+                    const bookingId = pick(booking.id, booking.Id);
+                    const slot = getBookingSlot(booking);
+                    const slotDate = pick(slot.date, slot.Date);
+                    const startTime = pick(slot.startTime, slot.StartTime);
+                    const endTime = pick(slot.endTime, slot.EndTime);
+                    const status = String(
+                      pick(booking.status, booking.Status) || "Unknown",
+                    ).toLowerCase();
+                    const amount =
+                      pick(booking.totalPrice, booking.TotalPrice) ?? 0;
+                    const dateLabel = slotDate
+                      ? `${formatBookingDate(slotDate)}${
+                          startTime
+                            ? ` • ${formatBookingTime(startTime)}${
+                                endTime ? ` – ${formatBookingTime(endTime)}` : ""
+                              }`
+                            : ""
+                        }`
+                      : "N/A";
+
+                    return (
                     <div
-                      key={booking.id || index}
+                      key={bookingId}
                       className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50 p-4"
                     >
                       <div className="flex-1">
                         <p className="font-medium text-slate-900">
-                          {booking.tourName || booking.tourTitle || "Tour"}
+                          {getTourTitleFromBookingItem(item)}
                         </p>
                         <p className="mt-1 text-sm text-slate-600">
-                          {booking.touristName || "Tourist"} •{" "}
-                          {booking.date || "N/A"}
+                          {dateLabel}
                         </p>
                       </div>
                       <div className="ml-4 text-right">
                         <p className="font-semibold text-slate-900">
-                          {booking.amount || 0} EGP
+                          {Number(amount).toLocaleString("en-US")} EGP
                         </p>
                         <p
-                          className={`mt-1 text-xs font-medium ${
-                            booking.status === "confirmed"
+                          className={`mt-1 text-xs font-medium capitalize ${
+                            status === "confirmed"
                               ? "text-green-600"
-                              : booking.status === "pending"
+                              : status === "pending"
                                 ? "text-yellow-600"
                                 : "text-red-600"
                           }`}
                         >
-                          {booking.status || "Unknown"}
+                          {status}
                         </p>
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <p className="text-center text-slate-500">No recent bookings</p>

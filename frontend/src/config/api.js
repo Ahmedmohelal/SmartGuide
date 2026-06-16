@@ -33,10 +33,9 @@ export const ENDPOINTS = {
 
   SAVED_PLACES: `${API_BASE}/tourists/me/savedplaces`,
 
-
-
   TOURIST_SAVED_GUIDES: `${API_BASE}/tourists/me/savedguides`,
 
+  BOOKINGS: `${API_BASE}/Users/bookings`,
 
 
 };
