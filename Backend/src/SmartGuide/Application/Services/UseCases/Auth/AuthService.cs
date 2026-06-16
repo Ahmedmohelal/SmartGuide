@@ -143,6 +143,7 @@ namespace Application.Services.UseCases.Auth
                 Id = appUser.Id,
                 UserName = appUser.UserName,
                 Email = appUser.Email,
+                ProfilePictureUrl = _imageUrlService.ToPublicImageUrl(profileImage, "profileImages"),
                 Country = appUser.Country,
                 WhatsAppNumber = appUser.WhatsAppNumber,
                 Token = token,

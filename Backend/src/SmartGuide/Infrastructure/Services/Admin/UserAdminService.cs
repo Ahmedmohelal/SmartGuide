@@ -212,6 +212,18 @@ namespace Infrastructure.Services.Admin
                 };
             }
 
+            if (user.ProfileImage is not null)
+            {
+                try
+                {
+                    await _attachmentService.Delete(user.ProfileImage, "profileImages");
+                }
+                catch (Exception)
+                {
+                    _logger.LogError("Can not delete the image for this user");
+                }
+
+            }
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
 
