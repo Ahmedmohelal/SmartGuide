@@ -209,7 +209,85 @@ namespace Application.Services.UseCases.Booking
             return bookings.Select(MapToDto).ToList();
         }
 
-      
+
+        public async Task<OperationResultDto>
+    ConfirmBookingAsync(
+        Guid bookingId,
+        string guideId)
+        {
+            var booking =
+                await _bookingRepo
+                    .GetBookingByIdAsync(
+                        bookingId);
+
+            if (booking == null)
+            {
+                return new OperationResultDto
+                {
+                    IsSuccess = false,
+                    Message = "Booking not found."
+                };
+            }
+
+            if (booking.GuideId != guideId)
+            {
+                return new OperationResultDto
+                {
+                    IsSuccess = false,
+                    Message = "Unauthorized."
+                };
+            }
+
+            if (booking.Status == BookingStatus.Cancelled)
+            {
+                return new OperationResultDto
+                {
+                    IsSuccess = false,
+                    Message = "Booking is cancelled."
+                };
+            }
+
+            if (booking.Status == BookingStatus.Confirmed)
+            {
+                return new OperationResultDto
+                {
+                    IsSuccess = false,
+                    Message = "Booking already confirmed."
+                };
+            }
+
+            if (booking.PaymentMethod != PaymentMethod.Cash)
+            {
+                return new OperationResultDto
+                {
+                    IsSuccess = false,
+                    Message = "Only cash bookings can be confirmed manually."
+                };
+            }
+
+            booking.Status = BookingStatus.Confirmed;
+
+            await _bookingRepo.UpdateAsync(booking);
+
+            await _notificationService.SendToMultipleAsync(
+                new[] { booking.TouristId, booking.GuideId },
+                "Booking Confirmed ✅",
+                "Your cash booking has been confirmed.",
+                NotificationType.BookingConfirmed,
+                booking.Id.ToString(),
+                "Booking");
+
+            return new OperationResultDto
+            {
+                IsSuccess = true,
+                Message = "Booking confirmed successfully."
+            };
+        }
+
+
+
+
+
         public async Task<OperationResultDto> CancelBookingAsync(
             Guid bookingId, string requesterId)
         {
@@ -252,6 +330,7 @@ namespace Application.Services.UseCases.Booking
                 TotalPrice = b.TotalPrice,
                 PaymentMethod = b.PaymentMethod.ToString(),
                 CreatedAtUtc = b.CreatedAtUtc,
+                ConfirmedAtUtc = b.ConfirmedAtUtc,
                 Slot = new BookingSlotInfoDto
                 {
                     Id = b.Slot.Id,

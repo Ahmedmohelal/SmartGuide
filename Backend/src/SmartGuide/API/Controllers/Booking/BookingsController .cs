@@ -118,6 +118,33 @@ namespace API.Controllers.Booking
         }
 
 
+        [HttpPatch("{bookingId:guid}/confirm")]
+        [Authorize(Roles = "TourGuide")]
+        public async Task<ActionResult<OperationResultDto>>
+    ConfirmBookingAsync(Guid bookingId)
+        {
+            var guideId =
+                User.FindFirstValue(
+                    ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrWhiteSpace(guideId))
+                return Unauthorized();
+
+            var result =
+                await _bookingService
+                    .ConfirmBookingAsync(
+                        bookingId,
+                        guideId);
+
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
+            return Ok(result);
+        }
+
+
+
+
         [HttpDelete("{bookingId:guid}")]
 
         [ProducesResponseType(

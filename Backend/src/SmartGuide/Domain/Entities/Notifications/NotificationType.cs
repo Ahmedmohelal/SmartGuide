@@ -9,27 +9,26 @@ namespace Domain.Entities.Notifications
         // Booking Notifications
         BookingCreated = 1,
         BookingCancelled = 2,
-
+        BookingConfirmed = 3,
         // Guide Verification
-        GuideApproved = 3,
-        GuideRejected = 4,
+        GuideApproved = 4,
+        GuideRejected = 5,
 
         // Payment
-        PaymentSucceeded = 5,
-        PaymentFailed = 6,
-
+        PaymentSucceeded = 6,
+        PaymentFailed = 7,
         // Admin Actions on Guide Account
-        AccountSuspended = 7,
-        AccountBanned = 8,
-        AccountActivated = 9,
-        AccountUnderReview = 10,
+        AccountSuspended = 8,
+        AccountBanned = 9,
+        AccountActivated = 10,
+        AccountUnderReview = 11,
 
         // Admin Actions on Tours
-        TourDeactivated = 11,
-        TourActivated = 12,
-        TourDeleted = 13,
+        TourDeactivated = 12,
+        TourActivated = 13,
+        TourDeleted = 14,
 
         // Favorites
-        GuideSaved = 14
+        GuideSaved = 15
     }
 }

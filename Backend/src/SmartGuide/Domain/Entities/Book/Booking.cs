@@ -20,5 +20,7 @@ namespace Domain.Entities.Book
 
         public BookingSlot Slot { get; set; } = null!;
         public List<BookingAddOn> SelectedAddOns { get; set; } = new();
+
+        public DateTime? ConfirmedAtUtc { get; set; }
     }
 }

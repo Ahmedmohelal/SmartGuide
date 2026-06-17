@@ -26,5 +26,7 @@ public interface IBookingRepository
 
     Task<bool> IsSlotAvailableAsync(Guid slotId);
 
+    Task UpdateAsync(Booking booking);
+
     Task SaveChangesAsync();
 }

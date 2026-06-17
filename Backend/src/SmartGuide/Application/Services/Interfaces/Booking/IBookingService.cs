@@ -23,6 +23,8 @@ namespace Application.Services.Interfaces.Booking
 
         Task<List<BookingDto>> GetGuideBookingsAsync(string guideId);
 
+        Task<OperationResultDto> ConfirmBookingAsync(Guid bookingId,string guideId);
+
         Task<OperationResultDto> CancelBookingAsync(
             Guid bookingId, string requesterId);
     }

@@ -154,6 +154,7 @@ namespace Infrastructure.Repository.Book
                     }
 
                     booking.Status = BookingStatus.Confirmed;
+                    booking.ConfirmedAtUtc = DateTime.UtcNow;
 
                     await _context.SaveChangesAsync();
                     await transaction.CommitAsync();
@@ -289,6 +290,13 @@ namespace Infrastructure.Repository.Book
                 return false;
 
             return slot.BookedCount < slot.Capacity;
+        }
+
+        public async Task UpdateAsync(Booking booking)
+        {
+            _context.Bookings.Update(booking);
+
+            await _context.SaveChangesAsync();
         }
 
         public async Task SaveChangesAsync()
