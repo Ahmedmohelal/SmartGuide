@@ -91,10 +91,12 @@ namespace Application.Services.UseCases.Booking
             };
         }
 
+      
         public async Task<List<BookingSlotDto>> GetSlotsByTourAndDateAsync(
             Guid tourId, DateOnly date)
         {
             var slots = await _bookingRepo.GetSlotsByTourAndDateAsync(tourId, date);
+
             return slots.Select(s => new BookingSlotDto
             {
                 Id = s.Id,
@@ -157,6 +159,7 @@ namespace Application.Services.UseCases.Booking
                 }
             }
 
+
             var booking = new BookingEntity
             {
                 Id = Guid.NewGuid(),
@@ -206,13 +209,14 @@ namespace Application.Services.UseCases.Booking
             return bookings.Select(MapToDto).ToList();
         }
 
+      
         public async Task<OperationResultDto> CancelBookingAsync(
             Guid bookingId, string requesterId)
         {
             var cancelled = await _bookingRepo
                 .CancelBookingAsync(bookingId, requesterId);
 
-            if (!cancelled)
+            if (!cancelled.Success)
                 return new OperationResultDto
                 {
                     IsSuccess = false,

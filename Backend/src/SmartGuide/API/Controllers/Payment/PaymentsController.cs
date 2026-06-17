@@ -1,3 +1,4 @@
+using Application.Common.Results;
 using Application.Services.Interfaces.Payment;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -54,11 +55,24 @@ namespace API.Controllers.Payment
 
             var success = await _paymentService
                 .HandleWebhookAsync(json, stripeSignature);
+            switch (success)
+            {
+                case WebhookProcessingResult.Processed:
+                    return Ok();
 
-            if (!success)
-                return BadRequest(new { message = "Webhook handling failed." });
+                case WebhookProcessingResult.AlreadyProcessed:
+                    return Ok(new { message = "Already processed." });
 
-            return Ok();
+                case WebhookProcessingResult.InvalidSignature:
+                    return BadRequest(new { message = "Invalid signature." });
+
+                case WebhookProcessingResult.Malformed:
+                    return BadRequest(new { message = "Malformed payload." });
+
+                default:
+                    return StatusCode(500);
+            }
+
         }
     }
 }

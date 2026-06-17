@@ -1,10 +1,7 @@
 ﻿using Domain.Entities.Book;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Text;
 
 namespace Infrastructure.Repository.Book
 {
@@ -23,32 +20,7 @@ namespace Infrastructure.Repository.Book
             await _context.SaveChangesAsync();
         }
 
-        public async Task<bool> CancelBookingAsync(Guid bookingId, string requesterId)
-        {
-            var user = await _context.Users.FindAsync(requesterId);
-            if (user == null) return false;
-            var booking = await _context.Bookings
-                       .FirstOrDefaultAsync(b => b.Id == bookingId
-                           && (b.TouristId == requesterId
-                           || b.GuideId == requesterId
-                           || user.Role == "Admin"));
-            if (booking == null) return false;
 
-            if (booking.Status == BookingStatus.Cancelled) return false;
-
-            booking.Status = BookingStatus.Cancelled;
-
-            await _context.SaveChangesAsync();
-
-            await _context.BookingsSlot
-                .Where(s => s.Id == booking.SlotId && s.BookedCount > 0)
-                .ExecuteUpdateAsync(s => s.SetProperty(
-                       x => x.BookedCount, x => x.BookedCount - 1));
-
-            await _context.SaveChangesAsync();
-            return true;
-        }
-    
         public async Task<Booking> CreateBookingAsync(Booking booking)
         {
             var strategy = _context.Database.CreateExecutionStrategy();
@@ -60,19 +32,192 @@ namespace Infrastructure.Repository.Book
 
                 try
                 {
-                    var isAvailable = await IsSlotAvailableAsync(booking.SlotId);
-                    if (!isAvailable)
+                    if (!await IsSlotAvailableAsync(booking.SlotId))
                         throw new InvalidOperationException("Slot is no longer available.");
 
                     await _context.Bookings.AddAsync(booking);
-
-                    await IncrementBookedCountAsync(booking.SlotId);
-
                     await _context.SaveChangesAsync();
-
                     await transaction.CommitAsync();
 
                     return booking;
+                }
+                catch
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
+            });
+        }
+
+
+        public async Task<BookingCancellationResult> CancelBookingAsync(Guid bookingId, string requesterId)
+        {
+            var strategy = _context.Database.CreateExecutionStrategy();
+
+            return await strategy.ExecuteAsync(async () =>
+            {
+                await using var transaction = await _context.Database
+                    .BeginTransactionAsync(IsolationLevel.Serializable);
+
+                try
+                {
+                    var user = await _context.Users.FindAsync(requesterId);
+                    if (user == null)
+                        return BookingCancellationResult.Fail("Requester not found.");
+
+                    var booking = await _context.Bookings
+                        .FirstOrDefaultAsync(b => b.Id == bookingId
+                            && (b.TouristId == requesterId
+                                || b.GuideId == requesterId
+                                || user.Role == "Admin"));
+
+                    if (booking == null)
+                        return BookingCancellationResult.Fail("Booking not found or not authorized.");
+
+                    if (booking.Status == BookingStatus.Cancelled)
+                        return BookingCancellationResult.Fail("Booking already cancelled.");
+
+                    var seatWasReserved = booking.Status == BookingStatus.Confirmed;
+
+                    var requiresRefund = seatWasReserved
+                        && booking.PaymentMethod == PaymentMethod.Online
+                        && !string.IsNullOrWhiteSpace(booking.PaymentIntentId);
+
+                    booking.Status = BookingStatus.Cancelled;
+
+                    if (seatWasReserved)
+                    {
+                        var slot = await _context.BookingsSlot
+                            .FirstOrDefaultAsync(s => s.Id == booking.SlotId);
+
+                        if (slot != null && slot.BookedCount > 0)
+                            slot.BookedCount--;
+                    }
+
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    return BookingCancellationResult.Ok(
+                        requiresRefund,
+                        booking.PaymentIntentId,
+                        booking.TotalPrice,
+                        booking.TouristId);
+                }
+                catch
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
+            });
+        }
+
+
+        public async Task<PaymentConfirmationResult> ConfirmBookingAfterPaymentAsync(Guid bookingId)
+        {
+            var strategy = _context.Database.CreateExecutionStrategy();
+
+            return await strategy.ExecuteAsync(async () =>
+            {
+                await using var transaction = await _context.Database
+                    .BeginTransactionAsync(IsolationLevel.Serializable);
+
+                try
+                {
+                    var booking = await _context.Bookings
+                        .FirstOrDefaultAsync(b => b.Id == bookingId);
+
+                    if (booking == null)
+                        return PaymentConfirmationResult.Failed;
+
+                    if (booking.Status == BookingStatus.Confirmed)
+                        return PaymentConfirmationResult.AlreadyConfirmed;
+
+                    if (booking.Status == BookingStatus.Cancelled)
+                        return PaymentConfirmationResult.Failed;
+
+                    if (booking.PaymentMethod != PaymentMethod.Online)
+                        return PaymentConfirmationResult.Failed;
+
+                    var slot = await _context.BookingsSlot
+                        .FirstOrDefaultAsync(s => s.Id == booking.SlotId);
+
+                    if (slot == null || !IsSlotTimeValid(slot))
+                        return PaymentConfirmationResult.Failed;
+
+                    if (!await TryIncrementBookedCountAsync(booking.SlotId))
+                    {
+
+                        booking.Status = BookingStatus.Cancelled;
+                        await _context.SaveChangesAsync();
+                        await transaction.CommitAsync();
+                        return PaymentConfirmationResult.SlotFull;
+                    }
+
+                    booking.Status = BookingStatus.Confirmed;
+
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                    return PaymentConfirmationResult.NewlyConfirmed;
+                }
+                catch
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
+            });
+        }
+
+
+        public async Task<PaymentConfirmationResult> ConfirmCashBookingAsync(Guid bookingId, string confirmerId)
+        {
+            var strategy = _context.Database.CreateExecutionStrategy();
+
+            return await strategy.ExecuteAsync(async () =>
+            {
+                await using var transaction = await _context.Database
+                    .BeginTransactionAsync(IsolationLevel.Serializable);
+
+                try
+                {
+                    var user = await _context.Users.FindAsync(confirmerId);
+                    if (user == null)
+                        return PaymentConfirmationResult.Failed;
+
+                    var booking = await _context.Bookings
+                        .FirstOrDefaultAsync(b => b.Id == bookingId
+                            && (b.GuideId == confirmerId || user.Role == "Admin"));
+
+                    if (booking == null)
+                        return PaymentConfirmationResult.Failed;
+
+                    if (booking.Status == BookingStatus.Confirmed)
+                        return PaymentConfirmationResult.AlreadyConfirmed;
+
+                    if (booking.Status == BookingStatus.Cancelled)
+                        return PaymentConfirmationResult.Failed;
+
+                    if (booking.PaymentMethod != PaymentMethod.Cash)
+                        return PaymentConfirmationResult.Failed;
+
+                    var slot = await _context.BookingsSlot
+                        .FirstOrDefaultAsync(s => s.Id == booking.SlotId);
+
+                    if (slot == null)
+                        return PaymentConfirmationResult.Failed;
+
+                    if (!await TryIncrementBookedCountAsync(booking.SlotId))
+                    {
+                        booking.Status = BookingStatus.Cancelled;
+                        await _context.SaveChangesAsync();
+                        await transaction.CommitAsync();
+                        return PaymentConfirmationResult.SlotFull;
+                    }
+
+                    booking.Status = BookingStatus.Confirmed;
+
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                    return PaymentConfirmationResult.NewlyConfirmed;
                 }
                 catch
                 {
@@ -112,38 +257,52 @@ namespace Infrastructure.Repository.Book
 
         public Task<BookingSlot?> GetSlotByIdAsync(Guid slotId)
         {
-            var slot = _context.BookingsSlot.FirstOrDefaultAsync(s => s.Id == slotId);
-            return slot;
+            return _context.BookingsSlot.FirstOrDefaultAsync(s => s.Id == slotId);
         }
 
         public async Task<List<Booking>> GetTouristBookingsAsync(string touristId)
         {
             return await _context.Bookings
-            .Where(b => b.TouristId == touristId)
-            .Include(b => b.Slot)
-            .Include(b => b.SelectedAddOns)
-                .ThenInclude(a => a.TourAddOn)
-            .OrderByDescending(b => b.CreatedAtUtc)
-            .ToListAsync();
+                .Where(b => b.TouristId == touristId)
+                .Include(b => b.Slot)
+                .Include(b => b.SelectedAddOns)
+                    .ThenInclude(a => a.TourAddOn)
+                .OrderByDescending(b => b.CreatedAtUtc)
+                .ToListAsync();
         }
 
-        public async Task IncrementBookedCountAsync(Guid slotId)
+        public async Task<bool> TryIncrementBookedCountAsync(Guid slotId)
         {
-            await _context.BookingsSlot
-            .Where(s => s.Id == slotId)
-            .ExecuteUpdateAsync(s => s.SetProperty(x => x.BookedCount, x => x.BookedCount + 1));
+            var rowsAffected = await _context.BookingsSlot
+                .Where(s => s.Id == slotId && s.BookedCount < s.Capacity)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(x => x.BookedCount, x => x.BookedCount + 1));
+
+            return rowsAffected > 0;
         }
 
 
         public async Task<bool> IsSlotAvailableAsync(Guid slotId)
         {
             var slot = await _context.BookingsSlot.FirstOrDefaultAsync(s => s.Id == slotId);
-            return slot != null && slot.BookedCount < slot.Capacity;
+            if (slot == null || !IsSlotTimeValid(slot))
+                return false;
+
+            return slot.BookedCount < slot.Capacity;
         }
 
         public async Task SaveChangesAsync()
         {
             await _context.SaveChangesAsync();
         }
+
+
+
+        private static bool IsSlotTimeValid(BookingSlot slot)
+        {
+            return slot.Date.ToDateTime(slot.StartTime) > DateTime.UtcNow;
+        }
+
+
     }
 }

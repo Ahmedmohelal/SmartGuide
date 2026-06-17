@@ -1,36 +1,36 @@
 ﻿using Application.Common.Pagination;
 using Application.DTOs.AdminDashboard;
-using Application.DTOs.AuthenticationDTOs;
 using Application.DTOs.Home;
 using Application.Services.Interfaces.Admin;
 using Application.Services.Interfaces.Notifications;
 using Domain.Entities.Book;
 using Domain.Entities.Notifications;
+using Domain.Interfaces;
 using Infrastructure.Data;
 using Infrastructure.Services.Admin.Specs;
 using Infrastructure.Services.Home;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Infrastructure.Services.Admin
 {
     public class BookingAdminService : IBookingAdminService
     {
         private readonly ApplicationDbContext _context;
+        private readonly IBookingRepository _bookingRepository;
         private readonly INotificationService _notificationService;
 
         public BookingAdminService(
             ApplicationDbContext context,
+            IBookingRepository bookingRepository,
             INotificationService notificationService)
         {
             _context = context;
+            _bookingRepository = bookingRepository;
             _notificationService = notificationService;
         }
 
         public async Task<Pagination<AdminBookingDto>>
-    GetAllBookingsAsync(AdminBookingSpecParams param)
+            GetAllBookingsAsync(AdminBookingSpecParams param)
         {
             var spec =
                 new AdminBookingsSpecification(
@@ -172,36 +172,25 @@ namespace Infrastructure.Services.Admin
 
         public async Task<bool> CancelBookingAsync(Guid bookingId, string requesterId)
         {
-            var user = await _context.Users.FindAsync(requesterId);
-            if (user == null) return false;
-            var booking = await _context.Bookings
-                       .FirstOrDefaultAsync(b => b.Id == bookingId
-                           && (b.TouristId == requesterId
-                           || b.GuideId == requesterId
-                           || user.Role == "Admin"));
-            if (booking == null) return false;
+            var cancelled = await _bookingRepository
+                .CancelBookingAsync(bookingId, requesterId);
 
-            if (booking.Status == BookingStatus.Cancelled) return false;
+            if (!cancelled.Success)
+                return false;
 
-            booking.Status = BookingStatus.Cancelled;
+            var booking = await _bookingRepository.GetBookingByIdAsync(bookingId);
+            if (booking is not null)
+            {
+                await _notificationService.SendToMultipleAsync(
+                    new[] { booking.TouristId, booking.GuideId },
+                    "Booking Cancelled by Admin ❌",
+                    "Your booking has been cancelled by the administrator.",
+                    NotificationType.BookingCancelled,
+                    bookingId.ToString(),
+                    "Booking");
+            }
 
-            await _context.SaveChangesAsync();
-
-            await _notificationService.SendToMultipleAsync(
-                new[] { booking.TouristId, booking.GuideId },
-                "Booking Cancelled by Admin ❌",
-                "Your booking has been cancelled by the administrator.",
-                NotificationType.BookingCancelled,
-                bookingId.ToString(), "Booking");
-
-            await _context.BookingsSlot
-                .Where(s => s.Id == booking.SlotId && s.BookedCount > 0)
-                .ExecuteUpdateAsync(s => s.SetProperty(
-                       x => x.BookedCount, x => x.BookedCount - 1));
-
-            await _context.SaveChangesAsync();
             return true;
         }
-
     }
 }
