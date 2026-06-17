@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loader2, Shield, Moon, Sun } from "lucide-react";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 import { login } from "../services/authService";
 import { useTheme } from "../context/ThemeContext";
+import { getToken, isAdmin } from "../utils/tokenUtils";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -12,6 +13,13 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+
+  useEffect(() => {
+    // Redirect to home if already logged in
+    if (getToken() && isAdmin()) {
+      navigate("/", { replace: true });
+    }
+  }, [navigate]);
 
   const onSubmit = async (e) => {
     e.preventDefault();
