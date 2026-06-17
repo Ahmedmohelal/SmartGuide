@@ -50,6 +50,7 @@ export default function BookingsPage() {
               <th>Tour</th>
               <th>Tourist</th>
               <th>Guide</th>
+              <th>Date</th>
               <th>Status</th>
               <th>Price</th>
               <th>Actions</th>
@@ -58,13 +59,13 @@ export default function BookingsPage() {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={6} className="!text-center">
+                <td colSpan={7} className="!text-center">
                   Loading…
                 </td>
               </tr>
             ) : bookings.length === 0 ? (
               <tr>
-                <td colSpan={6} className="!text-center text-[var(--admin-text-muted)]">
+                <td colSpan={7} className="!text-center text-[var(--admin-text-muted)]">
                   No bookings found
                 </td>
               </tr>
@@ -74,6 +75,7 @@ export default function BookingsPage() {
                   <td className="font-semibold">{b.tourTitle}</td>
                   <td>{b.touristName}</td>
                   <td>{b.guideName}</td>
+                  <td>{b.createdAtUtc ? new Date(b.createdAtUtc).toLocaleString() : "—"}</td>
                   <td>
                     <span className="admin-badge admin-badge-gold">{b.status}</span>
                   </td>

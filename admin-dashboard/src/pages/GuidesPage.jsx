@@ -25,6 +25,8 @@ export default function GuidesPage() {
     load();
   }, []);
 
+  
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -44,14 +46,17 @@ export default function GuidesPage() {
         </div>
       ) : (
         <div className="space-y-4">
+          
           {guides.map((g) => (
             <article key={g.userId} className="admin-card p-5">
+              
               <div className="flex flex-wrap items-start gap-4">
                 {g.profileImage ? (
                   <img
                     src={g.profileImage}
                     alt=""
                     className="h-14 w-14 rounded-xl object-cover ring-2 ring-[var(--admin-border)]"
+                    
                   />
                 ) : (
                   <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-brand/15 text-lg font-bold text-brand">

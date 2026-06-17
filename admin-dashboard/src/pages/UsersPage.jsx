@@ -15,7 +15,7 @@ export default function UsersPage() {
       try {
         const response = await fetchUsers();
 
-        console.log("USERS RESPONSE", response);
+        
 
         setUsers(Array.isArray(response.data) ? response.data : []);
       } catch (err) {

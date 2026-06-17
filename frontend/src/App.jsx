@@ -27,6 +27,7 @@ import GuideProfilePublic from "./pages/GuideProfilePublic";
 import TouristProfilePublic from "./pages/TouristProfilePublic";
 import Chat from "./pages/Chat";
 import Notifications from "./pages/Notifications";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (
@@ -51,21 +52,21 @@ function App() {
           <Route path="/support" element={<Support />} />
 
           {/* 3. إضافة مسار البروفايل هنا */}
-          <Route path="/profile" element={<Profile />} />
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/guides/:id" element={<GuideProfilePublic />} />
           <Route path="/tourists/:id" element={<TouristProfilePublic />} />
-          <Route path="/chat" element={<Chat />} />
-          <Route path="/chat/:conversationId" element={<Chat />} />
-          <Route path="/notifications" element={<Notifications />} />
+          <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+          <Route path="/chat/:conversationId" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+          <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
           <Route path="/tours" element={<Tours />} />
           <Route path="/tours/:id" element={<TourDetails />} />
 
           {/* صفحات المستقبل */}
-          <Route path="/settings" element={<Settings />} />
+          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="/places" element={<Places />} />
-          <Route path="/saved-places" element={<SavedPlaces />} />
-          <Route path="/saved-guides" element={<SavedGuides />} />
-          <Route path="/guide-dashboard" element={<GuideDashboard />} />
+          <Route path="/saved-places" element={<ProtectedRoute><SavedPlaces /></ProtectedRoute>} />
+          <Route path="/saved-guides" element={<ProtectedRoute><SavedGuides /></ProtectedRoute>} />
+          <Route path="/guide-dashboard" element={<ProtectedRoute><GuideDashboard /></ProtectedRoute>} />
 
           <Route path="/places/:id" element={<PlaceDetails />} />
         </Route>
