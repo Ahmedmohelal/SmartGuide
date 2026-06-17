@@ -91,7 +91,7 @@ namespace Application.Services.UseCases.Booking
             };
         }
 
-      
+
         public async Task<List<BookingSlotDto>> GetSlotsByTourAndDateAsync(
             Guid tourId, DateOnly date)
         {
@@ -291,6 +291,30 @@ namespace Application.Services.UseCases.Booking
         public async Task<OperationResultDto> CancelBookingAsync(
             Guid bookingId, string requesterId)
         {
+            var booking = await _bookingRepo.GetBookingByIdAsync(bookingId);
+
+            if (booking == null)
+                return new OperationResultDto
+                {
+                    IsSuccess = false,
+                    Message = "Booking not found."
+                };
+            if (booking.Status == BookingStatus.Cancelled)
+                return new OperationResultDto
+                {
+                    IsSuccess = false,
+                    Message = "Booking is already cancelled."
+                };
+
+            // if (booking.TouristId != requesterId && booking.GuideId != requesterId)
+            //{
+            //    return new OperationResultDto
+            //    {
+            //        IsSuccess = false,
+            //        Message = "Unauthorized."
+            //    };
+            //}
+
             var cancelled = await _bookingRepo
                 .CancelBookingAsync(bookingId, requesterId);
 
@@ -301,16 +325,14 @@ namespace Application.Services.UseCases.Booking
                     Message = "Booking not found or already cancelled."
                 };
 
-            var booking = await _bookingRepo.GetBookingByIdAsync(bookingId);
-            if (booking is not null)
-            {
-                await _notificationService.SendToMultipleAsync(
-                    new[] { booking.TouristId, booking.GuideId },
-                    "Booking Cancelled ❌",
-                    "A booking has been cancelled.",
-                    NotificationType.BookingCancelled,
-                    bookingId.ToString(), "Booking");
-            }
+
+            await _notificationService.SendToMultipleAsync(
+                new[] { booking.TouristId, booking.GuideId },
+                "Booking Cancelled ❌",
+                "A booking has been cancelled.",
+                NotificationType.BookingCancelled,
+                bookingId.ToString(), "Booking");
+
 
             return new OperationResultDto
             {

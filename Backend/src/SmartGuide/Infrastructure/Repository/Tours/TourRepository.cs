@@ -125,17 +125,17 @@ namespace Infrastructure.Repository.Tours
         }
 
 
-        public async Task DeleteAsync(Guid tourId)
+        public async Task<bool> DeleteAsync(Guid tourId)
         {
             var tour = await _context.Tours.FindAsync(tourId);
 
             if (tour == null)
-                return;
+                return false;
 
             tour.IsActive = false;
 
             _context.Tours.Update(tour);
-            await _context.SaveChangesAsync();
+            return await _context.SaveChangesAsync() > 0;
         }
 
 

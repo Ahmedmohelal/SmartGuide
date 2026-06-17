@@ -1,13 +1,18 @@
-﻿using Application.DTOs.AuthenticationDTOs;
+﻿using Application.DTOs;
+using Application.DTOs.AuthenticationDTOs;
 using Application.DTOs.GuideDashboard;
 using Application.DTOs.Tour;
+using Application.Services.Interfaces.Admin;
 using Application.Services.Interfaces.Auth;
+using Application.Services.Interfaces.Notifications;
 using Application.Services.Interfaces.PictureMaker;
 using Application.Services.Interfaces.Tour;
+using Domain.Entities.Notifications;
 using Domain.Entities.Tours;
 using Domain.Entities.Tours.Enums;
 using Domain.Interfaces;
 using Microsoft.AspNetCore.Identity;
+using System.Net;
 using System.Text.Json;
 
 namespace Application.Services.UseCases.Tours
@@ -19,14 +24,18 @@ namespace Application.Services.UseCases.Tours
         private readonly IAttachmentService _attachmentService;
 
         private readonly IUserService _userService;
+        private readonly INotificationService _notificationService;
+
+        private readonly IAdminAuditService _auditService;
 
         public TourService(ITourRepository tourRepository, IImageUrlService imageUrlService, IAttachmentService attachmentService,
-            IUserService userService)
+            IUserService userService , INotificationService notificationService, IAdminAuditService auditService)
         {
             _tourRepository = tourRepository;
             _imageUrlService = imageUrlService;
             _attachmentService = attachmentService;
             _userService = userService;
+            _notificationService = notificationService;
         }
 
 
@@ -454,12 +463,36 @@ namespace Application.Services.UseCases.Tours
                 };
             }
 
-            await _tourRepository.DeleteAsync(id);
+            var result = await _tourRepository.DeleteAsync(id);
+
+            if (result)
+            {
+                var folderName = $"ToursImages";
+                foreach (var image in tour.TourImages)
+                {
+                    try
+                    {
+                        await _attachmentService.Delete(image.ImageUrl, folderName);
+                    }
+                    catch { }
+                }
+
+                await _notificationService.SendAsync(
+    guideId,
+    "Tour Deleted ✅",
+    "Your tour has been deleted.",
+    NotificationType.TourDeleted,
+    guideId, "Guide");
+
+                await _auditService.WriteAsync(guideId, "DeleteTour", "Tour", tour.Id.ToString(), "Unknown", "Unknown");
+                return new OperationResultDto { IsSuccess = true, Message = "Tour deleted successfully." };
+            }
+
 
             return new OperationResultDto
             {
-                IsSuccess = true,
-                Message = "Tour deleted successfully"
+                IsSuccess = false,
+                Message = "Failed to delete tour"
             };
         }
 

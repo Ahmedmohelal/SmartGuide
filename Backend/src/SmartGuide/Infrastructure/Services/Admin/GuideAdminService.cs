@@ -110,6 +110,9 @@ namespace Infrastructure.Services.Admin
 
             user.IsGuideVerified = GuideVerificationStatus.Verified;
             user.GuideAccountStatus = GuideAccountStatus.Active;
+
+            _context.Users.Update(user);
+
             await _context.SaveChangesAsync();
 
             await _notificationService.SendAsync(
@@ -158,6 +161,7 @@ namespace Infrastructure.Services.Admin
             user.GuideAccountStatus = GuideAccountStatus.Rejected;
             user.LockoutEnabled = true;
             user.LockoutEnd = DateTimeOffset.UtcNow.AddYears(100);
+            _context.Users.Update(user);
             await _context.SaveChangesAsync();
 
             await _notificationService.SendAsync(
@@ -201,6 +205,7 @@ namespace Infrastructure.Services.Admin
             user.LockoutEnabled = false;
             user.LockoutEnd = null;
             user.ForceLogoutRequired = false;
+            _context.Users.Update(user);
             await _context.SaveChangesAsync();
 
             await _notificationService.SendAsync(
