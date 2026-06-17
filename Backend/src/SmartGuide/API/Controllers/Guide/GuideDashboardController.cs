@@ -286,7 +286,7 @@ namespace API.Controllers.Guide
             if (string.IsNullOrWhiteSpace(userId))
                 return Unauthorized();
 
-            var res = await _tourService.DeleteTourAsync(id, userId);
+            var res = await _tourService.DeactivateTourAsync(id, userId);
 
             if (!res.IsSuccess)
                 return BadRequest(res);

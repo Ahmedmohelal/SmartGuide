@@ -6,8 +6,10 @@ using Application.Services.Interfaces.Admin;
 using Application.Services.Interfaces.Auth;
 using Application.Services.Interfaces.Notifications;
 using Application.Services.Interfaces.PictureMaker;
+using Application.Services.UseCases.PictureMaker;
 using Domain.Entities.Notifications;
 using Domain.Entities.Tours;
+using Domain.Interfaces;
 using Infrastructure.Data;
 using Infrastructure.Services.Admin.Specs;
 using Infrastructure.Services.Home;
@@ -25,13 +27,19 @@ namespace Infrastructure.Services.Admin
         private readonly IImageUrlService _imageUrlService;
         private readonly INotificationService _notificationService;
         private readonly ILogger<TourAdminService> _logger;
+        private readonly ITourRepository _tourRepository;
+        private readonly IAttachmentService _attachmentService;
+        private readonly IAdminAuditService _adminAuditService;
 
-        public TourAdminService(ApplicationDbContext context,IImageUrlService imageUrlService,INotificationService notificationService , ILogger<TourAdminService> logger)
+        public TourAdminService(ApplicationDbContext context, IImageUrlService imageUrlService, INotificationService notificationService, ILogger<TourAdminService> logger, ITourRepository tourRepository, IAttachmentService attachmentService, IAdminAuditService adminAuditService)
         {
             _context = context;
             _imageUrlService = imageUrlService;
             _notificationService = notificationService;
             _logger = logger;
+            _tourRepository = tourRepository;
+            _attachmentService = attachmentService;
+            _adminAuditService = adminAuditService;
         }
         public async Task<Pagination<AdminTourDto>> GetAllToursAsync(AdminTourSpecParams param)
         {
@@ -47,7 +55,7 @@ namespace Infrastructure.Services.Admin
                     .GetQuery(
                         _context.Tours
                             .Include(t => t.TourImages)
-                            .Include(t=>t.Bookings)
+                            .Include(t => t.Bookings)
                             .AsQueryable(),
                         spec);
 
@@ -173,9 +181,38 @@ namespace Infrastructure.Services.Admin
                 return new OperationResultDto { IsSuccess = false, Message = "Tour not found." };
             try
             {
-                _context.Tours.Remove(tour);
+                var result = await _tourRepository.DeleteAsync(tourId);
 
-                await _context.SaveChangesAsync();
+                if (result)
+                {
+                    var folderName = "ToursImages";
+                    foreach (var image in tour.TourImages)
+                    {
+                        try
+                        {
+                            await _attachmentService.Delete(image.ImageUrl, folderName);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to delete image {ImageUrl} for tour {TourId}", image.ImageUrl, tourId);
+                        }
+                    }
+
+                    await _notificationService.SendAsync(
+                     tour.GuideId,
+                     "Tour Deleted ✅",
+                             $"Your tour \"{tour.Title}\" has been deleted by the administrator.",
+                     NotificationType.TourDeleted,
+                     tour.Id.ToString(), "Tour");
+
+
+                    await _adminAuditService.WriteAsync(tour.GuideId, "DeleteTour", "Tour", tour.Id.ToString(), "Unknown", "Unknown");
+                    return new OperationResultDto { IsSuccess = true, Message = "Tour deleted successfully." };
+                }
+                else
+                {
+                    return new OperationResultDto { IsSuccess = false, Message = "Error occurred while deleting the tour." };
+                }
             }
             catch (Exception ex)
             {
@@ -184,15 +221,6 @@ namespace Infrastructure.Services.Admin
                 throw;
             }
 
-            await _notificationService.SendAsync(
-                tour.GuideId,
-                "Tour Deleted ",
-                $"Your tour \"{tour.Title}\" has been deleted by the administrator.",
-                NotificationType.TourDeleted,
-                tour.Id.ToString(), "Tour");
-
-
-            return new OperationResultDto { IsSuccess = true, Message = "Tour deleted successfully." };
         }
         private async static Task<OperationResultDto> AlreadyDone()
         {

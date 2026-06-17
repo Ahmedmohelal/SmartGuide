@@ -14,7 +14,7 @@ namespace Application.Services.Interfaces.Tour
 
         Task<CreateTourResponseDTO> CreateTourAsync(CreateTourRequestDTO request, string guideId);
         Task<OperationResultDto> UpdateTourAsync(Guid id, UpdateTourRequestDTO request, string guideId);
-        Task<OperationResultDto> DeleteTourAsync(Guid id, string guideId);
+        Task<OperationResultDto> DeactivateTourAsync(Guid id, string guideId);
 
         Task<List<TourCardDto>> GetToursByPlaceAsync(int placeId);
         Task<List<GuideToursHomeDto>> GetHomeToursAsync();

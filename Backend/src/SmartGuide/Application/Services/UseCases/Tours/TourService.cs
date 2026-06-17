@@ -29,7 +29,7 @@ namespace Application.Services.UseCases.Tours
         private readonly IAdminAuditService _auditService;
 
         public TourService(ITourRepository tourRepository, IImageUrlService imageUrlService, IAttachmentService attachmentService,
-            IUserService userService , INotificationService notificationService, IAdminAuditService auditService)
+            IUserService userService, INotificationService notificationService, IAdminAuditService auditService)
         {
             _tourRepository = tourRepository;
             _imageUrlService = imageUrlService;
@@ -324,7 +324,7 @@ namespace Application.Services.UseCases.Tours
                     addonEntities);
             }
 
-            
+
             if (!string.IsNullOrWhiteSpace(request.Title))
                 tour.Title = request.Title;
 
@@ -441,7 +441,7 @@ namespace Application.Services.UseCases.Tours
 
 
 
-        public async Task<OperationResultDto> DeleteTourAsync(Guid id, string guideId)
+        public async Task<OperationResultDto> DeactivateTourAsync(Guid id, string guideId)
         {
             var tour = await _tourRepository.GetByIdAsync(id);
 
@@ -467,25 +467,15 @@ namespace Application.Services.UseCases.Tours
 
             if (result)
             {
-                var folderName = $"ToursImages";
-                foreach (var image in tour.TourImages)
-                {
-                    try
-                    {
-                        await _attachmentService.Delete(image.ImageUrl, folderName);
-                    }
-                    catch { }
-                }
-
                 await _notificationService.SendAsync(
     guideId,
-    "Tour Deleted ✅",
-    "Your tour has been deleted.",
-    NotificationType.TourDeleted,
+    "Tour Deactivated ✅",
+    "Your tour has been deactivated.",
+    NotificationType.TourDeactivated,
     guideId, "Guide");
 
-                await _auditService.WriteAsync(guideId, "DeleteTour", "Tour", tour.Id.ToString(), "Unknown", "Unknown");
-                return new OperationResultDto { IsSuccess = true, Message = "Tour deleted successfully." };
+                await _auditService.WriteAsync(guideId, "DeactivateTour", "Tour", tour.Id.ToString(), "Unknown", "Unknown");
+                return new OperationResultDto { IsSuccess = true, Message = "Tour Deactivated successfully." };
             }
 
 
