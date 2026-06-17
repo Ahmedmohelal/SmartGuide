@@ -65,6 +65,51 @@ namespace Infrastructure.Repository.Tours
             await _context.TourAddOns.AddRangeAsync(addons);
             await _context.SaveChangesAsync();
         }
+
+        public async Task ReplaceTourStopsAsync(
+    Tour tour,
+    List<TourStops> stops)
+        {
+            _context.TourStops.RemoveRange(tour.TourStops);
+
+            await _context.TourStops.AddRangeAsync(stops);
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task ReplaceTourInclusionsAsync(
+    Tour tour,
+    List<TourInclusion> inclusions)
+        {
+            _context.TourInclusions.RemoveRange(
+                tour.TourInclusions);
+
+            await _context.TourInclusions
+                .AddRangeAsync(inclusions);
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task ReplaceTourAddOnsAsync(
+    Tour tour,
+    List<TourAddOn> addons)
+        {
+            _context.TourAddOns.RemoveRange(
+                tour.TourAddOns);
+
+            await _context.TourAddOns
+                .AddRangeAsync(addons);
+
+            await _context.SaveChangesAsync();
+        }
+
+
+
+
+
+
+
+
         public async Task ReplaceTourImagesAsync(Tour tour, List<TourImage> images)
         {
             _context.TourImages.RemoveRange(tour.TourImages);

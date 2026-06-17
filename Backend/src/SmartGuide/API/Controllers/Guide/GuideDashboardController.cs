@@ -240,6 +240,10 @@ namespace API.Controllers.Guide
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<List<TourCardDto>>> GetToursByPlace(int placeId)
         {
+
+            if (placeId <= 0)
+                return Ok(new { IsSucceeded = false, Message = "Place Ids Start With 1" });
+
             var tours = await _tourService.GetToursByPlaceAsync(placeId);
 
             if (tours is null || tours.Count == 0)
@@ -254,7 +258,7 @@ namespace API.Controllers.Guide
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<ActionResult<OperationResultDto>> UpdateTour(
             Guid id,
-            [FromForm] CreateTourRequestDTO request)
+            [FromForm] UpdateTourRequestDTO request)
         {
             var userId = User.FindFirstValue("userId")
                          ?? User.FindFirstValue(ClaimTypes.NameIdentifier);

@@ -1,4 +1,5 @@
 ﻿using Application.DTOs.AuthenticationDTOs;
+using Application.DTOs.GuideDashboard;
 using Application.DTOs.Tour;
 using Application.Services.Interfaces.Auth;
 using Application.Services.Interfaces.PictureMaker;
@@ -206,6 +207,7 @@ namespace Application.Services.UseCases.Tours
                 return new CreateTourResponseDTO
                 {
                     IsSucceded = true,
+                    message = "Tour Created Successfully",
                     Id = tour.Id,
                     Title = tour.Title,
                     Price = tour.Price
@@ -221,7 +223,7 @@ namespace Application.Services.UseCases.Tours
             }
         }
 
-        public async Task<OperationResultDto> UpdateTourAsync(Guid id, CreateTourRequestDTO request, string guideId)
+        public async Task<OperationResultDto> UpdateTourAsync(Guid id, UpdateTourRequestDTO request, string guideId)
         {
             var tour = await _tourRepository.GetByIdAsync(id);
 
@@ -244,25 +246,25 @@ namespace Application.Services.UseCases.Tours
             }
 
 
-            var stops = string.IsNullOrWhiteSpace(request.StopsJson)
-                ? new List<CreateTourStopDto>()
-                : JsonSerializer.Deserialize<List<CreateTourStopDto>>(request.StopsJson) ?? new();
+            //var stops = string.IsNullOrWhiteSpace(request.StopsJson)
+            //    ? new List<CreateTourStopDto>()
+            //    : JsonSerializer.Deserialize<List<CreateTourStopDto>>(request.StopsJson) ?? new();
 
-            var inclusions = string.IsNullOrWhiteSpace(request.InclusionsJson)
-                ? new List<CreateTourInclusionDto>()
-                : JsonSerializer.Deserialize<List<CreateTourInclusionDto>>(request.InclusionsJson) ?? new();
+            //var inclusions = string.IsNullOrWhiteSpace(request.InclusionsJson)
+            //    ? new List<CreateTourInclusionDto>()
+            //    : JsonSerializer.Deserialize<List<CreateTourInclusionDto>>(request.InclusionsJson) ?? new();
 
-            var addons = string.IsNullOrWhiteSpace(request.AddOnsJson)
-                ? new List<CreateTourAddOnDto>()
-                : JsonSerializer.Deserialize<List<CreateTourAddOnDto>>(request.AddOnsJson) ?? new();
+            //var addons = string.IsNullOrWhiteSpace(request.AddOnsJson)
+            //    ? new List<CreateTourAddOnDto>()
+            //    : JsonSerializer.Deserialize<List<CreateTourAddOnDto>>(request.AddOnsJson) ?? new();
 
-            tour.Title = request.Title;
-            tour.Description = request.Description;
-            tour.DurationHours = request.DurationHours;
-            tour.Price = request.Price;
-            tour.MaxGroupSize = request.MaxGroupSize;
 
-            var stopsEntities = stops.Select(s => new TourStops(
+            if (!string.IsNullOrWhiteSpace(request.StopsJson))
+            {
+                var stops = JsonSerializer.Deserialize<List<CreateTourStopDto>>
+                    (request.StopsJson) ?? new();
+
+                var stopsEntities = stops.Select(s => new TourStops(
                 tour.Id,
                 s.OrderIndex,
                 s.Title,
@@ -270,24 +272,66 @@ namespace Application.Services.UseCases.Tours
                 s.PlaceId
             )).ToList();
 
-            var inclusionEntities = inclusions.Select(i => new TourInclusion
-            {
-                Id = Guid.NewGuid(),
-                TourId = tour.Id,
-                Description = i.Description,
-                Type = Enum.Parse<InclusionType>(i.Type, true)
-            }).ToList();
+                await _tourRepository.ReplaceTourStopsAsync(
+                    tour,
+                    stopsEntities);
+            }
 
-            var addonEntities = addons.Select(a => new TourAddOn
-            {
-                Id = Guid.NewGuid(),
-                TourId = tour.Id,
-                Title = a.Title,
-                Price = a.Price,
-                IsActive = true
-            }).ToList();
 
-            await _tourRepository.ReplaceTourRelationsAsync(tour, stopsEntities, inclusionEntities, addonEntities);
+            if (!string.IsNullOrWhiteSpace(request.InclusionsJson))
+            {
+                var inclusions = JsonSerializer.Deserialize<List<CreateTourInclusionDto>>
+                    (request.InclusionsJson) ?? new();
+
+                var inclusionEntities = inclusions.Select(i => new TourInclusion
+                {
+                    Id = Guid.NewGuid(),
+                    TourId = tour.Id,
+                    Description = i.Description,
+                    Type = Enum.Parse<InclusionType>(i.Type, true)
+                }).ToList();
+
+                await _tourRepository.ReplaceTourInclusionsAsync(
+                    tour,
+                    inclusionEntities);
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.AddOnsJson))
+            {
+                var addons = JsonSerializer.Deserialize<List<CreateTourAddOnDto>>
+                    (request.AddOnsJson) ?? new();
+
+                var addonEntities = addons.Select(a => new TourAddOn
+                {
+                    Id = Guid.NewGuid(),
+                    TourId = tour.Id,
+                    Title = a.Title,
+                    Price = a.Price,
+                    IsActive = true
+                }).ToList();
+
+                await _tourRepository.ReplaceTourAddOnsAsync(
+                    tour,
+                    addonEntities);
+            }
+
+            
+            if (!string.IsNullOrWhiteSpace(request.Title))
+                tour.Title = request.Title;
+
+            if (!string.IsNullOrWhiteSpace(request.Description))
+                tour.Description = request.Description;
+
+            if (request.DurationHours.HasValue)
+                tour.DurationHours = request.DurationHours.Value;
+
+            if (request.Price.HasValue)
+                tour.Price = request.Price.Value;
+
+            if (request.MaxGroupSize.HasValue)
+                tour.MaxGroupSize = request.MaxGroupSize.Value;
+
+
 
 
             List<string>? oldImageUrlsToDelete = null;
@@ -342,6 +386,26 @@ namespace Application.Services.UseCases.Tours
 
                 await _tourRepository.ReplaceTourImagesAsync(tour, imageEntities);
             }
+
+            if (request.Price.HasValue && request.Price <= 0)
+                return new OperationResultDto
+                {
+                    IsSuccess = false,
+                    Message = "Price must be greater than zero"
+                };
+
+            if (request.DurationHours.HasValue && request.DurationHours <= 0)
+                return new OperationResultDto
+                {
+                    IsSuccess = false,
+                    Message = "Duration must be greater than zero"
+                };
+
+            if (request.MaxGroupSize.HasValue && request.MaxGroupSize <= 0)
+                return new OperationResultDto { IsSuccess = false, Message = "Max group size must be greater than zero" };
+
+
+
             await _tourRepository.UpdateAsync(tour);
 
             if (oldImageUrlsToDelete != null)
@@ -401,6 +465,7 @@ namespace Application.Services.UseCases.Tours
 
         public async Task<List<TourCardDto>> GetToursByPlaceAsync(int placeId)
         {
+
             var tours = await _tourRepository.GetToursByPlaceAsync(placeId);
 
             return tours.Select(t => new TourCardDto
