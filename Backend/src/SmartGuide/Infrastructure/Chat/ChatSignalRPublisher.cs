@@ -31,5 +31,16 @@ namespace Infrastructure.Chat
 
         public Task PublishPresenceAsync(string notifyUserId, UserPresenceRealtimeDto dto, CancellationToken cancellationToken = default) =>
             _hubContext.Clients.User(notifyUserId).UserPresenceChanged(dto);
+
+        public Task PublishConversationSummaryUpdatedAsync(Guid conversationId,ConversationUpdatedRealtimeDto dto,CancellationToken cancellationToken = default)
+        {
+            return _hubContext.Clients
+                .Group(HubGroupNames.Conversation(conversationId))
+                .ConversationSummaryUpdated(dto);
+        }
+
+
+
+
     }
 }

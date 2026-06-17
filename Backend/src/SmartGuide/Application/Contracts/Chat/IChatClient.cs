@@ -12,5 +12,6 @@ namespace Application.Contracts.Chat
         Task ChatMessageStatusUpdated(ChatMessageStatusRealtimeDto dto);
         Task ConversationReadReceipt(ConversationReadReceiptRealtimeDto dto);
         Task UserPresenceChanged(UserPresenceRealtimeDto dto);
+        Task ConversationSummaryUpdated(ConversationUpdatedRealtimeDto dto);
     }
 }

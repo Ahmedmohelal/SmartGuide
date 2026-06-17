@@ -282,6 +282,18 @@ namespace Application.Services.UseCases.Chat
 
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+            await _realtime.PublishConversationSummaryUpdatedAsync(conversation.Id,
+                     new ConversationUpdatedRealtimeDto
+                     {
+                         ConversationId = conversation.Id,
+                         LastMessagePreview = conversation.LastMessagePreview,
+                         LastMessageSentAtUtc = conversation.LastMessageSentAtUtc,
+                         IsEdited = false,
+                         IsDeleted = false
+                     },
+                     cancellationToken);
+
+
             var dto = MapMessageDto(message);
             var realtime = ToRealtimeDto(message);
 
@@ -331,20 +343,43 @@ namespace Application.Services.UseCases.Chat
             message.EditedAtUtc = now;
             _messages.Update(message);
 
-            var conversation = await _conversations.GetByIdForUpdateAsync(message.ConversationId, cancellationToken);
+            var conversation = await _conversations.GetByIdForUpdateAsync(message.ConversationId,cancellationToken);
+
             if (conversation != null && !conversation.IsDeleted)
             {
                 conversation.UpdatedAtUtc = now;
-                var latest = await _messages.GetLatestNonDeletedAsync(conversation.Id, cancellationToken);
-                if (latest != null)
+
+                if (conversation.LastMessageSentAtUtc == message.SentAtUtc)
                 {
-                    conversation.LastMessagePreview = latest.Content.Length > 200 ? latest.Content[..200] : latest.Content;
-                    conversation.LastMessageSentAtUtc = latest.SentAtUtc;
+                    conversation.LastMessagePreview =
+                        newContent.Length > 200
+                            ? newContent[..200]
+                            : newContent;
+
+                    conversation.LastMessageSentAtUtc =
+                        message.SentAtUtc;
                 }
+
                 _conversations.Update(conversation);
             }
 
             await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            if (conversation != null)
+            {
+                await _realtime.PublishConversationSummaryUpdatedAsync(
+                    conversation.Id,
+                    new ConversationUpdatedRealtimeDto
+                    {
+                        ConversationId = conversation.Id,
+                        LastMessagePreview = conversation.LastMessagePreview,
+                        LastMessageSentAtUtc = conversation.LastMessageSentAtUtc,
+                        IsEdited = true,
+                        IsDeleted = false
+                    },
+                    cancellationToken);
+            }
+
 
             var dto = MapMessageDto(message);
             await _realtime.PublishMessageEditedAsync(message.ConversationId, new ChatMessageEditedRealtimeDto
@@ -387,6 +422,7 @@ namespace Application.Services.UseCases.Chat
             if (conversation != null && !conversation.IsDeleted)
             {
                 conversation.UpdatedAtUtc = now;
+
                 var latest = await _messages.GetLatestNonDeletedAsync(conversation.Id, cancellationToken);
                 if (latest != null)
                 {
@@ -404,6 +440,22 @@ namespace Application.Services.UseCases.Chat
             }
 
             await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            if (conversation != null)
+            {
+                await _realtime.PublishConversationSummaryUpdatedAsync(
+                    conversation.Id,
+                    new ConversationUpdatedRealtimeDto
+                    {
+                        ConversationId = conversation.Id,
+                        LastMessagePreview = conversation.LastMessagePreview,
+                        LastMessageSentAtUtc = conversation.LastMessageSentAtUtc,
+                        IsEdited = false,
+                        IsDeleted = true
+                    },
+                    cancellationToken);
+            }
+
 
             await _realtime.PublishMessageDeletedAsync(message.ConversationId, new ChatMessageDeletedRealtimeDto
             {
