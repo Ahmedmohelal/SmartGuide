@@ -28,8 +28,8 @@ namespace API.Controllers
 
             var result = await _authService.RegisterAsync(model);
 
-            Console.WriteLine($"RT => {result.RefreshToken}");
-            Console.WriteLine($"RTT => {result.RefreshTokenExpiresOn}");
+            //Console.WriteLine($"RT => {result.RefreshToken}");
+            //Console.WriteLine($"RTT => {result.RefreshTokenExpiresOn}");
 
             if (!result.IsAuthenticated)
                 return BadRequest(result.Message);
