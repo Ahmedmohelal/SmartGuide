@@ -55,7 +55,7 @@ namespace Infrastructure.Settings
         {
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
-                    configuration.GetConnectionString("DefaultConnection"),
+                    configuration.GetConnectionString("AhmedDefaultConnection"),
                         sqlOptions => sqlOptions.EnableRetryOnFailure()
             ));
 
@@ -110,6 +110,8 @@ namespace Infrastructure.Settings
                    };
                });
 
+
+
             //Repositories 
             services.AddScoped<ITourRepository, TourRepository>();
             services.AddScoped<IProfileRepository<TourGuideProfileDto, UpdateTourGuideProfileDto>, TourGuideProfileRepository>();
@@ -123,6 +125,11 @@ namespace Infrastructure.Settings
             services.Configure<GoogleAuthOptions>(configuration.GetSection(GoogleAuthOptions.SectionName));
             services.Configure<EmailSettings>(configuration.GetSection(EmailSettings.SectionName));
             services.Configure<StripeSettings>(configuration.GetSection(StripeSettings.SectionName));
+            services.Configure<CloudinarySettings>(configuration.GetSection("CloudinarySettings"));
+
+
+
+
 
             services.AddHttpContextAccessor();
             services.AddScoped<IImageUrlService, ImageUrlService>();
@@ -144,6 +151,9 @@ namespace Infrastructure.Settings
             services.AddScoped<IBookingAdminService, BookingAdminService>();
             services.AddScoped<IGuideDashboardService, GuideDashboardService>();
             services.AddScoped<INotificationService, NotificationService>();
+            services.AddScoped<IAttachmentService, CloudinaryAttachmentService>();
+
+
 
             //seeders
             services.AddScoped<PlacesSeeder>();

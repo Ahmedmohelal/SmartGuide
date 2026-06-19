@@ -30,7 +30,12 @@ namespace Application.Settings
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<ITourGuideProfileService, TourGuideProfileService>();
             services.AddScoped<ITouristProfileService, TouristProfileService>();
-            services.AddScoped<IAttachmentService, AttachmentService>();
+
+
+            //services.AddScoped<IAttachmentService, AttachmentService>();
+
+
+
             services.AddScoped<ITouristFavoritesService, TouristFavoritesService>();
 
             services.AddScoped<ITourService, TourService>();

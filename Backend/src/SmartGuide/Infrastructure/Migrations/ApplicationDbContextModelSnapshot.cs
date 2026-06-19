@@ -65,7 +65,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("EntityType");
 
-                    b.ToTable("AdminAuditLogs");
+                    b.ToTable("AdminAuditLogs", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.Book.Booking", b =>
@@ -468,7 +468,7 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Places");
+                    b.ToTable("Places", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.Notifications.Notification", b =>
@@ -551,7 +551,7 @@ namespace Infrastructure.Migrations
                     b.HasIndex("UserId", "PlaceId")
                         .IsUnique();
 
-                    b.ToTable("PlaceRatings");
+                    b.ToTable("PlaceRatings", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.Profiles.TourGuide.TourGuideCity", b =>
@@ -697,7 +697,7 @@ namespace Infrastructure.Migrations
                     b.HasIndex("TouristUserId", "PlaceId")
                         .IsUnique();
 
-                    b.ToTable("SavedPlaces");
+                    b.ToTable("SavedPlaces", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.Tours.Tour", b =>
@@ -890,7 +890,7 @@ namespace Infrastructure.Migrations
                     b.HasIndex("GuideId")
                         .IsUnique();
 
-                    b.ToTable("GuideWallets", t =>
+                    b.ToTable("GuideWallets", null, t =>
                         {
                             t.HasCheckConstraint("CK_GuideWallet_Balance_NonNegative", "[Balance] >= 0");
                         });
@@ -945,7 +945,7 @@ namespace Infrastructure.Migrations
 
                     b.HasIndex("WalletId");
 
-                    b.ToTable("GuideWalletTransactions");
+                    b.ToTable("GuideWalletTransactions", (string)null);
                 });
 
             modelBuilder.Entity("Infrastructure.Data.Entities.Identity.ApplicationUser", b =>

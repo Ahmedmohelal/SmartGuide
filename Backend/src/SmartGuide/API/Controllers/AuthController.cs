@@ -17,7 +17,7 @@ namespace API.Controllers
             _authService = authService;
         }
 
-
+            
 
         [HttpPost("register")]
         public async Task<ActionResult<AuthDto>> RegisterAsync([FromForm] RegisterDto model)
