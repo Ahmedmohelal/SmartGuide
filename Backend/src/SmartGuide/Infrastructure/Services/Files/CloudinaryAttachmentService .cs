@@ -85,10 +85,47 @@ namespace Infrastructure.Services.Files
         }
 
         public async Task<bool> Delete(
-            string fileUrl,
-            string folderName)
+    string fileUrl,
+    string folderName)
         {
-            return true;
+            try
+            {
+                if (string.IsNullOrWhiteSpace(fileUrl))
+                    return false;
+
+                var uri = new Uri(fileUrl);
+
+                var segments = uri.AbsolutePath.Split('/');
+
+                var uploadIndex = Array.IndexOf(segments, "upload");
+
+                if (uploadIndex == -1)
+                    return false;
+
+                var publicIdParts = segments
+                    .Skip(uploadIndex + 2) // skip upload + version
+                    .ToArray();
+
+                var publicId = string.Join("/", publicIdParts);
+
+                var extension = Path.GetExtension(publicId);
+
+                if (!string.IsNullOrEmpty(extension))
+                {
+                    publicId = publicId[..^extension.Length];
+                }
+
+                var deleteParams = new DeletionParams(publicId);
+
+                var result =
+                    await _cloudinary.DestroyAsync(deleteParams);
+
+                return result.Result == "ok";
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }
