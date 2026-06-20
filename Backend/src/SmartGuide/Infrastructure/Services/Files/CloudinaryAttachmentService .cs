@@ -24,8 +24,7 @@ namespace Infrastructure.Services.Files
 
         private readonly long maxFileSize = 5 * 1024 * 1024;
 
-        public CloudinaryAttachmentService(
-            IOptions<CloudinarySettings> options)
+        public CloudinaryAttachmentService(IOptions<CloudinarySettings> options)
         {
             var settings = options.Value;
 
@@ -37,9 +36,7 @@ namespace Infrastructure.Services.Files
             _cloudinary = new Cloudinary(account);
         }
 
-        public async Task<string?> Upload(
-            string folderName,
-            IFormFile file)
+        public async Task<string?> Upload(string folderName, IFormFile file)
         {
             try
             {
@@ -47,31 +44,27 @@ namespace Infrastructure.Services.Files
                     return null;
 
                 if (file.Length > maxFileSize)
-                    return null;
+                    return "The File Must Be Less Than 5 MB";
 
                 var extension =
                     Path.GetExtension(file.FileName)
                         .ToLower();
 
                 if (!allowedExtensions.Contains(extension))
-                    return null;
+                    return "The File Must Be A JPG, JPEG, Or PNG";
 
-                await using var stream =
-                    file.OpenReadStream();
+                await using var stream = file.OpenReadStream();
 
-                var uploadParams =
-                    new ImageUploadParams
-                    {
-                        File = new FileDescription(
+                var uploadParams = new ImageUploadParams
+                {
+                    File = new FileDescription(
                             file.FileName,
                             stream),
 
-                        Folder = $"SmartGuide/{folderName}"
-                    };
+                    Folder = $"SmartGuide/{folderName}"
+                };
 
-                var result =
-                    await _cloudinary.UploadAsync(
-                        uploadParams);
+                var result = await _cloudinary.UploadAsync(uploadParams);
 
                 if (result.Error != null)
                     return null;
