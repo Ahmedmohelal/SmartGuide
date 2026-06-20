@@ -1,4 +1,6 @@
-﻿using Application.DTOs.Notifications;
+﻿using Application.DTOs.FcmTokens;
+using Application.DTOs.Notifications;
+using Application.Services.Interfaces.Auth;
 using Application.Services.Interfaces.Notifications;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -13,10 +15,12 @@ namespace API.Controllers.Notifications
     public class NotificationsController : ControllerBase
     {
         private readonly INotificationService _notificationService;
+        private readonly IUserService _userService;
 
-        public NotificationsController(INotificationService notificationService)
+        public NotificationsController(INotificationService notificationService,IUserService userService)
         {
             _notificationService = notificationService;
+            _userService = userService;
         }
         // Called when user opens the app to fetch all notifications from DB
         [HttpGet]
@@ -31,6 +35,29 @@ namespace API.Controllers.Notifications
             return Ok(result);
 
         }
+
+        [Authorize]
+        [HttpPost("fcm-token")]
+        public async Task<IActionResult> SaveFcmToken(
+    SaveFcmTokenDto dto)
+        {
+            var userId =
+                User.FindFirstValue(
+                    ClaimTypes.NameIdentifier);
+
+
+            if (string.IsNullOrWhiteSpace(dto.Token))
+                return BadRequest("Token is required.");
+
+
+            await _userService
+                .SaveFcmTokenAsync(
+                    userId!,
+                    dto.Token);
+
+            return Ok();
+        }
+
 
 
         // Called to show unread badge count in navbar

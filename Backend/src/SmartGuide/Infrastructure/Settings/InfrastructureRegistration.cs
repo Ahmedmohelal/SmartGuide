@@ -55,7 +55,7 @@ namespace Infrastructure.Settings
         {
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
-                    configuration.GetConnectionString("DefaultConnection"),
+                    configuration.GetConnectionString("AhmedDefaultConnection"),
                         sqlOptions => sqlOptions.EnableRetryOnFailure()
             ));
 
@@ -172,6 +172,8 @@ namespace Infrastructure.Settings
             services.AddSignalR();
             services.AddSingleton<IUserIdProvider, NameIdentifierUserIdProvider>();
             services.AddScoped<IPlaceRatingRepository, PlaceRatingRepository>();
+            services.AddScoped<IFirebaseNotificationService, FirebaseNotificationService>();
+
 
             services.AddSingleton<IConnectionMultiplexer>(sp =>
             {

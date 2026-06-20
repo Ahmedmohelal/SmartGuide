@@ -15,23 +15,22 @@ namespace Infrastructure.Services.Notifications
 {
     public class NotificationService : INotificationService
     {
-        public NotificationService(ApplicationDbContext context, IHubContext<NotificationHub> hubContext, ILogger<NotificationService> logger)
+        public NotificationService(ApplicationDbContext context, IHubContext<NotificationHub> hubContext, ILogger<NotificationService> logger, IFirebaseNotificationService firebaseNotificationService)
         {
             _context = context;
             _hubContext = hubContext;
             _logger = logger;
+            _firebaseNotificationService = firebaseNotificationService;
         }
 
         private readonly ApplicationDbContext _context;
         private readonly IHubContext<NotificationHub> _hubContext;
         private readonly ILogger<NotificationService> _logger;
+        private readonly IFirebaseNotificationService _firebaseNotificationService;
 
 
 
-        public async Task SendAsync(string userId, string title, string message, NotificationType type,
-        string? referenceId = null,
-        string? referenceType = null,
-        CancellationToken cancellationToken = default)
+        public async Task SendAsync(string userId, string title, string message, NotificationType type,string? referenceId = null,string? referenceType = null,CancellationToken cancellationToken = default)
         {
             var notification = new Notification
             {
@@ -65,6 +64,7 @@ namespace Infrastructure.Services.Notifications
                                     "Real-time delivery failed for user {UserId}. " +
                                     "Notification saved in DB as fallback.", userId);
             }
+            await SendFcmNotificationAsync(userId, title, message, cancellationToken);
 
         }
 
@@ -113,6 +113,9 @@ namespace Infrastructure.Services.Notifications
             });
 
             await Task.WhenAll(tasks);
+
+            var fcmTasks = notifications.Select(n => SendFcmNotificationAsync(n.UserId, n.Title, n.Message, cancellationToken));
+            await Task.WhenAll(fcmTasks);
         }
 
         public async Task<NotificationListDto> GetUserNotificationsAsync(string userId,int page = 1,int pageSize = 20,
@@ -189,6 +192,40 @@ namespace Infrastructure.Services.Notifications
             await _context.SaveChangesAsync(cancellationToken);
             return true;
         }
+
+
+        private async Task SendFcmNotificationAsync(
+    string userId,
+    string title,
+    string message,
+    CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var user = await _context.Users
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(
+                        x => x.Id == userId,
+                        cancellationToken);
+
+                if (string.IsNullOrWhiteSpace(user?.FcmToken))
+                    return;
+
+                await _firebaseNotificationService.SendAsync(
+                    user.FcmToken,
+                    title,
+                    message);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(
+                    ex,
+                    "FCM delivery failed for user {UserId}",
+                    userId);
+            }
+        }
+
+
         private static NotificationDTO MapToDto(Notification n) => new()
         {
             Id = n.Id,

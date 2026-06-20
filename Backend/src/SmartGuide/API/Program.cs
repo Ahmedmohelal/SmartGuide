@@ -3,6 +3,8 @@ using API.Middleware;
 using API.Middlewares;
 using Application.Services.Interfaces;
 using Application.Settings;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
 using Infrastructure.Data;
 using Infrastructure.Hubs;
 using Infrastructure.Services.Email;
@@ -45,6 +47,10 @@ builder.Services.InfrastructureConfiguration(builder.Configuration);
 builder.Services.ApplicationConfiguration(builder.Configuration);
 
 
+FirebaseApp.Create(new AppOptions
+{
+    Credential = GoogleCredential.FromFile(builder.Configuration["Firebase:CredentialPath"])
+});
 
 
 builder.Services.AddControllers();

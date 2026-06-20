@@ -26,6 +26,8 @@ namespace Infrastructure.Data.Entities.Identity
         public string? ResetPasswordOtp { get; set; }
         public DateTime? ResetPasswordOtpExpiry { get; set; }
 
+        public string? FcmToken { get; set; }
+
         public virtual TouristProfile? TouristProfile { get; set; }
         public virtual TourGuideProfile? TourGuideProfile { get; set; }
 
