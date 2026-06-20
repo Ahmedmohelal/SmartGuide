@@ -19,7 +19,7 @@ namespace Infrastructure.Data.Entities.Identity
         public string Role { get; set; } = null!;
         public string? GuideLicenseImage { get; set; }
         public string? NationalIdImage { get; set; }
-        public GuideVerificationStatus IsGuideVerified { get; set; } = GuideVerificationStatus.NotVerified;
+        public GuideVerificationStatus IsGuideVerified { get; set; } = GuideVerificationStatus.Pending;
         public GuideAccountStatus GuideAccountStatus { get; set; } = GuideAccountStatus.Pending;
         public bool ForceLogoutRequired { get; set; }
         public string? ProfileImage { get; set; }
