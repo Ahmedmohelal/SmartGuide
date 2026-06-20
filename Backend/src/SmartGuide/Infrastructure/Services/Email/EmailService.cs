@@ -36,6 +36,7 @@ namespace Infrastructure.Services.Email
             using var client = new SmtpClient(_settings.SmtpServer, _settings.Port)
             {
                 EnableSsl = true,
+                UseDefaultCredentials = false,
                 Credentials = new NetworkCredential(_settings.SenderEmail, _settings.Password)
             };
 
