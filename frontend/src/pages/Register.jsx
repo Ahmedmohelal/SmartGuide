@@ -28,6 +28,25 @@ export default function Register() {
 
   const [fieldErrors, setFieldErrors] = useState({});
   const [generalError, setGeneralError] = useState("");
+  const [passwordStrength, setPasswordStrength] = useState({
+    hasMinLength: false,
+    hasUpperCase: false,
+    hasLowerCase: false,
+    hasNumber: false,
+    hasSpecialChar: false,
+  });
+
+  const validatePassword = (pwd) => {
+    const strength = {
+      hasMinLength: pwd.length >= 8,
+      hasUpperCase: /[A-Z]/.test(pwd),
+      hasLowerCase: /[a-z]/.test(pwd),
+      hasNumber: /[0-9]/.test(pwd),
+      hasSpecialChar: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(pwd),
+    };
+    setPasswordStrength(strength);
+    return Object.values(strength).every((val) => val === true);
+  };
 
   const {
     register,
@@ -46,6 +65,28 @@ export default function Register() {
   });
 
   const onSubmit = async (data) => {
+    setFieldErrors({});
+    setGeneralError("");
+
+    // Validate password requirements
+    if (!validatePassword(data.password)) {
+      setFieldErrors({
+        password:
+          "Password must be at least 8 characters with uppercase, lowercase, number, and special character.",
+      });
+      setGeneralError(
+        "Please fix password requirements before proceeding.",
+      );
+      return;
+    }
+
+    // Validate password match
+    if (data.password !== data.confirmPassword) {
+      setFieldErrors({ confirmPassword: "Passwords do not match." });
+      setGeneralError("Please ensure both passwords match.");
+      return;
+    }
+
     const basicInfo = {
       FirstName: data.firstName,
       LastName: data.lastName,
@@ -64,8 +105,6 @@ export default function Register() {
     }
 
     setLoading(true);
-    setFieldErrors({});
-    setGeneralError("");
 
     try {
       const submitData = new FormData();
@@ -283,6 +322,7 @@ export default function Register() {
                     {...register("password", {
                       required: "Password is required",
                     })}
+                    onChange={(e) => validatePassword(e.target.value)}
                     className={`w-full border-2 rounded-xl px-4 py-2.5 outline-none transition ${fieldErrors.password ? "border-red-500 ring-2 ring-red-100 bg-red-50" : "focus:border-teal-600 border-gray-100"}`}
                   />
                   <div
@@ -294,6 +334,26 @@ export default function Register() {
                   {errors.password && (
                     <FieldError msg={errors.password.message} />
                   )}
+                  {fieldErrors.password && (
+                    <FieldError msg={fieldErrors.password} />
+                  )}
+                  <div className="mt-2 space-y-1 text-xs">
+                    <p className={`${passwordStrength.hasMinLength ? "text-green-600" : "text-gray-400"}`}>
+                      ✓ At least 8 characters
+                    </p>
+                    <p className={`${passwordStrength.hasUpperCase ? "text-green-600" : "text-gray-400"}`}>
+                      ✓ Uppercase letter
+                    </p>
+                    <p className={`${passwordStrength.hasLowerCase ? "text-green-600" : "text-gray-400"}`}>
+                      ✓ Lowercase letter
+                    </p>
+                    <p className={`${passwordStrength.hasNumber ? "text-green-600" : "text-gray-400"}`}>
+                      ✓ Number
+                    </p>
+                    <p className={`${passwordStrength.hasSpecialChar ? "text-green-600" : "text-gray-400"}`}>
+                      ✓ Special character (!@#$%^&*)
+                    </p>
+                  </div>
                 </div>
                 <div className="flex flex-col relative">
                   <label className="text-xs font-bold text-gray-700 mb-1 uppercase">
@@ -315,6 +375,9 @@ export default function Register() {
                   </div>
                   {errors.confirmPassword && (
                     <FieldError msg={errors.confirmPassword.message} />
+                  )}
+                  {fieldErrors.confirmPassword && (
+                    <FieldError msg={fieldErrors.confirmPassword} />
                   )}
                 </div>
               </div>
