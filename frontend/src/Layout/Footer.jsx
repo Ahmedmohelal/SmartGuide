@@ -58,18 +58,13 @@ export default function HomeFooter() {
         </nav>
 
         <div className="m-15 flex justify-center ">
-          {/* {[Facebook, Instagram, Twitter, Youtube].map((Icon, i) => (
-            <a
-              key={i}
-              href="#"
-              className="text-white/70 transition hover:text-white"
-              aria-label="social"
-            >
-              <Icon className="h-5 w-5" />
-            </a>
-          ))} */}
+          
 
           <Tooltip />
+
+        
+
+
         </div>
 
         <p className="mt-10 text-xs text-white/50">{footer.copyright}</p>

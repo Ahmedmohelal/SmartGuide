@@ -87,11 +87,11 @@ const team = [
   { name: "Sawsan Amer", role: "Backend Developer" },
   { name: "Ahmed Medhat", role: "Backend Developer" },
   { name: "Abdullah Elqisy", role: "Flutter" },
-  { name: "Ebrahim", role: "Flutter" },
-  { name: "Abdullah", role: "UI/UX Designer" },
-  { name: "Mostafa", role: "UI/UX Designer" },
-  { name: "Hana", role: "AI Trainer" },
-  { name: "Lena", role: "Data Analyst" },
+  { name: "Ebrahim Elhaw", role: "Flutter" },
+  { name: "Abdullah Awadin", role: "UI/UX Designer" },
+  { name: "Mostafa Heikal", role: "UI/UX Designer" },
+  { name: "Hana Ashraf", role: "AI Trainer" },
+  { name: "Lina Ashraf", role: "Data Analyst" },
 ];
 
 function AnimatedSection({ children, className = "" }) {
@@ -177,14 +177,14 @@ export default function AboutUs() {
             <HashLink
               smooth
               to="/home#tours"
-              className="rounded-xl bg-egypt-gold px-10 py-4 text-lg font-bold text-white shadow-lg transition hover:bg-[#b08c18]"
+              className="rounded-xl bg-egypt-gold px-10 py-4 text-lg font-bold text-white shadow-lg transition hover:bg-white hover:text-black"
             >
               Explore Tours
             </HashLink>
             <HashLink
               smooth
               to="/home#guides"
-              className="rounded-xl bg-white px-10 py-4 text-lg font-bold text-egypt-teal shadow-lg transition hover:bg-slate-100"
+              className="rounded-xl bg-white px-10 py-4 text-lg font-bold text-egypt-teal shadow-lg transition hover:bg-egypt-gold hover:text-white"
             >
               Meet Our Guides
             </HashLink>
