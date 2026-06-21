@@ -85,7 +85,7 @@ namespace Infrastructure.Services.GuideDashboard
 
             var tours = await _context.Tours
                 .AsNoTracking()
-                .Where(t => t.GuideId == guideId)
+                .Where(t => t.GuideId == guideId && t.IsActive)
                 .Select(t => new
                 {
                     t.Id,
@@ -116,8 +116,11 @@ namespace Infrastructure.Services.GuideDashboard
                 .Select(w => new { w.Balance })
                 .FirstOrDefaultAsync();
 
-            var activeTours = tours.Count(x => x.IsActive);
+            var activeTours = tours.Count;
             var totalTours = tours.Count;
+            var inactiveTours = await _context.Tours
+                .AsNoTracking()
+                .CountAsync(t => t.GuideId == guideId && !t.IsActive);
 
             var cancelledTours = bookings.Count(b => b.Status == BookingStatus.Cancelled);
 
@@ -157,7 +160,7 @@ namespace Infrastructure.Services.GuideDashboard
 
                 TotalTours = totalTours,
                 ActiveTours = activeTours,
-                InactiveTours = totalTours - activeTours,
+                InactiveTours = inactiveTours,
 
                 UpcomingTours = upcomingTours,
                 CancelledTours = cancelledTours,
@@ -261,7 +264,7 @@ namespace Infrastructure.Services.GuideDashboard
 
             var tourBase = await _context.Tours
                 .AsNoTracking()
-                .Where(t => t.GuideId == guideId)
+                .Where(t => t.GuideId == guideId && t.IsActive)
                 .Select(t => new
                 {
                     t.Id,
