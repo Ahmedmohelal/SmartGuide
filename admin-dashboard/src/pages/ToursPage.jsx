@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import toast from "react-hot-toast";
 import PageHeader from "../components/PageHeader";
 import {
@@ -17,10 +17,9 @@ export default function ToursPage() {
   
   // Filter states
   const [search, setSearch] = useState("");
-  const [guideId, setGuideId] = useState("");
+  
   const [isActive, setIsActive] = useState("");
-  const [minPrice, setMinPrice] = useState("");
-  const [maxPrice, setMaxPrice] = useState("");
+  const [priceSort, setPriceSort] = useState("");
   const [pageIndex, setPageIndex] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
 
@@ -33,10 +32,12 @@ export default function ToursPage() {
       };
       
       if (search.trim()) params.search = search.trim();
-      if (guideId.trim()) params.guideId = guideId.trim();
+      
       if (isActive !== "") params.isActive = isActive === "true";
-      if (minPrice) params.minPrice = parseFloat(minPrice);
-      if (maxPrice) params.maxPrice = parseFloat(maxPrice);
+      if (priceSort) {
+        params.sortBy = "price";
+        params.order = priceSort === "min" ? "asc" : "desc";
+      }
       
       const response = await fetchTours(params);
       
@@ -54,7 +55,14 @@ export default function ToursPage() {
     } finally {
       setLoading(false);
     }
-  }, [pageIndex, search, guideId, isActive, minPrice, maxPrice]);
+  }, [pageIndex, search, isActive, priceSort]);
+
+  const sortedTours = useMemo(() => {
+    if (!priceSort) return tours;
+    return [...tours].sort((a, b) =>
+      priceSort === "min" ? a.price - b.price : b.price - a.price,
+    );
+  }, [tours, priceSort]);
 
   useEffect(() => {
     load();
@@ -96,7 +104,7 @@ export default function ToursPage() {
       <PageHeader title="Tours" subtitle="Activate, deactivate, or remove tours." />
 
       {/* Filters */}
-      <div className="admin-card space-y-4">
+      <div className="admin-card space-y-4 p-3">
         <h3 className="font-semibold">Filters</h3>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {/* Search */}
@@ -114,20 +122,7 @@ export default function ToursPage() {
             />
           </div>
 
-          {/* Guide ID */}
-          <div>
-            <label className="admin-label">Guide ID</label>
-            <input
-              type="text"
-              placeholder="Filter by guide..."
-              value={guideId}
-              onChange={(e) => {
-                setGuideId(e.target.value);
-                handleFilterChange();
-              }}
-              className="admin-input"
-            />
-          </div>
+         
 
           {/* Status */}
           <div>
@@ -146,34 +141,20 @@ export default function ToursPage() {
             </select>
           </div>
 
-          {/* Min Price */}
           <div>
-            <label className="admin-label">Min Price</label>
-            <input
-              type="number"
-              placeholder="Min price..."
-              value={minPrice}
+            <label className="admin-label">Price</label>
+            <select
+              value={priceSort}
               onChange={(e) => {
-                setMinPrice(e.target.value);
+                setPriceSort(e.target.value);
                 handleFilterChange();
               }}
               className="admin-input"
-            />
-          </div>
-
-          {/* Max Price */}
-          <div>
-            <label className="admin-label">Max Price</label>
-            <input
-              type="number"
-              placeholder="Max price..."
-              value={maxPrice}
-              onChange={(e) => {
-                setMaxPrice(e.target.value);
-                handleFilterChange();
-              }}
-              className="admin-input"
-            />
+            >
+              <option value="">All</option>
+              <option value="min">Min Price </option>
+              <option value="max">Max Price </option>
+            </select>
           </div>
         </div>
       </div>
@@ -208,7 +189,7 @@ export default function ToursPage() {
                 </td>
               </tr>
             ) : (
-              tours.map((t) => (
+              sortedTours.map((t) => (
                 
                 <tr key={t.id}>
                   <td>
