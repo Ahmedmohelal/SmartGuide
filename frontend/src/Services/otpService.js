@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'http://smartguide.runasp.net/api/Auth';
+const BASE_URL = 'https://smartguide.runasp.net/api/Auth';
 
 const otpService = {
   // 1. إرسال كود الاسترجاع للإيميل

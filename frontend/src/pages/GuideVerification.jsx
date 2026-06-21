@@ -2,10 +2,13 @@ import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { IdCard, File, X, Loader2 } from "lucide-react";
 import authService from "../Services/authService";
+import {toast} from "react-hot-toast";
+
 
 export default function GuideVerification() {
   const navigate = useNavigate();
   const location = useLocation();
+
 
   const basicInfo = location.state?.basicInfo;
 
@@ -29,7 +32,8 @@ export default function GuideVerification() {
   const validateFile = (file) => {
     if (!file) return false;
     if (file.size > MAX_SIZE) {
-      alert("File must be less than 5MB");
+      
+      toast.error("File must be less than 5MB");
       return false;
     }
     return true;
@@ -75,7 +79,8 @@ export default function GuideVerification() {
 
       await authService.register(formData);
 
-      alert("Registration submitted successfully! You can now login.");
+      
+        toast.success("Registration successful! Please log in.");
       navigate("/login");
     } catch (err) {
       setError(err.message || "Registration failed. Please try again.");

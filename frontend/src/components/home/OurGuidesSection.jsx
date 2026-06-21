@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Bookmark, ChevronLeft, ChevronRight, MapPin, Star } from "lucide-react";
+import {
+  Bookmark,
+  ChevronLeft,
+  ChevronRight,
+  MapPin,
+  Star,
+} from "lucide-react";
 import { getAllGuides } from "../../Services/api/guideService";
 import {
   deleteSavedGuide,
@@ -8,6 +14,7 @@ import {
   saveGuide,
 } from "../../Services/api/savedGuideService";
 import { getToken, isGuide } from "../../Services/utils/tokenUtils";
+import GuideCarousel from "../GuideCarousel";
 
 const getGuideName = (guide) => {
   if (guide.firstName && guide.lastName) {
@@ -16,7 +23,13 @@ const getGuideName = (guide) => {
   if (guide.FirstName && guide.LastName) {
     return `${guide.FirstName} ${guide.LastName}`;
   }
-  return guide.name || guide.Name || guide.userName || guide.UserName || "Unknown Guide";
+  return (
+    guide.name ||
+    guide.Name ||
+    guide.userName ||
+    guide.UserName ||
+    "Unknown Guide"
+  );
 };
 
 const getGuideImage = (guide) =>
@@ -87,16 +100,16 @@ export default function OurGuidesSection() {
         const guidesList = Array.isArray(guidesData?.data)
           ? guidesData.data
           : Array.isArray(guidesData?.items)
-          ? guidesData.items
-          : Array.isArray(guidesData?.Items)
-          ? guidesData.Items
-          : Array.isArray(guidesData?.value)
-          ? guidesData.value
-          : Array.isArray(guidesData?.Value)
-          ? guidesData.Value
-          : Array.isArray(guidesData)
-          ? guidesData
-          : [];
+            ? guidesData.items
+            : Array.isArray(guidesData?.Items)
+              ? guidesData.Items
+              : Array.isArray(guidesData?.value)
+                ? guidesData.value
+                : Array.isArray(guidesData?.Value)
+                  ? guidesData.Value
+                  : Array.isArray(guidesData)
+                    ? guidesData
+                    : [];
         setGuides(guidesList);
 
         if (isAuthenticated && !isUserGuide && savedData) {
@@ -136,7 +149,10 @@ export default function OurGuidesSection() {
     if (!carousel || !item) return;
 
     carousel.scrollBy({
-      left: direction === "next" ? item.getBoundingClientRect().width + 24 : -item.getBoundingClientRect().width - 24,
+      left:
+        direction === "next"
+          ? item.getBoundingClientRect().width + 24
+          : -item.getBoundingClientRect().width - 24,
       behavior: "smooth",
     });
   }, []);
@@ -163,11 +179,15 @@ export default function OurGuidesSection() {
       if (isGuideSaved(guideId)) {
         await deleteSavedGuide(guideId);
         setSavedGuides((prev) =>
-          prev.filter((guide) => String(guide.guideId ?? guide.id) !== String(guideId))
+          prev.filter(
+            (guide) => String(guide.guideId ?? guide.id) !== String(guideId),
+          ),
         );
       } else {
         await saveGuide(guideId);
-        const guide = guides.find((g) => String(guideRowId(g)) === String(guideId));
+        const guide = guides.find(
+          (g) => String(guideRowId(g)) === String(guideId),
+        );
         if (guide) {
           setSavedGuides((prev) => [
             ...prev,
@@ -184,7 +204,9 @@ export default function OurGuidesSection() {
       });
 
       if (error.response?.status === 404) {
-        alert("Saved guides endpoint not found. The feature will be available soon!");
+        alert(
+          "Saved guides endpoint not found. The feature will be available soon!",
+        );
       } else {
         alert("Failed to save guide. Please try again later.");
       }
@@ -220,7 +242,7 @@ export default function OurGuidesSection() {
             <div className="mx-auto mt-4 h-1 w-20 rounded-full bg-egypt-teal sm:mx-0" />
           </div>
 
-          {guides.length > 1 && (
+          {/* {guides.length > 1 && (
             <div className="flex items-center justify-center gap-3">
               <button
                 type="button"
@@ -239,84 +261,19 @@ export default function OurGuidesSection() {
                 <ChevronRight className="h-5 w-5" />
               </button>
             </div>
-          )}
+          )} */}
         </div>
 
-        <div
-          ref={carouselRef}
-          onScroll={handleCarouselScroll}
-          dir="ltr"
-          className="guides-carousel mt-12 flex snap-x snap-mandatory gap-6 overflow-x-auto scroll-smooth pb-6"
-        >
-          {guides.map((guide) => {
-            const gid = guideRowId(guide);
-            const saved = gid != null && isGuideSaved(gid);
+        <GuideCarousel
+          guides={guides}
+          getGuideName={getGuideName}
+          getGuideImage={getGuideImage}
+          getGuideCity={getGuideCity}
+          getGuideRating={getGuideRating}
+          guideRowId={guideRowId}
+        />
 
-            return (
-              <article
-                key={gid != null ? String(gid) : getGuideName(guide)}
-                data-guide-card
-                className="relative flex min-h-[430px] w-[82vw] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_18px_45px_rgb(15_23_42_/_0.08)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_24px_60px_rgb(15_23_42_/_0.14)] sm:w-[calc((100%-24px)/2)] lg:w-[calc((100%-72px)/4)]"
-              >
-                {isAuthenticated && !isUserGuide && saved && (
-                  <div className="absolute right-3 top-3 z-10 flex items-center gap-1 rounded-full bg-emerald-600 px-3 py-1 text-xs font-bold text-white shadow-sm">
-                    <Bookmark className="h-3.5 w-3.5 fill-current" />
-                    Saved
-                  </div>
-                )}
-                <div className="h-64 overflow-hidden bg-slate-100">
-                  <img
-                    src={getGuideImage(guide)}
-                    alt={getGuideName(guide)}
-                    className="h-full w-full object-cover transition duration-500 hover:scale-105"
-                  />
-                </div>
-                <div className="flex flex-1 flex-col p-5" dir="ltr">
-                  <h3 className="text-lg font-bold leading-snug text-slate-900">
-                    {getGuideName(guide)}
-                  </h3>
-                  <p className="mt-2 flex-1 text-sm leading-relaxed text-slate-600">
-                    {`Professional tour guide from ${getGuideCity(guide)}`}
-                  </p>
-                  <div className="mt-4 flex items-center justify-between gap-3 text-sm text-slate-500">
-                    <span className="flex min-w-0 items-center gap-1.5">
-                      <MapPin className="h-4 w-4 shrink-0 text-egypt-teal" />
-                      <span className="truncate">{getGuideCity(guide)}</span>
-                    </span>
-                    <span className="flex items-center gap-1.5 font-semibold text-slate-700">
-                      <Star className="h-4 w-4 fill-egypt-gold text-egypt-gold" />
-                      {getGuideRating(guide)}
-                    </span>
-                  </div>
-                  <div className="mt-4 flex gap-2">
-                    <Link
-                      to={gid != null ? `/guides/${gid}` : "#"}
-                      className="flex-1 rounded-lg border border-egypt-teal py-2 text-center text-sm font-bold text-egypt-teal transition hover:bg-egypt-teal hover:text-white"
-                    >
-                      View Profile
-                    </Link>
-                    {isAuthenticated && !isUserGuide && gid != null && (
-                      <button
-                        type="button"
-                        onClick={() => handleToggleSave(gid)}
-                        disabled={saving === gid}
-                        className={`rounded-lg px-3 py-2 text-sm font-bold transition disabled:opacity-60 ${
-                          saved
-                            ? "bg-red-600 text-white hover:bg-red-500"
-                            : "bg-egypt-teal text-white hover:bg-egypt-teal/90"
-                        }`}
-                      >
-                        {saving === gid ? "Saving..." : saved ? "Remove" : "Save"}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-
-        {guides.length > 1 && (
+        {/* {guides.length > 1 && (
           <div className="mt-2 flex justify-center gap-2" dir="ltr">
             {guideDots.map((guide, index) => (
               <button
@@ -332,7 +289,7 @@ export default function OurGuidesSection() {
               />
             ))}
           </div>
-        )}
+        )} */}
 
         {guides.length === 0 && (
           <div className="py-12 text-center">

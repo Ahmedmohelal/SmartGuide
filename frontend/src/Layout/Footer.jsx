@@ -55,7 +55,7 @@ export default function HomeFooter() {
           })}
         </nav>
 
-        <div className="mt-8 flex justify-center gap-4">
+        <div className="mt-8 flex justify-center">
           {[Facebook, Instagram, Twitter, Youtube].map((Icon, i) => (
             <a
               key={i}
@@ -66,6 +66,7 @@ export default function HomeFooter() {
               <Icon className="h-5 w-5" />
             </a>
           ))}
+
         </div>
 
         <p className="mt-10 text-xs text-white/50">{footer.copyright}</p>

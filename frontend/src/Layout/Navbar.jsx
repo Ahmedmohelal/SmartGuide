@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { navLinks } from "../data/homeContent";
-import { Menu, X, CircleUserRound, User, Settings, Headphones, LogOut, MessageCircle, Bell } from "lucide-react";
+import { Menu, X, CircleUserRound, User, Headphones, LogOut, MessageCircle, Bell } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { useProfile } from "../Context/ProfileContext";
 import { HashLink } from "react-router-hash-link";
@@ -172,7 +172,6 @@ export default function Navbar() {
                   <Link onClick={() => setIsProfileOpen(false)} to="/profile" className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition"><User className="w-5 h-5" /> My Account</Link>
                   <Link onClick={() => setIsProfileOpen(false)} to="/notifications" className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition"><Bell className="w-5 h-5" /> Notifications</Link>
                   <Link onClick={() => setIsProfileOpen(false)} to="/chat" className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition"><MessageCircle className="w-5 h-5" /> Chats</Link>
-                  <Link onClick={() => setIsProfileOpen(false)} to="/settings" className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition"><Settings className="w-5 h-5" /> Settings</Link>
                   {!isGuide() && (
                     <>
                       <Link onClick={() => setIsProfileOpen(false)} to="/saved-places" className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 transition"><User className="w-5 h-5" /> Saved Places</Link>
@@ -289,7 +288,6 @@ export default function Navbar() {
             <li className="w-full text-center"><Link to="/profile" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-center gap-2 py-3 hover:text-white transition"><User className="w-5 h-5" /> My Account</Link></li>
             <li className="w-full text-center"><Link to="/notifications" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-center gap-2 py-3 hover:text-white transition"><Bell className="w-5 h-5" /> Notifications{unreadNotifications > 0 ? ` (${unreadNotifications})` : ""}</Link></li>
             <li className="w-full text-center"><Link to="/chat" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-center gap-2 py-3 hover:text-white transition"><MessageCircle className="w-5 h-5" /> Chats</Link></li>
-            <li className="w-full text-center"><Link to="/settings" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-center gap-2 py-3 hover:text-white transition"><Settings className="w-5 h-5" /> Settings</Link></li>
             {!isGuide() && (
               <>
                 <li className="w-full text-center"><Link to="/saved-places" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center justify-center gap-2 py-3 hover:text-white transition"><User className="w-5 h-5" /> Saved Places</Link></li>
