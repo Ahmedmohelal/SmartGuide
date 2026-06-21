@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
+import { RefreshCw } from "lucide-react";
 import toast from "react-hot-toast";
 import { fetchPendingGuides } from "../services/adminService";
 import GuideActionButtons from "../components/GuideActionButtons";
@@ -8,8 +9,9 @@ import PageHeader from "../components/PageHeader";
 export default function PendingGuidesPage() {
   const [guides, setGuides] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
       const data = await fetchPendingGuides();
@@ -19,11 +21,26 @@ export default function PendingGuidesPage() {
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const data = await fetchPendingGuides();
+      setGuides(Array.isArray(data) ? data : []);
+      toast.success("Updated pending guides");
+    } catch {
+      toast.error("Failed to refresh pending guides");
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   useEffect(() => {
     load();
-  }, []);
+    const interval = setInterval(load, 30000);
+    return () => clearInterval(interval);
+  }, [load]);
 
   return (
     <div className="space-y-6">
@@ -31,9 +48,19 @@ export default function PendingGuidesPage() {
         title="Approve / Reject"
         subtitle="Review new guide applications and their documents."
       >
-        <Link to="/guides" className="admin-btn admin-btn-ghost">
-          All guides →
-        </Link>
+        <div className="flex gap-2">
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="admin-btn admin-btn-ghost flex items-center gap-2"
+          >
+            <RefreshCw size={18} className={refreshing ? "animate-spin" : ""} />
+            {refreshing ? "Updating…" : "Refresh"}
+          </button>
+          <Link to="/guides" className="admin-btn admin-btn-ghost">
+            All guides →
+          </Link>
+        </div>
       </PageHeader>
 
       {loading ? (
