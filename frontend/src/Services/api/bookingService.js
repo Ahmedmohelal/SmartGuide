@@ -114,6 +114,22 @@ export const cancelBooking = async (bookingId) => {
   }
 };
 
+
+export const confirmBooking = async (bookingId) => {
+  try {
+    const response = await axios.patch(
+      `${API_BASE}/Bookings/${bookingId}/confirm`,
+      {},
+      { headers: authHeader() }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error("Failed to confirm booking:", error);
+    throw error;
+  }
+};
+
 /* =========================
    SLOTS (GUIDE / TOUR)
 ========================= */
@@ -269,3 +285,4 @@ export const deleteBookingSlot = async (slotId) => {
     throw error;
   }
 };
+
