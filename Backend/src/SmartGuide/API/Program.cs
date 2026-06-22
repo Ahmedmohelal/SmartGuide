@@ -65,14 +65,14 @@ var app = builder.Build();
 await app.MigrateDataBaseAsync();
 await app.SeedPlacesDataAsync();
 
-using (var scope = app.Services.CreateScope())
-{
-    var seeder =
-        scope.ServiceProvider
-             .GetRequiredService<PlacesSeeder>();
+//using (var scope = app.Services.CreateScope())
+//{
+//    var seeder =
+//        scope.ServiceProvider
+//             .GetRequiredService<PlacesSeeder>();
 
-    await seeder.UpdateFirst10ImagesAsync();
-}
+//    await seeder.UpdateFirst10ImagesAsync();
+//}
 
 await app.SeedRolesDataAsync();
 await app.SeedAdminDataAsync();
