@@ -95,6 +95,8 @@ namespace Infrastructure.Repository.Profile
             CancellationToken cancellationToken = default)
         {
             return await _context.SavedPlaces
+                .Include(x => x.Place)
+                .ThenInclude(x => x.Ratings)
                 .AsNoTracking()
                 .Where(x => x.TouristUserId == touristUserId)
                 .OrderByDescending(x => x.CreatedAtUtc)
