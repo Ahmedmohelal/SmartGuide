@@ -1,10 +1,12 @@
 ﻿using Application.DTOs.AuthenticationDTOs;
 using Application.DTOs.Booking;
 using Application.Services.Interfaces;
+using Application.Services.Interfaces.Admin;
 using Application.Services.Interfaces.Booking;
 using Application.Services.Interfaces.Notifications;
 using Domain.Entities.Book;
 using Domain.Entities.Notifications;
+using Domain.Entities.Tours;
 using Domain.Interfaces;
 using BookingEntity = Domain.Entities.Book.Booking;
 
@@ -15,15 +17,18 @@ namespace Application.Services.UseCases.Booking
         private readonly IBookingRepository _bookingRepo;
         private readonly ITourRepository _tourRepo;
         private readonly INotificationService _notificationService;
+        private readonly IAdminAuditService _auditService;
 
         public BookingService(
             IBookingRepository bookingRepo,
             ITourRepository tourRepo,
-            INotificationService notificationService)
+            INotificationService notificationService,
+            IAdminAuditService auditService)
         {
             _bookingRepo = bookingRepo;
             _tourRepo = tourRepo;
             _notificationService = notificationService;
+            _auditService = auditService;
         }
 
         // ==================== Slots ====================
@@ -276,6 +281,11 @@ namespace Application.Services.UseCases.Booking
                 NotificationType.BookingConfirmed,
                 booking.Id.ToString(),
                 "Booking");
+
+
+            await _auditService.WriteAsync(guideId, "ConfirmBooking", "Booking", booking.Id.ToString(), "Unknown", "Unknown");
+
+
 
             return new OperationResultDto
             {
