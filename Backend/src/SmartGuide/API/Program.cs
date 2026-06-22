@@ -6,6 +6,7 @@ using Application.Settings;
 using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 using Infrastructure.Data;
+using Infrastructure.Data.DbSeeder;
 using Infrastructure.Hubs;
 using Infrastructure.Services.Email;
 using Infrastructure.Settings;
@@ -63,6 +64,16 @@ var app = builder.Build();
 
 await app.MigrateDataBaseAsync();
 await app.SeedPlacesDataAsync();
+
+using (var scope = app.Services.CreateScope())
+{
+    var seeder =
+        scope.ServiceProvider
+             .GetRequiredService<PlacesSeeder>();
+
+    await seeder.UpdateFirst10ImagesAsync();
+}
+
 await app.SeedRolesDataAsync();
 await app.SeedAdminDataAsync();
 
