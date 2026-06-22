@@ -1,4 +1,5 @@
 ﻿using Domain.Entities.Book;
+using Domain.Entities.Wallet;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
@@ -156,6 +157,29 @@ namespace Infrastructure.Repository.Book
                     booking.Status = BookingStatus.Confirmed;
                     booking.ConfirmedAtUtc = DateTime.UtcNow;
 
+                    var wallet = await _context.GuideWallets
+    .FirstOrDefaultAsync(x => x.GuideId == booking.GuideId);
+
+                    if (wallet == null)
+                    {
+                        wallet = new GuideWallet
+                        {
+                            Id = Guid.NewGuid(),
+                            GuideId = booking.GuideId,
+                            Balance = booking.TotalPrice,
+                            UpdatedAtUtc = DateTime.UtcNow
+                        };
+
+                        await _context.GuideWallets.AddAsync(wallet);
+                    }
+                    else
+                    {
+                        wallet.Balance += booking.TotalPrice;
+                        wallet.UpdatedAtUtc = DateTime.UtcNow;
+                    }
+
+
+
                     await _context.SaveChangesAsync();
                     await transaction.CommitAsync();
                     return PaymentConfirmationResult.NewlyConfirmed;
@@ -215,7 +239,28 @@ namespace Infrastructure.Repository.Book
                     }
 
                     booking.Status = BookingStatus.Confirmed;
+                    booking.ConfirmedAtUtc = DateTime.UtcNow;
 
+                    var wallet = await _context.GuideWallets
+                        .FirstOrDefaultAsync(x => x.GuideId == booking.GuideId);
+
+                    if (wallet == null)
+                    {
+                        wallet = new GuideWallet
+                        {
+                            Id = Guid.NewGuid(),
+                            GuideId = booking.GuideId,
+                            Balance = booking.TotalPrice,
+                            UpdatedAtUtc = DateTime.UtcNow
+                        };
+
+                        await _context.GuideWallets.AddAsync(wallet);
+                    }
+                    else
+                    {
+                        wallet.Balance += booking.TotalPrice;
+                        wallet.UpdatedAtUtc = DateTime.UtcNow;
+                    }
                     await _context.SaveChangesAsync();
                     await transaction.CommitAsync();
                     return PaymentConfirmationResult.NewlyConfirmed;

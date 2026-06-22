@@ -270,7 +270,9 @@ namespace Application.Services.UseCases.Booking
                 };
             }
 
-            booking.Status = BookingStatus.Confirmed;
+
+            await _bookingRepo.ConfirmCashBookingAsync(bookingId, guideId);
+
 
             await _bookingRepo.UpdateAsync(booking);
 
