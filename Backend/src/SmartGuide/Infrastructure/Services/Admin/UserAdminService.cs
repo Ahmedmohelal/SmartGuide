@@ -195,20 +195,57 @@ namespace Infrastructure.Services.Admin
                 };
             }
 
-            bool hasTours = await _context.Tours
-                .AnyAsync(x => x.GuideId == userId);
+            var hasTours = await _context.Tours
+    .AnyAsync(x => x.GuideId == userId);
 
-            if (hasTours)
+            var hasBookings = await _context.Bookings
+                .AnyAsync(x =>
+                    x.GuideId == userId ||
+                    x.TouristId == userId);
+
+            var hasConversations = await _context.ChatConversations
+                .AnyAsync(x =>
+                    x.GuideUserId == userId ||
+                    x.TouristUserId == userId);
+
+            //var hasMessages = await _context.ChatMessages
+            //    .AnyAsync(x =>
+            //        x.SenderUserId == userId);
+
+            //var hasNotifications = await _context.Notifications
+            //    .AnyAsync(x =>
+            //        x.UserId == userId);
+
+            //var hasAuditLogs = await _context.AdminAuditLogs
+            //    .AnyAsync(x =>
+            //        x.AdminId == userId);
+
+            //var hasSlots = await _context.BookingsSlot
+            //    .AnyAsync(x =>
+            //        x.GuideId == userId);
+
+            //var hasFavorites = await _context.SavedTourGuides
+            //    .AnyAsync(x =>
+            //        x.TourGuideUserId == userId ||
+            //        x.TouristUserId == userId);
+
+            var hasRelatedData =
+                               hasTours
+                            || hasBookings
+                            || hasConversations;
+
+            if (hasRelatedData)
             {
                 user.LockoutEnabled = true;
                 user.LockoutEnd = DateTimeOffset.UtcNow.AddYears(100);
+                user.ForceLogoutRequired = true;
 
-                await _context.SaveChangesAsync();
+                await _userManager.UpdateAsync(user);
 
                 return new OperationResultDto
                 {
                     IsSuccess = true,
-                    Message = "User has related data, so account was deactivated instead of deleted."
+                    Message = "User has related data so account was deactivated."
                 };
             }
 
@@ -224,6 +261,9 @@ namespace Infrastructure.Services.Admin
                 }
 
             }
+
+
+
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
 

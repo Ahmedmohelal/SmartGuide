@@ -55,7 +55,7 @@ namespace Infrastructure.Settings
         {
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
-                    configuration.GetConnectionString("DefaultConnection"),
+                    configuration.GetConnectionString("AhmedDefaultConnection"),
                         sqlOptions => sqlOptions.EnableRetryOnFailure()
             ));
 
@@ -152,7 +152,7 @@ namespace Infrastructure.Settings
             services.AddScoped<IGuideDashboardService, GuideDashboardService>();
             services.AddScoped<INotificationService, NotificationService>();
             services.AddScoped<IAttachmentService, CloudinaryAttachmentService>();
-
+            //services.AddScoped<IAdminAuditService, AdminAuditService>();
 
 
             //seeders

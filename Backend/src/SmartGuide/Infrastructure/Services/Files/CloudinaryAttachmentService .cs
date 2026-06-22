@@ -2,30 +2,32 @@
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using Infrastructure.Settings;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace Infrastructure.Services.Files
 {
     public class CloudinaryAttachmentService : IAttachmentService
     {
         private readonly Cloudinary _cloudinary;
+        private readonly IWebHostEnvironment _environment;
 
-        private readonly string[] allowedExtensions =
+        private readonly string[] _allowedExtensions =
         {
-        ".jpg",
-        ".jpeg",
-        ".png"
-    };
+            ".jpg",
+            ".jpeg",
+            ".png"
+        };
 
-        private readonly long maxFileSize = 5 * 1024 * 1024;
+        private const long MaxFileSize = 5 * 1024 * 1024;
 
-        public CloudinaryAttachmentService(IOptions<CloudinarySettings> options)
+        public CloudinaryAttachmentService(
+            IOptions<CloudinarySettings> options,
+            IWebHostEnvironment environment)
         {
+            _environment = environment;
+
             var settings = options.Value;
 
             var account = new Account(
@@ -36,40 +38,46 @@ namespace Infrastructure.Services.Files
             _cloudinary = new Cloudinary(account);
         }
 
-        public async Task<string?> Upload(string folderName, IFormFile file)
+        public async Task<string?> Upload(
+            string folderName,
+            IFormFile file)
         {
             try
             {
                 if (file == null || file.Length == 0)
                     return null;
 
-                if (file.Length > maxFileSize)
-                    return "The File Must Be Less Than 5 MB";
+                if (file.Length > MaxFileSize)
+                    return null;
 
                 var extension =
                     Path.GetExtension(file.FileName)
-                        .ToLower();
+                        .ToLowerInvariant();
 
-                if (!allowedExtensions.Contains(extension))
-                    return "The File Must Be A JPG, JPEG, Or PNG";
+                if (!_allowedExtensions.Contains(extension))
+                    return null;
 
-                await using var stream = file.OpenReadStream();
+                await using var stream =
+                    file.OpenReadStream();
 
-                var uploadParams = new ImageUploadParams
-                {
-                    File = new FileDescription(
+                var uploadParams =
+                    new ImageUploadParams
+                    {
+                        File = new FileDescription(
                             file.FileName,
                             stream),
 
-                    Folder = $"SmartGuide/{folderName}"
-                };
+                        Folder = $"SmartGuide/{folderName}"
+                    };
 
-                var result = await _cloudinary.UploadAsync(uploadParams);
+                var result =
+                    await _cloudinary.UploadAsync(
+                        uploadParams);
 
                 if (result.Error != null)
                     return null;
 
-                return result.SecureUrl.ToString();
+                return result.SecureUrl?.ToString();
             }
             catch
             {
@@ -78,42 +86,77 @@ namespace Infrastructure.Services.Files
         }
 
         public async Task<bool> Delete(
-    string fileUrl,
-    string folderName)
+            string fileNameOrUrl,
+            string folderName)
         {
             try
             {
-                if (string.IsNullOrWhiteSpace(fileUrl))
-                    return false;
+                if (string.IsNullOrWhiteSpace(fileNameOrUrl))
+                    return true;
 
-                var uri = new Uri(fileUrl);
-
-                var segments = uri.AbsolutePath.Split('/');
-
-                var uploadIndex = Array.IndexOf(segments, "upload");
-
-                if (uploadIndex == -1)
-                    return false;
-
-                var publicIdParts = segments
-                    .Skip(uploadIndex + 2) // skip upload + version
-                    .ToArray();
-
-                var publicId = string.Join("/", publicIdParts);
-
-                var extension = Path.GetExtension(publicId);
-
-                if (!string.IsNullOrEmpty(extension))
+                if (Uri.TryCreate(
+                    fileNameOrUrl,
+                    UriKind.Absolute,
+                    out var uri))
                 {
-                    publicId = publicId[..^extension.Length];
+                    var segments =
+                        uri.AbsolutePath.Split(
+                            '/',
+                            StringSplitOptions.RemoveEmptyEntries);
+
+                    var uploadIndex =
+                        Array.IndexOf(
+                            segments,
+                            "upload");
+
+                    if (uploadIndex >= 0)
+                    {
+                        var publicIdParts =
+                            segments
+                                .Skip(uploadIndex + 2)
+                                .ToArray();
+
+                        var publicId =
+                            string.Join(
+                                "/",
+                                publicIdParts);
+
+                        var extension =
+                            Path.GetExtension(publicId);
+
+                        if (!string.IsNullOrWhiteSpace(extension))
+                        {
+                            publicId =
+                                publicId[..^extension.Length];
+                        }
+
+                        var deleteResult =
+                            await _cloudinary.DestroyAsync(
+                                new DeletionParams(publicId));
+
+                        return deleteResult.Result == "ok"
+                            || deleteResult.Result == "not found";
+                    }
                 }
 
-                var deleteParams = new DeletionParams(publicId);
 
-                var result =
-                    await _cloudinary.DestroyAsync(deleteParams);
+                if (!string.IsNullOrWhiteSpace(
+                    _environment.WebRootPath))
+                {
+                    var fullPath =
+                        Path.Combine(
+                            _environment.WebRootPath,
+                            "images",
+                            folderName,
+                            fileNameOrUrl);
 
-                return result.Result == "ok";
+                    if (File.Exists(fullPath))
+                    {
+                        File.Delete(fullPath);
+                    }
+                }
+
+                return true;
             }
             catch
             {

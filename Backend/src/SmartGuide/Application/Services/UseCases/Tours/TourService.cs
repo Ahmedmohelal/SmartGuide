@@ -36,6 +36,7 @@ namespace Application.Services.UseCases.Tours
             _attachmentService = attachmentService;
             _userService = userService;
             _notificationService = notificationService;
+            _auditService = auditService;
         }
 
 
@@ -468,11 +469,11 @@ namespace Application.Services.UseCases.Tours
             if (result)
             {
                 await _notificationService.SendAsync(
-    guideId,
-    "Tour Deactivated ✅",
-    "Your tour has been deactivated.",
-    NotificationType.TourDeactivated,
-    guideId, "Guide");
+                       guideId,
+                       "Tour Deactivated ✅",
+                       "Your tour has been deactivated.",
+                       NotificationType.TourDeactivated,
+                       guideId, "Guide");
 
                 await _auditService.WriteAsync(guideId, "DeactivateTour", "Tour", tour.Id.ToString(), "Unknown", "Unknown");
                 return new OperationResultDto { IsSuccess = true, Message = "Tour Deactivated successfully." };
