@@ -4,6 +4,8 @@ import { getSavedPlaces } from "../Services/api/savedPlaceService";
 import { Link } from "react-router-dom";
 import { getPlaceImage, getPlaceRating } from "../Services/utils/placeUtils";
 import { isGuide } from "../Services/utils/tokenUtils";
+import { useLocation } from "react-router-dom";
+
 
 const getPlaceTitle = (place) => place.name || place.title || "Untitled Place";
 
@@ -21,6 +23,7 @@ export default function Places() {
   const [activeSearch, setActiveSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const location = useLocation();
 
   const isPlaceSaved = (placeId) => {
     return savedPlaces.some(savedPlace => savedPlace.placeId === placeId);
@@ -53,6 +56,7 @@ export default function Places() {
         ]);
 
         const placeList = placesData?.data ?? placesData?.items ?? [];
+        console.log("Places data from API:", placeList);
         setPlaces(placeList);
         setTotalCount(placesData?.count ?? placeList.length);
       } catch (error) {
@@ -66,7 +70,18 @@ export default function Places() {
     };
 
     loadData();
-  }, [pageIndex, pageSize, activeSearch]);
+  }, [pageIndex, pageSize, activeSearch, location.state?.refresh]);
+
+  useEffect(() => {
+    if (location.state?.updatedPlace) {
+      const { id, rating } = location.state.updatedPlace;
+      setPlaces((prevPlaces) =>
+        prevPlaces.map((place) =>
+          place.id === id ? { ...place, rating: rating, averageRating: rating } : place
+        )
+      );
+    }
+  }, [location.state?.updatedPlace]);
 
   if (loading) {
     return (
