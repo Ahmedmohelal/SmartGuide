@@ -68,6 +68,7 @@ namespace Infrastructure.Settings
             })
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddDefaultTokenProviders();
+
             services.Configure<JWT>(configuration.GetSection("JWT"));
 
             var JWT = configuration.GetSection("JWT");
