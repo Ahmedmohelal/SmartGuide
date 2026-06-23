@@ -124,10 +124,35 @@ export default function Register() {
       });
     } catch (err) {
       console.error("Backend Error Details:", err);
+      console.error("Error structure:", JSON.stringify(err, null, 2));
 
       let serverErrors = {};
 
-      if (Array.isArray(err)) {
+      // Handle string error response
+      const stringError = typeof err === 'string' ? err : null;
+
+      // Get the error message from different possible structures
+      const errorMessage = stringError || err?.message || err?.title || err?.detail || err?.error || "";
+
+      console.log("Extracted errorMessage:", errorMessage);
+
+      if (errorMessage) {
+        const errorMsg = errorMessage.toLowerCase();
+
+        if (errorMsg.includes("email is already registered")) {
+          serverErrors.email = errorMessage;
+        } else if (errorMsg.includes("user name") || errorMsg.includes("username")) {
+          serverErrors.userName = errorMessage;
+        } else if (errorMsg.includes("email")) {
+          serverErrors.email = errorMessage;
+        } else if (errorMsg.includes("password")) {
+          serverErrors.password = errorMessage;
+        } else {
+          setGeneralError(errorMessage);
+        }
+      }
+      // Handle array of errors
+      else if (Array.isArray(err)) {
         err.forEach((e) => {
           const desc = e.description?.toLowerCase() || "";
 
@@ -137,7 +162,9 @@ export default function Register() {
             serverErrors.password = e.description;
           else setGeneralError(e.description);
         });
-      } else if (err?.errors) {
+      }
+      // Handle errors object
+      else if (err?.errors) {
         Object.keys(err.errors).forEach((key) => {
           const lowerKey = key.toLowerCase();
 
@@ -151,14 +178,21 @@ export default function Register() {
             serverErrors[key] = err.errors[key][0];
           }
         });
-      } else {
+      }
+      // Fallback
+      else {
         setGeneralError(
-          err.message || "Registration failed. Please try again.",
+          errorMessage || "Registration failed. Please try again.",
         );
       }
 
+      console.log("Server errors:", serverErrors);
+      console.log("Field errors to set:", serverErrors);
+
       if (Object.keys(serverErrors).length > 0) {
         setFieldErrors(serverErrors);
+      } else if (errorMessage) {
+        setGeneralError(errorMessage);
       }
     } finally {
       setLoading(false);
@@ -268,6 +302,7 @@ export default function Register() {
                 {errors.userName && (
                   <FieldError msg={errors.userName.message} />
                 )}
+                {fieldErrors.userName && <FieldError msg={fieldErrors.userName} />}
               </div>
 
               <div className="flex flex-col">
@@ -309,6 +344,7 @@ export default function Register() {
                   />
                 </div>
                 {errors.email && <FieldError msg={errors.email.message} />}
+                {fieldErrors.email && <FieldError msg={fieldErrors.email} />}
               </div>
 
               <div className="grid grid-cols-2 gap-4">
