@@ -1,8 +1,12 @@
 ﻿using Application.DTOs.AuthenticationDTOs;
 using Application.DTOs.Booking;
 using Application.Services.Interfaces;
+using Application.Services.Interfaces.Admin;
 using Application.Services.Interfaces.Booking;
+using Application.Services.Interfaces.Notifications;
 using Domain.Entities.Book;
+using Domain.Entities.Notifications;
+using Domain.Entities.Tours;
 using Domain.Interfaces;
 using BookingEntity = Domain.Entities.Book.Booking;
 
@@ -12,13 +16,19 @@ namespace Application.Services.UseCases.Booking
     {
         private readonly IBookingRepository _bookingRepo;
         private readonly ITourRepository _tourRepo;
+        private readonly INotificationService _notificationService;
+        private readonly IAdminAuditService _auditService;
 
         public BookingService(
             IBookingRepository bookingRepo,
-            ITourRepository tourRepo)
+            ITourRepository tourRepo,
+            INotificationService notificationService,
+            IAdminAuditService auditService)
         {
             _bookingRepo = bookingRepo;
             _tourRepo = tourRepo;
+            _notificationService = notificationService;
+            _auditService = auditService;
         }
 
         // ==================== Slots ====================
@@ -55,6 +65,16 @@ namespace Application.Services.UseCases.Booking
                     Message = "Tour does not belong to this guide."
                 };
 
+            var ExistedSlots = await _bookingRepo.GetSlotsByTourAndDateAsync(dto.TourId, dto.Date);
+            if (ExistedSlots.Any(s => (s.StartTime == dto.StartTime && s.EndTime == dto.EndTime)))
+            {
+                return new OperationResultDto
+                {
+                    IsSuccess = false,
+                    Message = "This Already Slot With This Tour."
+                };
+            }
+
             var slot = new BookingSlot
             {
                 Id = Guid.NewGuid(),
@@ -76,10 +96,12 @@ namespace Application.Services.UseCases.Booking
             };
         }
 
+
         public async Task<List<BookingSlotDto>> GetSlotsByTourAndDateAsync(
             Guid tourId, DateOnly date)
         {
             var slots = await _bookingRepo.GetSlotsByTourAndDateAsync(tourId, date);
+
             return slots.Select(s => new BookingSlotDto
             {
                 Id = s.Id,
@@ -142,6 +164,7 @@ namespace Application.Services.UseCases.Booking
                 }
             }
 
+
             var booking = new BookingEntity
             {
                 Id = Guid.NewGuid(),
@@ -159,6 +182,12 @@ namespace Application.Services.UseCases.Booking
             try
             {
                 var created = await _bookingRepo.CreateBookingAsync(booking);
+                await _notificationService.SendToMultipleAsync(
+                    new[] { touristId, slot.GuideId },
+                    "New Booking 🔔",
+                    "A new booking has been created.",
+                    NotificationType.BookingCreated,
+                    created.Id.ToString(), "Booking");
                 return BookingResultDto.Success(created.Id);
             }
             catch (InvalidOperationException ex)
@@ -185,18 +214,137 @@ namespace Application.Services.UseCases.Booking
             return bookings.Select(MapToDto).ToList();
         }
 
+
+        public async Task<OperationResultDto>
+    ConfirmBookingAsync(
+        Guid bookingId,
+        string guideId)
+        {
+            var booking =
+                await _bookingRepo
+                    .GetBookingByIdAsync(
+                        bookingId);
+
+            if (booking == null)
+            {
+                return new OperationResultDto
+                {
+                    IsSuccess = false,
+                    Message = "Booking not found."
+                };
+            }
+
+            if (booking.GuideId != guideId)
+            {
+                return new OperationResultDto
+                {
+                    IsSuccess = false,
+                    Message = "Unauthorized."
+                };
+            }
+
+            if (booking.Status == BookingStatus.Cancelled)
+            {
+                return new OperationResultDto
+                {
+                    IsSuccess = false,
+                    Message = "Booking is cancelled."
+                };
+            }
+
+            if (booking.Status == BookingStatus.Confirmed)
+            {
+                return new OperationResultDto
+                {
+                    IsSuccess = false,
+                    Message = "Booking already confirmed."
+                };
+            }
+
+            if (booking.PaymentMethod != PaymentMethod.Cash)
+            {
+                return new OperationResultDto
+                {
+                    IsSuccess = false,
+                    Message = "Only cash bookings can be confirmed manually."
+                };
+            }
+
+
+            await _bookingRepo.ConfirmCashBookingAsync(bookingId, guideId);
+
+
+            await _bookingRepo.UpdateAsync(booking);
+
+            await _notificationService.SendToMultipleAsync(
+                new[] { booking.TouristId, booking.GuideId },
+                "Booking Confirmed ✅",
+                "Your cash booking has been confirmed.",
+                NotificationType.BookingConfirmed,
+                booking.Id.ToString(),
+                "Booking");
+
+
+            await _auditService.WriteAsync(guideId, "ConfirmBooking", "Booking", booking.Id.ToString(), "Unknown", "Unknown");
+
+
+
+            return new OperationResultDto
+            {
+                IsSuccess = true,
+                Message = "Booking confirmed successfully."
+            };
+        }
+
+
+
+
+
         public async Task<OperationResultDto> CancelBookingAsync(
             Guid bookingId, string requesterId)
         {
+            var booking = await _bookingRepo.GetBookingByIdAsync(bookingId);
+
+            if (booking == null)
+                return new OperationResultDto
+                {
+                    IsSuccess = false,
+                    Message = "Booking not found."
+                };
+            if (booking.Status == BookingStatus.Cancelled)
+                return new OperationResultDto
+                {
+                    IsSuccess = false,
+                    Message = "Booking is already cancelled."
+                };
+
+            // if (booking.TouristId != requesterId && booking.GuideId != requesterId)
+            //{
+            //    return new OperationResultDto
+            //    {
+            //        IsSuccess = false,
+            //        Message = "Unauthorized."
+            //    };
+            //}
+
             var cancelled = await _bookingRepo
                 .CancelBookingAsync(bookingId, requesterId);
 
-            if (!cancelled)
+            if (!cancelled.Success)
                 return new OperationResultDto
                 {
                     IsSuccess = false,
                     Message = "Booking not found or already cancelled."
                 };
+
+
+            await _notificationService.SendToMultipleAsync(
+                new[] { booking.TouristId, booking.GuideId },
+                "Booking Cancelled ❌",
+                "A booking has been cancelled.",
+                NotificationType.BookingCancelled,
+                bookingId.ToString(), "Booking");
+
 
             return new OperationResultDto
             {
@@ -216,6 +364,7 @@ namespace Application.Services.UseCases.Booking
                 TotalPrice = b.TotalPrice,
                 PaymentMethod = b.PaymentMethod.ToString(),
                 CreatedAtUtc = b.CreatedAtUtc,
+                ConfirmedAtUtc = b.ConfirmedAtUtc,
                 Slot = new BookingSlotInfoDto
                 {
                     Id = b.Slot.Id,

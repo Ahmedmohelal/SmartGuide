@@ -1,13 +1,16 @@
-﻿using Application.DTOs.AdminDashboard;
+﻿using API.Attributes;
+using Application.Common.Pagination;
+using Application.DTOs.AdminDashboard;
+using Application.DTOs.AuthenticationDTOs;
+using Application.DTOs.Home;
 using Application.Services.Interfaces.Admin;
-using Infrastructure.Services.Admin;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
 namespace API.Controllers.Admin
 {
-
     [Route("api/admin")]
     [ApiController]
     [Authorize(Roles = "Admin")]
@@ -20,8 +23,8 @@ namespace API.Controllers.Admin
         private readonly IAdminDashboardService _adminService;
         private readonly IGuideWalletAdminService _guideWalletAdminService;
         private readonly IAdminAuditService _adminAuditService;
-
-
+        private string adminId =>
+            User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
         public AdminController(
             IUserAdminService userAdminService,
             IGuideAdminService guideAdminService,
@@ -40,76 +43,120 @@ namespace API.Controllers.Admin
             _adminAuditService = adminAuditService;
         }
 
-        // ==================== Users ====================
+        // =========================================================
+        // Users
+        // =========================================================
 
+        [RedisCache(300)]
         [HttpGet("users")]
-        public async Task<IActionResult> GetAllUsersAsync()
+        [ProducesResponseType(typeof(Application.DTOs.Home.Pagination<AdminUserDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<Application.DTOs.Home.Pagination<AdminUserDto>>> GetAllUsersAsync([FromQuery] AdminUserSpecParams specParams)
         {
-            var result = await _userAdminService.GetAllUsersAsync();
+            var result = await _userAdminService.GetAllUsersAsync(specParams);
+
             return Ok(result);
         }
 
         [HttpGet("users/{id}")]
-        public async Task<IActionResult> GetUserByIdAsync(string id)
+        [ProducesResponseType(typeof(AdminUserDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<AdminUserDto>> GetUserByIdAsync(string id)
         {
             var result = await _userAdminService.GetUserByIdAsync(id);
+
             if (result == null)
                 return NotFound(new { message = "User not found." });
+
             return Ok(result);
         }
 
         [HttpPut("users/{id}/deactivate")]
-        public async Task<IActionResult> DeactivateUserAsync(string id)
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<OperationResultDto>> DeactivateUserAsync(string id)
         {
             var result = await _userAdminService.DeactivateUserAsync(id);
+
             if (!result.IsSuccess)
                 return BadRequest(result);
+
             return Ok(result);
         }
 
         [HttpPut("users/{id}/activate")]
-        public async Task<IActionResult> ActivateUserAsync(string id)
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<OperationResultDto>> ActivateUserAsync(string id)
         {
             var result = await _userAdminService.ActivateUserAsync(id);
+
             if (!result.IsSuccess)
                 return BadRequest(result);
+
             return Ok(result);
         }
 
         [HttpDelete("users/{id}")]
-        public async Task<IActionResult> DeleteUserAsync(string id)
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<OperationResultDto>> DeleteUserAsync(string id)
         {
             var result = await _userAdminService.DeleteUserAsync(id);
+
             if (!result.IsSuccess)
                 return BadRequest(result);
+
             return Ok(result);
         }
 
         [HttpPost("create-admin")]
-        public async Task<IActionResult> CreateAdminAsync([FromForm] CreateAdminDto dto)
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<OperationResultDto>> CreateAdminAsync(
+            [FromForm] CreateAdminDto dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
             var result = await _userAdminService.CreateAdminAsync(dto);
+
             if (!result.IsSuccess)
                 return BadRequest(result);
+
             return Ok(result);
         }
 
-        // ==================== Guide Verification ====================
+        // =========================================================
+        // Guide Verification
+        // =========================================================
 
         [HttpGet("guides/pending")]
-        public async Task<IActionResult> GetPendingGuidesAsync()
+        [ProducesResponseType(typeof(Pagination<AdminGuideVerificationDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<Pagination<AdminGuideVerificationDto>>> GetPendingGuidesAsync([FromQuery]AdminGuideSpecParams param)
         {
-            var result = await _guideAdminService.GetPendingGuidesAsync();
+            var result = await _guideAdminService.GetPendingGuidesAsync(param);
+
             return Ok(result);
         }
 
-        [HttpGet("guides/{guideId}/documents")]
-        public async Task<IActionResult> GetGuideDocumentsAsync(string guideId)
+        [HttpGet("guides")]
+        [ProducesResponseType(typeof(Pagination<AdminGuideVerificationDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<Pagination<AdminGuideVerificationDto>>> GetAllGuidesAsync([FromQuery]AdminGuideSpecParams param)
         {
-            var result = await _guideAdminService.GetGuideDocumentsAsync(guideId);
+            var result = await _guideAdminService.GetAllGuidesAsync(param);
+
+            return Ok(result);
+        }
+
+        [RedisCache(300)]
+        [HttpGet("guides/{guideId}/documents")]
+        [ProducesResponseType(typeof(GuideDocumentsDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<ActionResult<GuideDocumentsDto>> GetGuideDocumentsAsync(
+            string guideId)
+        {
+            var result = await _guideAdminService
+                .GetGuideDocumentsAsync(guideId);
 
             if (result == null)
                 return NotFound(new { message = "Guide not found" });
@@ -117,89 +164,177 @@ namespace API.Controllers.Admin
             return Ok(result);
         }
 
-        [HttpGet("guides")]
-        public async Task<IActionResult> GetAllGuidesAsync()
-        {
-            var result = await _guideAdminService.GetAllGuidesAsync();
-            return Ok(result);
-        }
-
         [HttpPut("guides/{id}/approve")]
-        public async Task<IActionResult> ApproveGuideAsync(string id)
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<OperationResultDto>> ApproveGuideAsync(
+            string id)
         {
             var result = await _guideAdminService.ApproveGuideAsync(id);
+
             if (!result.IsSuccess)
                 return BadRequest(result);
+
             return Ok(result);
         }
 
         [HttpPut("guides/{id}/reject")]
-        public async Task<IActionResult> RejectGuideAsync(
-            string id, [FromBody] RejectGuideDto dto)
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<OperationResultDto>> RejectGuideAsync(
+            string id,
+            [FromBody] RejectGuideDto dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var result = await _guideAdminService.RejectGuideAsync(id, dto.Reason);
+            var result =
+                await _guideAdminService.RejectGuideAsync(
+                    id,
+                    dto.Reason);
+
             if (!result.IsSuccess)
                 return BadRequest(result);
+
             return Ok(result);
         }
 
         [HttpPatch("guides/{id}/activate")]
-        public async Task<IActionResult> ActivateGuideAsync(string id, [FromBody] GuideAccountStatusUpdateDto dto)
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<OperationResultDto>> ActivateGuideAsync(
+            string id,
+            [FromBody] GuideAccountStatusUpdateDto dto)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-            var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
-            var result = await _guideAdminService.ActivateGuideAsync(id, adminId, dto.Reason, HttpContext.Connection.RemoteIpAddress?.ToString());
-            if (!result.IsSuccess) return BadRequest(result);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+          
+
+            var result =
+                await _guideAdminService.ActivateGuideAsync(
+                    id,
+                    adminId,
+                    dto.Reason,
+                    HttpContext.Connection.RemoteIpAddress?.ToString());
+
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
             return Ok(result);
         }
 
         [HttpPatch("guides/{id}/suspend")]
-        public async Task<IActionResult> SuspendGuideAsync(string id, [FromBody] GuideAccountStatusUpdateDto dto)
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<OperationResultDto>> SuspendGuideAsync(
+            string id,
+            [FromBody] GuideAccountStatusUpdateDto dto)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-            var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
-            var result = await _guideAdminService.SuspendGuideAsync(id, adminId, dto.Reason, HttpContext.Connection.RemoteIpAddress?.ToString());
-            if (!result.IsSuccess) return BadRequest(result);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+           
+            var result =
+                await _guideAdminService.SuspendGuideAsync(
+                    id,
+                    adminId,
+                    dto.Reason,
+                    HttpContext.Connection.RemoteIpAddress?.ToString());
+
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
             return Ok(result);
         }
 
         [HttpPatch("guides/{id}/ban")]
-        public async Task<IActionResult> BanGuideAsync(string id, [FromBody] GuideAccountStatusUpdateDto dto)
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<OperationResultDto>> BanGuideAsync(
+            string id,
+            [FromBody] GuideAccountStatusUpdateDto dto)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-            var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
-            var result = await _guideAdminService.BanGuideAsync(id, adminId, dto.Reason, HttpContext.Connection.RemoteIpAddress?.ToString());
-            if (!result.IsSuccess) return BadRequest(result);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+
+            var result =
+                await _guideAdminService.BanGuideAsync(
+                    id,
+                    adminId,
+                    dto.Reason,
+                    HttpContext.Connection.RemoteIpAddress?.ToString());
+
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
             return Ok(result);
         }
 
         [HttpPatch("guides/{id}/under-review")]
-        public async Task<IActionResult> PutGuideUnderReviewAsync(string id, [FromBody] GuideAccountStatusUpdateDto dto)
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<OperationResultDto>>
+            PutGuideUnderReviewAsync(
+                string id,
+                [FromBody] GuideAccountStatusUpdateDto dto)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-            var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
-            var result = await _guideAdminService.PutUnderReviewAsync(id, adminId, dto.Reason, HttpContext.Connection.RemoteIpAddress?.ToString());
-            if (!result.IsSuccess) return BadRequest(result);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+
+            var result =
+                await _guideAdminService.PutUnderReviewAsync(
+                    id,
+                    adminId,
+                    dto.Reason,
+                    HttpContext.Connection.RemoteIpAddress?.ToString());
+
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
             return Ok(result);
         }
 
         [HttpPost("guides/{id}/force-logout")]
-        public async Task<IActionResult> ForceLogoutGuideAsync(string id, [FromBody] GuideAccountStatusUpdateDto dto)
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<OperationResultDto>>
+            ForceLogoutGuideAsync(
+                string id,
+                [FromBody] GuideAccountStatusUpdateDto dto)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-            var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
-            var result = await _guideAdminService.ForceLogoutGuideAsync(id, adminId, dto.Reason, HttpContext.Connection.RemoteIpAddress?.ToString());
-            if (!result.IsSuccess) return BadRequest(result);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+
+            var result =
+                await _guideAdminService.ForceLogoutGuideAsync(
+                    id,
+                    adminId,
+                    dto.Reason,
+                    HttpContext.Connection.RemoteIpAddress?.ToString());
+
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
             return Ok(result);
         }
 
+        // =========================================================
+        // Wallet
+        // =========================================================
+
         [HttpGet("guides/{id}/wallet")]
-        public async Task<IActionResult> GetGuideWalletAsync(string id)
+        [ProducesResponseType(typeof(GuideWalletDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<GuideWalletDto>> GetGuideWalletAsync(
+            string id)
         {
-            var result = await _guideWalletAdminService.GetWalletAsync(id);
+            var result =
+                await _guideWalletAdminService.GetWalletAsync(id);
+
             if (result == null)
                 return BadRequest("Not Found TourGuide With This Id");
 
@@ -207,135 +342,260 @@ namespace API.Controllers.Admin
         }
 
         [HttpGet("guides/{id}/wallet/transactions")]
-        public async Task<IActionResult> GetGuideWalletTransactionsAsync(string id, [FromQuery] int take = 100)
+        [ProducesResponseType(typeof(Pagination<GuideWalletTransactionDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<Pagination<GuideWalletTransactionDto>>>
+            GetGuideWalletTransactionsAsync(
+                string id,
+                [FromQuery] WalletTransactionSpecParams param)
         {
-            var result = await _guideWalletAdminService.GetTransactionsAsync(id, take);
+            var result =
+                await _guideWalletAdminService
+                    .GetTransactionsAsync(id, param);
             return Ok(result);
         }
 
         [HttpPost("guides/{id}/wallet/add-balance")]
-        public async Task<IActionResult> AddBalanceAsync(string id, [FromBody] GuideWalletAdjustmentDto dto)
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<OperationResultDto>> AddBalanceAsync(
+            string id,
+            [FromBody] GuideWalletAdjustmentDto dto)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-            var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
-            var result = await _guideWalletAdminService.AddBalanceAsync(id, adminId, dto, HttpContext.Connection.RemoteIpAddress?.ToString());
-            if (!result.IsSuccess) return BadRequest(result);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+          
+
+            var result =
+                await _guideWalletAdminService.AddBalanceAsync(
+                    id,
+                    adminId,
+                    dto,
+                    HttpContext.Connection.RemoteIpAddress?.ToString());
+
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
             return Ok(result);
         }
 
         [HttpPost("guides/{id}/wallet/deduct-balance")]
-        public async Task<IActionResult> DeductBalanceAsync(string id, [FromBody] GuideWalletAdjustmentDto dto)
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<OperationResultDto>> DeductBalanceAsync(
+            string id,
+            [FromBody] GuideWalletAdjustmentDto dto)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-            var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
-            var result = await _guideWalletAdminService.DeductBalanceAsync(id, adminId, dto, HttpContext.Connection.RemoteIpAddress?.ToString());
-            if (!result.IsSuccess) return BadRequest(result);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+
+            var result =
+                await _guideWalletAdminService.DeductBalanceAsync(
+                    id,
+                    adminId,
+                    dto,
+                    HttpContext.Connection.RemoteIpAddress?.ToString());
+
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
             return Ok(result);
         }
 
         [HttpPatch("guides/{id}/wallet/freeze")]
-        public async Task<IActionResult> FreezeWalletAsync(string id, [FromBody] GuideAccountStatusUpdateDto dto)
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<OperationResultDto>> FreezeWalletAsync(
+            string id,
+            [FromBody] GuideAccountStatusUpdateDto dto)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-            var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
-            var result = await _guideWalletAdminService.SetFreezeStateAsync(id, true, adminId, dto.Reason, HttpContext.Connection.RemoteIpAddress?.ToString());
-            if (!result.IsSuccess) return BadRequest(result);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+           var result =
+                await _guideWalletAdminService.SetFreezeStateAsync(
+                    id,
+                    true,
+                    adminId,
+                    dto.Reason,
+                    HttpContext.Connection.RemoteIpAddress?.ToString());
+
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
             return Ok(result);
         }
 
         [HttpPatch("guides/{id}/wallet/unfreeze")]
-        public async Task<IActionResult> UnfreezeWalletAsync(string id, [FromBody] GuideAccountStatusUpdateDto dto)
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<OperationResultDto>> UnfreezeWalletAsync(
+            string id,
+            [FromBody] GuideAccountStatusUpdateDto dto)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-            var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? string.Empty;
-            var result = await _guideWalletAdminService.SetFreezeStateAsync(id, false, adminId, dto.Reason, HttpContext.Connection.RemoteIpAddress?.ToString());
-            if (!result.IsSuccess) return BadRequest(result);
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);         
+
+            var result =
+                await _guideWalletAdminService.SetFreezeStateAsync(
+                    id,
+                    false,
+                    adminId,
+                    dto.Reason,
+                    HttpContext.Connection.RemoteIpAddress?.ToString());
+
+            if (!result.IsSuccess)
+                return BadRequest(result);
+
             return Ok(result);
         }
 
-        // ==================== Tours ====================
+        // =========================================================
+        // Tours
+        // =========================================================
 
         [HttpGet("tours")]
-        public async Task<IActionResult> GetAllToursAsync()
+        [ProducesResponseType(typeof(Pagination<AdminTourDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<Pagination<AdminTourDto>>> GetAllToursAsync([FromQuery] AdminTourSpecParams param)
         {
-            var result = await _tourAdminService.GetAllToursAsync();
+            var result = await _tourAdminService.GetAllToursAsync(param);
+
             return Ok(result);
         }
 
         [HttpPut("tours/{id}/deactivate")]
-        public async Task<IActionResult> DeactivateTourAsync(Guid id)
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<OperationResultDto>> DeactivateTourAsync(
+            Guid id)
         {
             var result = await _tourAdminService.DeactivateTourAsync(id);
+
             if (!result.IsSuccess)
                 return BadRequest(result);
+
             return Ok(result);
         }
 
         [HttpPut("tours/{id}/activate")]
-        public async Task<IActionResult> ActivateTourAsync(Guid id)
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<OperationResultDto>> ActivateTourAsync(
+            Guid id)
         {
             var result = await _tourAdminService.ActivateTourAsync(id);
+
             if (!result.IsSuccess)
                 return BadRequest(result);
+
             return Ok(result);
         }
 
         [HttpDelete("tours/{id}")]
-        public async Task<IActionResult> DeleteTourAsync(Guid id)
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(OperationResultDto), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<OperationResultDto>> DeleteTourAsync(
+            Guid id)
         {
             var result = await _tourAdminService.DeleteTourAsync(id);
+
             if (!result.IsSuccess)
                 return BadRequest(result);
+
             return Ok(result);
         }
 
-        // ==================== Bookings ====================
+        // =========================================================
+        // Bookings
+        // =========================================================
 
         [HttpGet("bookings")]
-        public async Task<IActionResult> GetAllBookingsAsync(
-            [FromQuery] string? status = null,
-            [FromQuery] string? guideId = null)
+        [ProducesResponseType(typeof(Pagination<AdminBookingDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<Pagination<AdminBookingDto>>>
+            GetAllBookingsAsync([FromQuery] AdminBookingSpecParams param)
         {
-            var result = await _bookingAdminService.GetAllBookingsAsync(status, guideId);
+            var result =
+                await _bookingAdminService
+                    .GetAllBookingsAsync(param);
             return Ok(result);
         }
 
-        [HttpDelete("{bookingId}")]
-        public async Task<IActionResult> CancelBookingAsync(Guid bookingId)
+        [HttpDelete("bookings/{bookingId:guid}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> CancelBookingAsync(
+            Guid bookingId)
         {
-            var requesterId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var requesterId =
+                User.FindFirstValue(ClaimTypes.NameIdentifier);
+
             if (string.IsNullOrWhiteSpace(requesterId))
                 return Unauthorized();
 
-            var result = await _bookingAdminService
-                .CancelBookingAsync(bookingId, requesterId);
+            var result =
+                await _bookingAdminService
+                    .CancelBookingAsync(bookingId, requesterId);
 
             if (!result)
-                return BadRequest(new { IsSuccess = false, Message = "Booking not found or already cancelled." });
-            return Ok(new { IsSuccess = true, Message = "Booking cancelled successfully." });
+            {
+                return BadRequest(new
+                {
+                    IsSuccess = false,
+                    Message = "Booking not found or already cancelled."
+                });
+            }
+
+            return Ok(new
+            {
+                IsSuccess = true,
+                Message = "Booking cancelled successfully."
+            });
         }
-        // ==================== Statistics ====================
+
+        // =========================================================
+        // Statistics
+        // =========================================================
 
         [HttpGet("statistics")]
-        public async Task<IActionResult> GetStatisticsAsync()
+        [ProducesResponseType(typeof(AdminStatisticsDto), StatusCodes.Status200OK)]
+        public async Task<ActionResult<AdminStatisticsDto>>
+            GetStatisticsAsync()
         {
-            var result = await _adminService.GetStatisticsAsync();
+            var result =
+                await _adminService.GetStatisticsAsync();
+
             return Ok(result);
         }
 
-        // ==================== Revenue ====================
+        // =========================================================
+        // Revenue
+        // =========================================================
 
         [HttpGet("revenue")]
-        public async Task<IActionResult> GetRevenueAsync()
+        [ProducesResponseType(typeof(AdminRevenueDto), StatusCodes.Status200OK)]
+        public async Task<ActionResult<AdminRevenueDto>>
+            GetRevenueAsync()
         {
-            var result = await _adminService.GetRevenueAsync();
+            var result =
+                await _adminService.GetRevenueAsync();
+
             return Ok(result);
         }
 
+        // =========================================================
+        // Audit Logs
+        // =========================================================
+
         [HttpGet("audit-logs")]
-        public async Task<IActionResult> GetAuditLogsAsync([FromQuery] int take = 100)
+        [ProducesResponseType(typeof(Pagination<AdminAuditLogDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<Pagination<AdminAuditLogDto>>>
+            GetAuditLogsAsync(
+                [FromQuery] AuditLogSpecParams param)
         {
-            var result = await _adminAuditService.GetRecentAsync(take);
+            var result =
+                await _adminAuditService.GetRecentAsync(param);
+
             return Ok(result);
         }
     }

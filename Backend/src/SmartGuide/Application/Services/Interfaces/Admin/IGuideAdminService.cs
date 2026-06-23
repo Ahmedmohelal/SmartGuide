@@ -1,5 +1,7 @@
-﻿using Application.DTOs.AdminDashboard;
+﻿using Application.Common.Pagination;
+using Application.DTOs.AdminDashboard;
 using Application.DTOs.AuthenticationDTOs;
+using Application.DTOs.Home;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -8,8 +10,8 @@ namespace Application.Services.Interfaces.Admin
 {
     public interface IGuideAdminService
     {
-        Task<List<AdminGuideVerificationDto>> GetPendingGuidesAsync();
-        Task<List<AdminGuideVerificationDto>> GetAllGuidesAsync();
+        Task<Pagination<AdminGuideVerificationDto>> GetPendingGuidesAsync(AdminGuideSpecParams param);
+        Task<Pagination<AdminGuideVerificationDto>> GetAllGuidesAsync(AdminGuideSpecParams param);
         Task<OperationResultDto> ApproveGuideAsync(string guideId);
         Task<OperationResultDto> RejectGuideAsync(string guideId, string reason);
         Task<OperationResultDto> ActivateGuideAsync(string guideId, string adminId, string reason, string? ipAddress);

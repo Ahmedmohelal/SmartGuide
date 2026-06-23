@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Application.DTOs.PlaceRatings;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -20,7 +21,7 @@ namespace Application.DTOs.Home
 
         public string? ImageUrl { get; set; }
 
-        public double? Rating { get; set; }
+        //public double? Rating { get; set; }
 
         public string? HistoricalBackground { get; set; }
 
@@ -29,5 +30,14 @@ namespace Application.DTOs.Home
         public string? Period { get; set; }
 
         public int? StartYear { get; set; }
+
+        public double AverageRating { get; set; }
+
+        public int RatingsCount { get; set; }
+
+        public int? MyRating { get; set; }
+
+        public List<PlaceReviewDto> Reviews { get; set; } = new();
+
     }
 }

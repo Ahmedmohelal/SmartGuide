@@ -1,6 +1,8 @@
-﻿using Application.DTOs;
+﻿using Application.Common.Pagination;
+using Application.DTOs;
 using Application.DTOs.AdminDashboard;
 using Application.DTOs.AuthenticationDTOs;
+using Application.DTOs.Home;
 using Application.Helper;
 using Application.Services.Interfaces.Admin;
 using Application.Services.Interfaces.Auth;
@@ -8,6 +10,8 @@ using Application.Services.Interfaces.PictureMaker;
 using Application.Services.UseCases.PictureMaker;
 using Infrastructure.Data;
 using Infrastructure.Data.Entities.Identity;
+using Infrastructure.Services.Admin.Specs;
+using Infrastructure.Services.Home;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -30,13 +34,7 @@ namespace Infrastructure.Services.Admin
         private readonly ILogger<UserAdminService> _logger;
 
 
-        public UserAdminService(
-            ApplicationDbContext context,
-            IImageUrlService imageUrlService
-,
-            UserManager<ApplicationUser> userManager,
-            IAttachmentService attachmentService,
-            ILogger<UserAdminService> logger)
+        public UserAdminService(ApplicationDbContext context, IImageUrlService imageUrlService, UserManager<ApplicationUser> userManager, IAttachmentService attachmentService, ILogger<UserAdminService> logger)
         {
             _context = context;
             _imageUrlService = imageUrlService;
@@ -44,29 +42,85 @@ namespace Infrastructure.Services.Admin
             _attachmentService = attachmentService;
             _logger = logger;
         }
-        public async Task<List<AdminUserDto>> GetAllUsersAsync()
+        public async Task<Pagination<AdminUserDto>> GetAllUsersAsync(AdminUserSpecParams specParams)
         {
+            var spec = new AdminUsersSpecification(specParams);
 
-            var users = await _context.Users
+            var countSpec = new AdminUsersCountSpecification(specParams);
+
+            var usersQuery = SpecificationEvaluator<ApplicationUser>
+                    .GetQuery(
+                        _context.Users.AsQueryable(),
+                        spec);
+
+            var countQuery =
+                SpecificationEvaluator<ApplicationUser>
+                    .GetQuery(
+                        _context.Users.AsQueryable(),
+                        countSpec);
+
+            var users = await usersQuery
+
                 .AsNoTracking()
+
                 .ToListAsync();
 
-            return users.Select(u => new AdminUserDto
-            {
-                Id = u.Id,
-                FirstName = u.FirstName,
-                LastName = u.LastName,
-                Email = u.Email ?? string.Empty,
-                UserName = u.UserName ?? string.Empty,
-                Country = u.Country,
-                Role = u.Role,
-                WhatsAppNumber = u.WhatsAppNumber,
-                ProfileImage = _imageUrlService.ToPublicImageUrl(u.ProfileImage, "profileImages"),
-                GuideLicenseImage = _imageUrlService.ToPublicImageUrl(u.GuideLicenseImage, "licenses"),
-                NationalIdImage = _imageUrlService.ToPublicImageUrl(u.NationalIdImage, "nationalIds"),
-                VerificationStatus = u.IsGuideVerified.ToString(),
-                IsActive = !u.LockoutEnd.HasValue || u.LockoutEnd < DateTimeOffset.UtcNow
-            }).ToList();
+            var count = await countQuery
+                .CountAsync();
+
+            var mappedUsers = users
+                .Select(u => new AdminUserDto
+                {
+                    Id = u.Id,
+
+                    FirstName = u.FirstName,
+
+                    LastName = u.LastName,
+
+                    Email = u.Email ?? string.Empty,
+
+                    UserName = u.UserName ?? string.Empty,
+
+                    Country = u.Country,
+
+                    Role = u.Role,
+
+                    WhatsAppNumber =
+                        u.WhatsAppNumber,
+
+                    ProfileImage =
+                        _imageUrlService
+                            .ToPublicImageUrl(
+                                u.ProfileImage,
+                                "profileImages"),
+
+                    GuideLicenseImage =
+                        _imageUrlService
+                            .ToPublicImageUrl(
+                                u.GuideLicenseImage,
+                                "licenses"),
+
+                    NationalIdImage =
+                        _imageUrlService
+                            .ToPublicImageUrl(
+                                u.NationalIdImage,
+                                "nationalIds"),
+
+                    VerificationStatus =
+                        u.IsGuideVerified.ToString(),
+
+                    IsActive =
+                        !u.LockoutEnd.HasValue
+                        || u.LockoutEnd
+                            < DateTimeOffset.UtcNow
+
+                }).ToList();
+
+            return new Pagination<AdminUserDto>(
+                specParams.PageIndex,
+                specParams.PageSize,
+                count,
+                mappedUsers);
         }
 
         public async Task<AdminUserDto?> GetUserByIdAsync(string userId)
@@ -101,6 +155,9 @@ namespace Infrastructure.Services.Admin
             if (user == null)
                 return new OperationResultDto { IsSuccess = false, Message = "User not found." };
 
+            if (user.LockoutEnd.HasValue && user.LockoutEnd > DateTimeOffset.UtcNow)
+                return await AlreadyDone();
+
             user.LockoutEnd = DateTimeOffset.UtcNow.AddYears(100);
             user.LockoutEnabled = true;
             await _context.SaveChangesAsync();
@@ -113,6 +170,9 @@ namespace Infrastructure.Services.Admin
             var user = await _context.Users.FirstOrDefaultAsync(x => x.Id == userId);
             if (user == null)
                 return new OperationResultDto { IsSuccess = false, Message = "User not found." };
+
+            if (!user.LockoutEnd.HasValue || user.LockoutEnd < DateTimeOffset.UtcNow)
+                return await AlreadyDone();
 
             user.LockoutEnd = null;
             user.LockoutEnabled = false;
@@ -135,22 +195,74 @@ namespace Infrastructure.Services.Admin
                 };
             }
 
-            bool hasTours = await _context.Tours
-                .AnyAsync(x => x.GuideId == userId);
+            var hasTours = await _context.Tours
+    .AnyAsync(x => x.GuideId == userId);
 
-            if (hasTours)
+            var hasBookings = await _context.Bookings
+                .AnyAsync(x =>
+                    x.GuideId == userId ||
+                    x.TouristId == userId);
+
+            var hasConversations = await _context.ChatConversations
+                .AnyAsync(x =>
+                    x.GuideUserId == userId ||
+                    x.TouristUserId == userId);
+
+            //var hasMessages = await _context.ChatMessages
+            //    .AnyAsync(x =>
+            //        x.SenderUserId == userId);
+
+            //var hasNotifications = await _context.Notifications
+            //    .AnyAsync(x =>
+            //        x.UserId == userId);
+
+            //var hasAuditLogs = await _context.AdminAuditLogs
+            //    .AnyAsync(x =>
+            //        x.AdminId == userId);
+
+            //var hasSlots = await _context.BookingsSlot
+            //    .AnyAsync(x =>
+            //        x.GuideId == userId);
+
+            //var hasFavorites = await _context.SavedTourGuides
+            //    .AnyAsync(x =>
+            //        x.TourGuideUserId == userId ||
+            //        x.TouristUserId == userId);
+
+            var hasRelatedData =
+                               hasTours
+                            || hasBookings
+                            || hasConversations;
+
+            if (hasRelatedData)
             {
                 user.LockoutEnabled = true;
                 user.LockoutEnd = DateTimeOffset.UtcNow.AddYears(100);
+                user.ForceLogoutRequired = true;
 
-                await _context.SaveChangesAsync();
+                await _userManager.UpdateAsync(user);
 
                 return new OperationResultDto
                 {
                     IsSuccess = true,
-                    Message = "User has related data, so account was deactivated instead of deleted."
+                    Message = "User has related data so account was deactivated."
                 };
             }
+
+            if (user.ProfileImage is not null)
+            {
+                try
+                {
+                    await _attachmentService.Delete(user.ProfileImage, "profileImages");
+                }
+                catch (Exception)
+                {
+                    _logger.LogError("Can not delete the image for this user");
+                }
+
+            }
+
+
 
             _context.Users.Remove(user);
             await _context.SaveChangesAsync();
@@ -186,7 +298,8 @@ namespace Infrastructure.Services.Admin
                     return new OperationResultDto
                     {
                         IsSuccess = false,
-                        Message = ErrorMessages.UploadFailed };
+                        Message = ErrorMessages.UploadFailed
+                    };
                 }
             }
 
@@ -234,9 +347,18 @@ namespace Infrastructure.Services.Admin
         }
         private async Task DeleteProfileImage(string? profileImage)
         {
-            
+
             if (profileImage != null)
                 await _attachmentService.Delete(profileImage, "profileImages");
+        }
+
+        private async static Task<OperationResultDto> AlreadyDone()
+        {
+            return await Task.FromResult(new OperationResultDto
+            {
+                IsSuccess = false,
+                Message = "This action has already been performed on this user."
+            });
         }
 
     }

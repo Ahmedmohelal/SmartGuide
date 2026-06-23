@@ -15,5 +15,6 @@ namespace Application.Services.Interfaces.Chat
         Task PublishMessageStatusAsync(Guid conversationId, ChatMessageStatusRealtimeDto dto, CancellationToken cancellationToken = default);
         Task PublishReadReceiptAsync(Guid conversationId, ConversationReadReceiptRealtimeDto dto, CancellationToken cancellationToken = default);
         Task PublishPresenceAsync(string notifyUserId, UserPresenceRealtimeDto dto, CancellationToken cancellationToken = default);
+        Task PublishConversationSummaryUpdatedAsync(Guid conversationId,ConversationUpdatedRealtimeDto dto,CancellationToken cancellationToken = default);
     }
 }

@@ -7,6 +7,8 @@ namespace Application.Services.Interfaces.Chat
     public interface IChatUserReader
     {
         Task<UserChatContext?> GetAsync(string userId, CancellationToken cancellationToken = default);
+        Task<string?> GetFullNameAsync(string userId, CancellationToken cancellationToken = default);
+        Task<string?> GetProfilePictureUrlAsync(string userId, CancellationToken cancellationToken = default);
     }
 
     public sealed class UserChatContext

@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
-import { getGuideDashboard, getGuideDashboardDocuments } from "../Services/api/guideService";
+import {
+  getGuideDashboard,
+  getGuideDashboardDocuments,
+} from "../Services/api/guideService";
 import {
   createTour,
   deleteTour,
@@ -32,6 +35,7 @@ import {
   Users,
   TrendingUp,
 } from "lucide-react";
+import { confirmBooking } from "../Services/api/bookingService";
 
 const createInitialState = () => ({
   title: "",
@@ -61,6 +65,7 @@ export default function GuideDashboard() {
   const [deleteLoadingId, setDeleteLoadingId] = useState(null);
   const [pendingDeleteTour, setPendingDeleteTour] = useState(null);
   const [editForm, setEditForm] = useState(() => createInitialState());
+  const [confirmLoadingId, setConfirmLoadingId] = useState(null);
 
   const fetchDashboard = async () => {
     try {
@@ -87,6 +92,36 @@ export default function GuideDashboard() {
       console.error(err);
     } finally {
       setDocsLoading(false);
+    }
+  };
+  const handleConfirmCash = async (bookingId) => {
+    if (!bookingId) return;
+
+    const confirmed = window.confirm("Confirm that you received the cash?");
+
+    if (!confirmed) return;
+
+    try {
+      setConfirmLoadingId(bookingId);
+
+      const res = await confirmBooking(bookingId);
+
+      toast.success(res?.message || "Booking confirmed");
+
+      setDashboardData((prev) => {
+        if (!prev) return prev;
+
+        return {
+          ...prev,
+          recentActivities: prev.recentActivities.map((b) =>
+            b.id === bookingId ? { ...b, status: "confirmed" } : b,
+          ),
+        };
+      });
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to confirm booking");
+    } finally {
+      setConfirmLoadingId(null);
     }
   };
 
@@ -399,7 +434,9 @@ export default function GuideDashboard() {
           </div>
 
           {docsLoading ? (
-            <p className="text-sm text-slate-500">Loading verification images...</p>
+            <p className="text-sm text-slate-500">
+              Loading verification images...
+            </p>
           ) : docsError ? (
             <p className="text-sm text-red-600">{docsError}</p>
           ) : documents ? (
@@ -614,21 +651,39 @@ export default function GuideDashboard() {
                       {booking.date || "N/A"}
                     </p>
                   </div>
-                  <div className="ml-4 text-right">
-                    <p className="font-semibold text-slate-900">
-                      {booking.amount || 0} EGP
-                    </p>
-                    <p
-                      className={`mt-1 text-xs font-medium ${
-                        booking.status === "confirmed"
-                          ? "text-green-600"
-                          : booking.status === "pending"
-                            ? "text-yellow-600"
-                            : "text-red-600"
-                      }`}
-                    >
-                      {booking.status || "Unknown"}
-                    </p>
+
+                  <div className="ml-4 flex items-center gap-3 text-right">
+                    <div>
+                      <p className="font-semibold text-slate-900">
+                        {booking.amount || 0} EGP
+                      </p>
+
+                      <p
+                        className={`mt-1 text-xs font-medium ${
+                          booking.status === "confirmed"
+                            ? "text-green-600"
+                            : booking.status === "pending"
+                              ? "text-yellow-600"
+                              : "text-red-600"
+                        }`}
+                      >
+                        {booking.status || "Unknown"}
+                      </p>
+                    </div>
+
+                    {/* ✅ CONFIRM BUTTON (CASH ONLY) */}
+                    {booking.paymentMethod === "Cash" &&
+                      booking.status !== "confirmed" && (
+                        <button
+                          onClick={() => handleConfirmCash(booking.id)}
+                          disabled={confirmLoadingId === booking.id}
+                          className="px-3 py-1.5 rounded-lg bg-green-600 text-white text-xs font-semibold hover:bg-green-700 disabled:bg-gray-400 transition"
+                        >
+                          {confirmLoadingId === booking.id
+                            ? "Confirming..."
+                            : "Confirm"}
+                        </button>
+                      )}
                   </div>
                 </div>
               ))}
@@ -810,94 +865,94 @@ export default function GuideDashboard() {
                 Loading tour details…
               </p>
             ) : (
-            <form onSubmit={handleUpdateTour} className="space-y-3">
-              <input
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-egypt-teal/30 focus:border-egypt-teal"
-                placeholder="Title *"
-                value={editForm.title}
-                onChange={(e) => handleEditChange("title", e.target.value)}
-              />
-              <textarea
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none min-h-[96px] resize-none focus:ring-2 focus:ring-egypt-teal/30 focus:border-egypt-teal"
-                placeholder="Description *"
-                value={editForm.description}
-                onChange={(e) =>
-                  handleEditChange("description", e.target.value)
-                }
-              />
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <form onSubmit={handleUpdateTour} className="space-y-3">
                 <input
                   className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-egypt-teal/30 focus:border-egypt-teal"
-                  type="number"
-                  placeholder="Price *"
-                  value={editForm.price}
-                  onChange={(e) => handleEditChange("price", e.target.value)}
+                  placeholder="Title *"
+                  value={editForm.title}
+                  onChange={(e) => handleEditChange("title", e.target.value)}
                 />
-                <input
-                  className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-egypt-teal/30 focus:border-egypt-teal"
-                  type="number"
-                  placeholder="Duration Hours *"
-                  value={editForm.durationHours}
+                <textarea
+                  className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none min-h-[96px] resize-none focus:ring-2 focus:ring-egypt-teal/30 focus:border-egypt-teal"
+                  placeholder="Description *"
+                  value={editForm.description}
                   onChange={(e) =>
-                    handleEditChange("durationHours", e.target.value)
+                    handleEditChange("description", e.target.value)
                   }
                 />
-                <input
-                  className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-egypt-teal/30 focus:border-egypt-teal"
-                  type="number"
-                  placeholder="Max Group Size *"
-                  value={editForm.maxGroupSize}
-                  onChange={(e) =>
-                    handleEditChange("maxGroupSize", e.target.value)
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <input
+                    className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-egypt-teal/30 focus:border-egypt-teal"
+                    type="number"
+                    placeholder="Price *"
+                    value={editForm.price}
+                    onChange={(e) => handleEditChange("price", e.target.value)}
+                  />
+                  <input
+                    className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-egypt-teal/30 focus:border-egypt-teal"
+                    type="number"
+                    placeholder="Duration Hours *"
+                    value={editForm.durationHours}
+                    onChange={(e) =>
+                      handleEditChange("durationHours", e.target.value)
+                    }
+                  />
+                  <input
+                    className="w-full rounded-xl border border-gray-200 px-4 py-3 outline-none focus:ring-2 focus:ring-egypt-teal/30 focus:border-egypt-teal"
+                    type="number"
+                    placeholder="Max Group Size *"
+                    value={editForm.maxGroupSize}
+                    onChange={(e) =>
+                      handleEditChange("maxGroupSize", e.target.value)
+                    }
+                  />
+                </div>
+
+                <TourExtrasFormSection
+                  programStops={editForm.programStops}
+                  onChangeProgramStops={(programStops) =>
+                    setEditForm((prev) => ({ ...prev, programStops }))
+                  }
+                  inclusionLines={editForm.inclusionLines}
+                  onChangeInclusionLines={(inclusionLines) =>
+                    setEditForm((prev) => ({ ...prev, inclusionLines }))
+                  }
+                  addOnRows={editForm.addOnRows}
+                  onChangeAddOnRows={(addOnRows) =>
+                    setEditForm((prev) => ({ ...prev, addOnRows }))
                   }
                 />
-              </div>
 
-              <TourExtrasFormSection
-                programStops={editForm.programStops}
-                onChangeProgramStops={(programStops) =>
-                  setEditForm((prev) => ({ ...prev, programStops }))
-                }
-                inclusionLines={editForm.inclusionLines}
-                onChangeInclusionLines={(inclusionLines) =>
-                  setEditForm((prev) => ({ ...prev, inclusionLines }))
-                }
-                addOnRows={editForm.addOnRows}
-                onChangeAddOnRows={(addOnRows) =>
-                  setEditForm((prev) => ({ ...prev, addOnRows }))
-                }
-              />
+                <label className="flex items-center gap-2 rounded-xl border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-600 bg-gray-50">
+                  <ImageIcon size={16} />
+                  <span className="font-medium">Change image (optional)</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="ml-auto text-xs"
+                    onChange={(e) =>
+                      handleEditChange("imageFile", e.target.files?.[0] || null)
+                    }
+                  />
+                </label>
 
-              <label className="flex items-center gap-2 rounded-xl border border-dashed border-gray-300 px-4 py-3 text-sm text-gray-600 bg-gray-50">
-                <ImageIcon size={16} />
-                <span className="font-medium">Change image (optional)</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="ml-auto text-xs"
-                  onChange={(e) =>
-                    handleEditChange("imageFile", e.target.files?.[0] || null)
-                  }
-                />
-              </label>
-
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={closeEditForm}
-                  className="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={editLoading}
-                  className="px-4 py-2 rounded-lg bg-egypt-teal text-white font-semibold hover:bg-teal-700 disabled:bg-gray-400 transition"
-                >
-                  {editLoading ? "Saving..." : "Save changes"}
-                </button>
-              </div>
-            </form>
+                <div className="flex items-center justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={closeEditForm}
+                    className="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50 transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={editLoading}
+                    className="px-4 py-2 rounded-lg bg-egypt-teal text-white font-semibold hover:bg-teal-700 disabled:bg-gray-400 transition"
+                  >
+                    {editLoading ? "Saving..." : "Save changes"}
+                  </button>
+                </div>
+              </form>
             )}
           </div>
         </div>

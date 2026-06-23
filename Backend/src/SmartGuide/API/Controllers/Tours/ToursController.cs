@@ -24,7 +24,7 @@ namespace API.Controllers.Tours
         // Get All Tours For TourGide To The Tourist To See The Tours To Choose One
         [Authorize(Roles = "Tourist")]
         [HttpGet("guide/{guideId}")]
-        public async Task<IActionResult> GetGuideTours(string guideId)
+        public async Task<ActionResult<List<TourListItemDto>>> GetGuideTours(string guideId)
         {
             var tours = await _tourService.GetGuideToursAsync(guideId);
             return Ok(tours);
@@ -32,7 +32,7 @@ namespace API.Controllers.Tours
 
         [Authorize(Roles = "Tourist")]
         [HttpGet("{id:guid}")]
-        public async Task<IActionResult> GetTourById(Guid id)
+        public async Task<ActionResult<TourDetailsDto>> GetTourById(Guid id)
         {
             var tour = await _tourService.GetTourByIdAsync(id);
             if (tour == null)
@@ -44,7 +44,7 @@ namespace API.Controllers.Tours
 
         [Authorize(Roles = "Tourist")]
         [HttpGet("home")]
-        public async Task<IActionResult> GetHomeTours()
+        public async Task<ActionResult<List<GuideToursHomeDto>>> GetHomeTours()
         {
             var result = await _tourService.GetHomeToursAsync();
             if (result == null)

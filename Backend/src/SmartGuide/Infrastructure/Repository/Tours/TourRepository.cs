@@ -28,7 +28,16 @@ namespace Infrastructure.Repository.Tours
                 .Include(t => t.TourImages)
                 .ToListAsync();
         }
-
+        public async Task<List<Tour>> GetTouristToursAsync(string touristId)
+        {
+            return await _context.Bookings
+        .Where(b => b.TouristId == touristId)
+        .Where(b => b.Tour.IsActive)
+        .Select(b => b.Tour)
+        .Distinct()
+        .Include(t => t.TourImages)
+        .ToListAsync();
+        }
 
         public async Task<Tour?> GetByIdAsync(Guid tourId)
         {
@@ -56,6 +65,51 @@ namespace Infrastructure.Repository.Tours
             await _context.TourAddOns.AddRangeAsync(addons);
             await _context.SaveChangesAsync();
         }
+
+        public async Task ReplaceTourStopsAsync(
+    Tour tour,
+    List<TourStops> stops)
+        {
+            _context.TourStops.RemoveRange(tour.TourStops);
+
+            await _context.TourStops.AddRangeAsync(stops);
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task ReplaceTourInclusionsAsync(
+    Tour tour,
+    List<TourInclusion> inclusions)
+        {
+            _context.TourInclusions.RemoveRange(
+                tour.TourInclusions);
+
+            await _context.TourInclusions
+                .AddRangeAsync(inclusions);
+
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task ReplaceTourAddOnsAsync(
+    Tour tour,
+    List<TourAddOn> addons)
+        {
+            _context.TourAddOns.RemoveRange(
+                tour.TourAddOns);
+
+            await _context.TourAddOns
+                .AddRangeAsync(addons);
+
+            await _context.SaveChangesAsync();
+        }
+
+
+
+
+
+
+
+
         public async Task ReplaceTourImagesAsync(Tour tour, List<TourImage> images)
         {
             _context.TourImages.RemoveRange(tour.TourImages);
@@ -71,17 +125,17 @@ namespace Infrastructure.Repository.Tours
         }
 
 
-        public async Task DeleteAsync(Guid tourId)
+        public async Task<bool> DeleteAsync(Guid tourId)
         {
             var tour = await _context.Tours.FindAsync(tourId);
 
             if (tour == null)
-                return;
+                return false;
 
             tour.IsActive = false;
 
             _context.Tours.Update(tour);
-            await _context.SaveChangesAsync();
+            return await _context.SaveChangesAsync() > 0;
         }
 
 

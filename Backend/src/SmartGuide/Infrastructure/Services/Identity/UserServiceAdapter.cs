@@ -309,5 +309,19 @@ namespace Infrastructure.Services.Identity
             applicationUser.ForceLogoutRequired = required;
             await _userManager.UpdateAsync(applicationUser);
         }
+
+        public async Task SaveFcmTokenAsync(string userId,string token)
+        {
+            var user = await _userManager
+                .FindByIdAsync(userId);
+
+            if (user == null)
+                return;
+
+            user.FcmToken = token;
+
+            await _userManager.UpdateAsync(user);
+        }
+
     }
 }

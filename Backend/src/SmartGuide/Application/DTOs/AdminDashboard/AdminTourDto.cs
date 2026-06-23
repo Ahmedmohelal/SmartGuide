@@ -12,6 +12,7 @@ namespace Application.DTOs.AdminDashboard
         public string Title { get; set; }
         public decimal Price { get; set; }
         public int DurationHours { get; set; }
+        public int MaxGroupSize { get; set; }
         public bool IsActive { get; set; }
         public string? PrimaryImage { get; set; }
         public int TotalBookings { get; set; }

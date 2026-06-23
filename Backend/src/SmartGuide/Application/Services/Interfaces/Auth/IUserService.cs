@@ -35,5 +35,9 @@ namespace Application.Services.Interfaces.Auth
         public Task<bool> ClearResetPasswordOtpAsync(User user);
         public Task SetForceLogoutRequiredAsync(string userId, bool required);
 
+        Task SaveFcmTokenAsync(
+    string userId,
+    string token);
+
     }
 }

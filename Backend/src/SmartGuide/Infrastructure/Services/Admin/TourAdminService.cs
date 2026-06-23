@@ -1,9 +1,18 @@
-﻿using Application.DTOs.AdminDashboard;
+﻿using Application.Common.Pagination;
+using Application.DTOs.AdminDashboard;
 using Application.DTOs.AuthenticationDTOs;
+using Application.DTOs.Home;
 using Application.Services.Interfaces.Admin;
 using Application.Services.Interfaces.Auth;
+using Application.Services.Interfaces.Notifications;
 using Application.Services.Interfaces.PictureMaker;
+using Application.Services.UseCases.PictureMaker;
+using Domain.Entities.Notifications;
+using Domain.Entities.Tours;
+using Domain.Interfaces;
 using Infrastructure.Data;
+using Infrastructure.Services.Admin.Specs;
+using Infrastructure.Services.Home;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
@@ -12,60 +21,112 @@ using System.Text;
 
 namespace Infrastructure.Services.Admin
 {
-    public class TourAdminService:ITourAdminService
+    public class TourAdminService : ITourAdminService
     {
         private readonly ApplicationDbContext _context;
         private readonly IImageUrlService _imageUrlService;
+        private readonly INotificationService _notificationService;
+        private readonly ILogger<TourAdminService> _logger;
+        private readonly ITourRepository _tourRepository;
+        private readonly IAttachmentService _attachmentService;
+        private readonly IAdminAuditService _adminAuditService;
 
-        public TourAdminService(
-            ApplicationDbContext context,
-            IImageUrlService imageUrlService
-          )
+        public TourAdminService(ApplicationDbContext context, IImageUrlService imageUrlService, INotificationService notificationService, ILogger<TourAdminService> logger, ITourRepository tourRepository, IAttachmentService attachmentService, IAdminAuditService adminAuditService)
         {
             _context = context;
             _imageUrlService = imageUrlService;
+            _notificationService = notificationService;
+            _logger = logger;
+            _tourRepository = tourRepository;
+            _attachmentService = attachmentService;
+            _adminAuditService = adminAuditService;
         }
-        public async Task<List<AdminTourDto>> GetAllToursAsync()
+        public async Task<Pagination<AdminTourDto>> GetAllToursAsync(AdminTourSpecParams param)
         {
-            var tours = await _context.Tours
+            var spec =
+                new AdminToursSpecification(
+                    param);
+
+            var countSpec =
+                new AdminToursCountSpecification(
+                    param);
+
+            var toursQuery = SpecificationEvaluator<Tour>
+                    .GetQuery(
+                        _context.Tours
+                            .Include(t => t.TourImages)
+                            .Include(t => t.Bookings)
+                            .AsQueryable(),
+                        spec);
+
+            var countQuery = SpecificationEvaluator<Tour>
+                    .GetQuery(
+                        _context.Tours.AsQueryable(),
+                        countSpec);
+
+            var tours = await toursQuery
+
                 .AsNoTracking()
-                .Include(t => t.TourImages)
+
                 .ToListAsync();
 
-            var guideIds = tours.Select(t => t.GuideId).Distinct().ToList();
+            var count = await countQuery
+                .CountAsync();
+
+            var guideIds = tours
+
+                .Select(t => t.GuideId)
+
+                .Distinct()
+
+                .ToList();
+
             var guides = await _context.Users
+
                 .AsNoTracking()
-                .Where(u => guideIds.Contains(u.Id))
-                .ToDictionaryAsync(u => u.Id);
 
-            var bookingCounts = await _context.Bookings
-                .AsNoTracking()
-                .GroupBy(b => b.TourId)
-                .Select(g => new { TourId = g.Key, Count = g.Count() })
-                .ToDictionaryAsync(x => x.TourId, x => x.Count);
+                .Where(x => guideIds.Contains(x.Id))
 
-            return tours.Select(t =>
-            {
-                guides.TryGetValue(t.GuideId, out var guide);
-                bookingCounts.TryGetValue(t.Id, out var bookingCount);
+                .ToDictionaryAsync(x => x.Id);
 
-                return new AdminTourDto
+            var mappedTours = tours
+                .Select(t =>
                 {
-                    Id = t.Id,
-                    GuideId = t.GuideId,
-                    GuideName = guide != null
-                        ? $"{guide.FirstName} {guide.LastName}"
-                        : "Unknown",
-                    Title = t.Title,
-                    Price = t.Price,
-                    DurationHours = t.DurationHours,
-                    IsActive = t.IsActive,
-                    PrimaryImage = _imageUrlService.ToPublicImageUrl(
-                        t.TourImages.FirstOrDefault(i => i.IsPrimary)?.ImageUrl,
-                        $"ToursImages/{t.Id}"),
-                    TotalBookings = bookingCount
-                };
-            }).ToList();
+                    guides.TryGetValue(
+                        t.GuideId,
+                        out var guide);
+
+                    return new AdminTourDto
+                    {
+                        Id = t.Id,
+
+                        Title = t.Title,
+
+
+                        Price = t.Price,
+                        TotalBookings = t.Bookings.Count,
+                        DurationHours = t.DurationHours,
+
+                        MaxGroupSize = t.MaxGroupSize,
+                        PrimaryImage = _imageUrlService.ToPublicImageUrl(
+                    t.TourImages.FirstOrDefault(i => i.IsPrimary)?.ImageUrl,
+                    $"ToursImages/{t.Id}"
+                        ) ?? string.Empty,
+                        IsActive = t.IsActive,
+
+                        GuideId = t.GuideId,
+                        GuideName = guide != null
+                            ? $"{guide.FirstName} {guide.LastName}"
+                            : "Unknown",
+                    };
+
+                }).ToList();
+
+            return new Pagination<AdminTourDto>(
+                param.PageIndex,
+                param.PageSize,
+                count,
+                mappedTours);
         }
 
         public async Task<OperationResultDto> DeactivateTourAsync(Guid tourId)
@@ -74,8 +135,19 @@ namespace Infrastructure.Services.Admin
             if (tour == null)
                 return new OperationResultDto { IsSuccess = false, Message = "Tour not found." };
 
+            if (!tour.IsActive)
+                return await AlreadyDone();
+
+
             tour.IsActive = false;
             await _context.SaveChangesAsync();
+
+            await _notificationService.SendAsync(
+                tour.GuideId,
+                "Tour Deactivated ⚠️",
+                $"Your tour \"{tour.Title}\" has been deactivated by the administrator.",
+                NotificationType.TourDeactivated,
+                tour.Id.ToString(), "Tour");
 
             return new OperationResultDto { IsSuccess = true, Message = "Tour deactivated successfully." };
         }
@@ -86,8 +158,18 @@ namespace Infrastructure.Services.Admin
             if (tour == null)
                 return new OperationResultDto { IsSuccess = false, Message = "Tour not found." };
 
+            if (tour.IsActive)
+                return await AlreadyDone();
+
             tour.IsActive = true;
             await _context.SaveChangesAsync();
+
+            await _notificationService.SendAsync(
+                tour.GuideId,
+                "Tour Activated ✅",
+                $"Your tour \"{tour.Title}\" has been activated.",
+                NotificationType.TourActivated,
+                tour.Id.ToString(), "Tour");
 
             return new OperationResultDto { IsSuccess = true, Message = "Tour activated successfully." };
         }
@@ -97,11 +179,56 @@ namespace Infrastructure.Services.Admin
             var tour = await _context.Tours.FirstOrDefaultAsync(x => x.Id == tourId);
             if (tour == null)
                 return new OperationResultDto { IsSuccess = false, Message = "Tour not found." };
+            try
+            {
+                var result = await _tourRepository.DeleteAsync(tourId);
 
-            tour.IsActive = false;
-            await _context.SaveChangesAsync();
+                if (result)
+                {
+                    var folderName = "ToursImages";
+                    foreach (var image in tour.TourImages)
+                    {
+                        try
+                        {
+                            await _attachmentService.Delete(image.ImageUrl, folderName);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "Failed to delete image {ImageUrl} for tour {TourId}", image.ImageUrl, tourId);
+                        }
+                    }
 
-            return new OperationResultDto { IsSuccess = true, Message = "Tour deleted successfully." };
+                    await _notificationService.SendAsync(
+                     tour.GuideId,
+                     "Tour Deleted ✅",
+                             $"Your tour \"{tour.Title}\" has been deleted by the administrator.",
+                     NotificationType.TourDeleted,
+                     tour.Id.ToString(), "Tour");
+
+
+                    await _adminAuditService.WriteAsync(tour.GuideId, "DeleteTour", "Tour", tour.Id.ToString(), "Unknown", "Unknown");
+                    return new OperationResultDto { IsSuccess = true, Message = "Tour deleted successfully." };
+                }
+                else
+                {
+                    return new OperationResultDto { IsSuccess = false, Message = "Error occurred while deleting the tour." };
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while deleting the tour with ID {TourId}", tourId);
+
+                throw;
+            }
+
+        }
+        private async static Task<OperationResultDto> AlreadyDone()
+        {
+            return await Task.FromResult(new OperationResultDto
+            {
+                IsSuccess = false,
+                Message = "This action has already been performed on this tour."
+            });
         }
     }
 }

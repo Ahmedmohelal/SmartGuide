@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import toast from "react-hot-toast";
 import PageHeader from "../components/PageHeader";
+import Swal from "sweetalert2";
 import {
   fetchTours,
   activateTour,
   deactivateTour,
   deleteTour,
 } from "../services/adminService";
+
 
 const PAGE_SIZE = 10;
 

@@ -20,14 +20,15 @@ export const fetchBookings = (params = {}) =>
   );
 
 export const fetchPendingGuides = () =>
-  admin({ url: `${ENDPOINTS.ADMIN}/guides` }).then((r) => {
+  admin({ url: `${ENDPOINTS.ADMIN}/guides/pending` }).then((r) => {
     const all = r.data?.data || [];
-
-    return all.filter((g) => g.verificationStatus === "NotVerified");
+    return all.filter((g) => g.verificationStatus === "Pending");
   });
 
-export const fetchAllGuides = () =>
-  admin({ url: `${ENDPOINTS.ADMIN}/guides` }).then((r) => r.data?.data || []);
+export const fetchAllGuides = (page = 1, pageSize = 10) =>
+  admin({
+    url: `${ENDPOINTS.ADMIN}/guides?pageIndex=${page}&pageSize=${pageSize}`,
+  }).then((r) => r.data);
 
 export const fetchGuideDocuments = (guideId) => {
   const url = `${ENDPOINTS.ADMIN}/guides/${guideId}/documents`;

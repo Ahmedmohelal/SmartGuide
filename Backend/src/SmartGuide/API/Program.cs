@@ -1,8 +1,12 @@
 using API.Extentions;
 using API.Middleware;
+using API.Middlewares;
 using Application.Services.Interfaces;
 using Application.Settings;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
 using Infrastructure.Data;
+using Infrastructure.Data.DbSeeder;
 using Infrastructure.Hubs;
 using Infrastructure.Services.Email;
 using Infrastructure.Settings;
@@ -44,6 +48,10 @@ builder.Services.InfrastructureConfiguration(builder.Configuration);
 builder.Services.ApplicationConfiguration(builder.Configuration);
 
 
+FirebaseApp.Create(new AppOptions
+{
+    Credential = GoogleCredential.FromFile(builder.Configuration["Firebase:CredentialPath"])
+});
 
 
 builder.Services.AddControllers();
@@ -56,6 +64,16 @@ var app = builder.Build();
 
 await app.MigrateDataBaseAsync();
 await app.SeedPlacesDataAsync();
+
+//using (var scope = app.Services.CreateScope())
+//{
+//    var seeder =
+//        scope.ServiceProvider
+//             .GetRequiredService<PlacesSeeder>();
+
+//    await seeder.UpdateFirst10ImagesAsync();
+//}
+
 await app.SeedRolesDataAsync();
 await app.SeedAdminDataAsync();
 
@@ -82,11 +100,16 @@ app.Use(async (context, next) =>
 
     await next();
 });
+
+app.UseMiddleware<ExceptionMiddleware>();
+app.UseMiddleware<RedisCacheMiddleware>();
 app.UseAuthentication();
 app.UseMiddleware<GuideAccessGuardMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();
 app.MapHub<ChatHub>("/hubs/chat");
+app.MapHub<NotificationHub>("/hubs/notifications");
+
 
 app.Run();

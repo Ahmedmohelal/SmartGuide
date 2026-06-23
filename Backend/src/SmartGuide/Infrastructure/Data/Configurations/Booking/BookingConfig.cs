@@ -49,6 +49,10 @@ namespace Infrastructure.Data.Configurations.Booking
                    .HasMaxLength(20)
                    .IsRequired();
 
+            builder.HasOne(b => b.Tour)
+                    .WithMany()
+                    .HasForeignKey(b => b.TourId);
+
             builder.Property(e => e.PaymentIntentId)
                    .HasMaxLength(255)
                    .IsRequired(false);

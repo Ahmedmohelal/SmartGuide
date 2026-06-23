@@ -1,4 +1,5 @@
-﻿using Application.DTOs.SavedPlaces;
+﻿using Application.DTOs.AuthenticationDTOs;
+using Application.DTOs.SavedPlaces;
 using Application.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -20,7 +21,7 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> SaveAsync(
+        public async Task<ActionResult<OperationResultDto>> SaveAsync(
             [FromBody] SavePlaceRequestDto model,
             CancellationToken cancellationToken = default)
         {
@@ -58,7 +59,7 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetSavedAsync(
+        public async Task<ActionResult<IReadOnlyList<SavedPlaceDto>>> GetSavedAsync(
             CancellationToken cancellationToken)
         {
             var touristUserId =
@@ -76,7 +77,7 @@ namespace API.Controllers
         }
 
         [HttpDelete("{placeId}")]
-        public async Task<IActionResult> RemoveAsync(
+        public async Task<ActionResult<OperationResultDto>> RemoveAsync(
             [FromRoute] int placeId,
             CancellationToken cancellationToken)
         {

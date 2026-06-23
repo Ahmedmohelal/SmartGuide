@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Text;
-
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 namespace Application.Services.UseCases.PictureMaker
 {
     public class AttachmentService : IAttachmentService

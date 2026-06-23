@@ -1,4 +1,5 @@
-﻿using Domain.Entities.SavedPlaces;
+﻿using Domain.Entities.PlaceRatings;
+using Domain.Entities.SavedPlaces;
 using Domain.Entities.Tours;
 using System;
 using System.Collections.Generic;
@@ -32,6 +33,7 @@ namespace Domain.Entities.Home
 
         public int? StartYear { get; set; }
 
+        public List<PlaceRating> Ratings { get; set; } = new();
         public ICollection<TourStops> TourStops { get; set; }
            = new List<TourStops>();
         public ICollection<SavedPlace> SavedByTourists { get; set; }

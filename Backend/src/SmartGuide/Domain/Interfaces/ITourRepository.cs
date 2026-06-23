@@ -8,6 +8,7 @@ namespace Domain.Interfaces
     public interface ITourRepository
     {
         public Task<List<Tour>> GetGuideToursAsync(string guideId);
+        public Task<List<Tour>> GetTouristToursAsync(string touristId);
         public Task<Tour?> GetByIdAsync(Guid tourId);
         public Task AddAsync(Tour tour);
 
@@ -15,7 +16,10 @@ namespace Domain.Interfaces
         public Task ReplaceTourRelationsAsync(Tour tour, List<TourStops> stops, List<TourInclusion> inclusions, List<TourAddOn> addons);
 
         public Task ReplaceTourImagesAsync(Tour tour, List<TourImage> images);
-        public Task DeleteAsync(Guid tourId);
+        public Task ReplaceTourStopsAsync(Tour tour,List<TourStops> stops);
+        public Task ReplaceTourInclusionsAsync(Tour tour,List<TourInclusion> inclusions);
+        public Task ReplaceTourAddOnsAsync(Tour tour,List<TourAddOn> addons);
+        public Task<bool> DeleteAsync(Guid tourId);
 
         public Task<List<Tour>> GetToursByPlaceAsync(int placeId);
         Task<List<Tour>> GetAllActiveToursAsync();

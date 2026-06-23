@@ -95,23 +95,24 @@ namespace Infrastructure.Repository.Profile
             CancellationToken cancellationToken = default)
         {
             return await _context.SavedPlaces
-                .AsNoTracking()
-                .Where(x => x.TouristUserId == touristUserId)
-                .OrderByDescending(x => x.CreatedAtUtc)
-                .Join(
-                    _context.Places.AsNoTracking(),
-                    saved => saved.PlaceId,
-                    place => place.Id,
-                    (saved, place) => new SavedPlaceDto
-                    {
-                        PlaceId = place.Id,
-                        Name = place.Name,
-                        Description = place.Description,
-                        ImageUrl = place.ImageUrl,
-                        City = place.City,
-                        Rating = place.Rating
-                    })
-                .ToListAsync(cancellationToken);
+    .Include(x => x.Place)
+    .ThenInclude(x => x.Ratings)
+    .AsNoTracking()
+    .Where(x => x.TouristUserId == touristUserId)
+    .OrderByDescending(x => x.CreatedAtUtc)
+    .Select(x => new SavedPlaceDto
+    {
+        PlaceId = x.Place.Id,
+        Name = x.Place.Name,
+        Description = x.Place.Description,
+        ImageUrl = x.Place.ImageUrl,
+        City = x.Place.City,
+
+        Rating = x.Place.Ratings.Any()
+            ? x.Place.Ratings.Average(r => r.Rating)
+            : 0
+    })
+    .ToListAsync(cancellationToken);
         }
     }
 }

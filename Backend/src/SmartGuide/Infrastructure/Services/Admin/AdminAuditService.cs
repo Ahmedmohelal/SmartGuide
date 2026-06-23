@@ -1,7 +1,11 @@
-﻿using Application.DTOs.AdminDashboard;
+﻿using Application.Common.Pagination;
+using Application.DTOs.AdminDashboard;
+using Application.DTOs.Home;
 using Application.Services.Interfaces.Admin;
 using Domain.Entities.Admin;
 using Infrastructure.Data;
+using Infrastructure.Services.Admin.Specs;
+using Infrastructure.Services.Home;
 using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Services.Admin
@@ -32,26 +36,67 @@ namespace Infrastructure.Services.Admin
             await _context.SaveChangesAsync();
         }
 
-        public async Task<List<AdminAuditLogDto>> GetRecentAsync(int take = 100)
+        public async Task<Pagination<AdminAuditLogDto>>
+    GetRecentAsync(
+        AuditLogSpecParams param)
         {
-            take = Math.Clamp(take, 1, 500);
+            var spec =
+                new AuditLogsSpecification(
+                    param);
 
-            return await _context.AdminAuditLogs
+            var countSpec =
+                new AuditLogsCountSpecification(
+                    param);
+
+            var logsQuery =
+                SpecificationEvaluator<AdminAuditLog>
+                    .GetQuery(
+                        _context.AdminAuditLogs
+                            .AsQueryable(),
+                        spec);
+
+            var countQuery =
+                SpecificationEvaluator<AdminAuditLog>
+                    .GetQuery(
+                        _context.AdminAuditLogs
+                            .AsQueryable(),
+                        countSpec);
+
+            var logs = await logsQuery
+
                 .AsNoTracking()
-                .OrderByDescending(x => x.CreatedAtUtc)
-                .Take(take)
+
+                .ToListAsync();
+
+            var count = await countQuery
+                .CountAsync();
+
+            var mappedLogs = logs
                 .Select(x => new AdminAuditLogDto
                 {
                     Id = x.Id,
+
                     AdminId = x.AdminId,
+
                     Action = x.Action,
+
                     EntityType = x.EntityType,
+
                     EntityId = x.EntityId,
+
                     Details = x.Details,
+
                     IpAddress = x.IpAddress,
+
                     CreatedAtUtc = x.CreatedAtUtc
-                })
-                .ToListAsync();
+
+                }).ToList();
+
+            return new Pagination<AdminAuditLogDto>(
+                param.PageIndex,
+                param.PageSize,
+                count,
+                mappedLogs);
         }
     }
 }

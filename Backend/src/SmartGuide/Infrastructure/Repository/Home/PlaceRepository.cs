@@ -12,7 +12,7 @@ using System.Text;
 
 namespace Infrastructure.Repository.Home
 {
-    public class PlaceRepository<T> : IPlaceRepository<T> where T : class
+    public class PlaceRepository : IPlaceRepository<Place> 
     {
         private readonly ApplicationDbContext _context;
 
@@ -21,23 +21,23 @@ namespace Infrastructure.Repository.Home
             _context = context;
         }
 
-        public async Task<IReadOnlyList<T>> GetAllWithSpecAsync(ISpecification<T> spec)
+        public async Task<IReadOnlyList<Place>> GetAllWithSpecAsync(ISpecification<Place > spec)
         {
-            return await SpecificationEvaluator<T>
-                .GetQuery(_context.Set<T>(), spec)
+            return await SpecificationEvaluator<Place>
+                .GetQuery(_context.Set<Place>().Include(X=>X.Ratings), spec)
                 .ToListAsync();
         }
 
-        public async Task<int> CountAsync(ISpecification<T> spec)
+        public async Task<int> CountAsync(ISpecification<Place> spec)
         {
-            return await _context.Set<T>()
+            return await _context.Set<Place>()
                 .Where(spec.Criteria)
                 .CountAsync();
         }
 
-        public async Task<T?> GetByIdAsync(int id)
+        public async Task<Place?> GetByIdAsync(int id)
         {
-            return await _context.Set<T>().FindAsync(id);
+            return await _context.Places.Include(X=>X.Ratings).FirstOrDefaultAsync(X=>X.Id == id);
         }
     }
 }

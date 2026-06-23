@@ -6,7 +6,6 @@ namespace Infrastructure.Data.Entities.Enums
 {
     public enum GuideVerificationStatus
     {
-        NotVerified,
         Pending,
         Verified,
         Rejected

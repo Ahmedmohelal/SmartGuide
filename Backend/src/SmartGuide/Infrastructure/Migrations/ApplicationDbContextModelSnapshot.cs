@@ -74,9 +74,6 @@ namespace Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<DateOnly>("BookingDate")
-                        .HasColumnType("date");
-
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 
@@ -472,6 +469,89 @@ namespace Infrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Places");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Notifications.Notification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("NotificationType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("ReferenceId")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("ReferenceType")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "CreatedAt");
+
+                    b.HasIndex("UserId", "IsRead");
+
+                    b.ToTable("Notifications", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.PlaceRatings.PlaceRating", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("PlaceId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Review")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PlaceId");
+
+                    b.HasIndex("UserId", "PlaceId")
+                        .IsUnique();
+
+                    b.ToTable("PlaceRatings");
                 });
 
             modelBuilder.Entity("Domain.Entities.Profiles.TourGuide.TourGuideCity", b =>
@@ -891,6 +971,9 @@ namespace Infrastructure.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
 
+                    b.Property<string>("FcmToken")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("FirstName")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -1155,8 +1238,8 @@ namespace Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("Domain.Entities.Tours.Tour", null)
-                        .WithMany()
+                    b.HasOne("Domain.Entities.Tours.Tour", "Tour")
+                        .WithMany("Bookings")
                         .HasForeignKey("TourId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
@@ -1168,6 +1251,8 @@ namespace Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Slot");
+
+                    b.Navigation("Tour");
                 });
 
             modelBuilder.Entity("Domain.Entities.Book.BookingAddOn", b =>
@@ -1235,6 +1320,17 @@ namespace Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Conversation");
+                });
+
+            modelBuilder.Entity("Domain.Entities.PlaceRatings.PlaceRating", b =>
+                {
+                    b.HasOne("Domain.Entities.Home.Place", "Place")
+                        .WithMany("Ratings")
+                        .HasForeignKey("PlaceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Place");
                 });
 
             modelBuilder.Entity("Domain.Entities.Profiles.TourGuide.TourGuideCity", b =>
@@ -1444,6 +1540,8 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.Home.Place", b =>
                 {
+                    b.Navigation("Ratings");
+
                     b.Navigation("SavedByTourists");
 
                     b.Navigation("TourStops");
@@ -1465,6 +1563,8 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.Tours.Tour", b =>
                 {
+                    b.Navigation("Bookings");
+
                     b.Navigation("TourAddOns");
 
                     b.Navigation("TourImages");

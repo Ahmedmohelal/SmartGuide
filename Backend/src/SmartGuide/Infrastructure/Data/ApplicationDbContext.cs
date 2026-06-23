@@ -1,18 +1,20 @@
+using Domain.Entities.Admin;
 using Domain.Entities.Book;
+using Domain.Entities.Chat;
 using Domain.Entities.Favorites;
 using Domain.Entities.Home;
+using Domain.Entities.Notifications;
+using Domain.Entities.PlaceRatings;
 using Domain.Entities.Profiles.TourGuide;
 using Domain.Entities.Profiles.Tourist;
 using Domain.Entities.SavedPlaces;
 using Domain.Entities.Tours;
 using Domain.Entities.Wallet;
-using Domain.Entities.Admin;
 using Infrastructure.Data.Configurations.RefreshTokens;
 using Infrastructure.Data.Entities;
 using Infrastructure.Data.Entities.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Domain.Entities.Chat;
 
 namespace Infrastructure.Data
 {
@@ -55,6 +57,10 @@ namespace Infrastructure.Data
         public DbSet<ConversationParticipant> ChatConversationParticipants { get; set; }
         public DbSet<ChatMessage> ChatMessages { get; set; }
         public DbSet<ChatUserConnection> ChatUserConnections { get; set; }
+
+        public DbSet<Notification> Notifications { get; set; }
+
+        public DbSet<PlaceRating> PlaceRatings { get; set; }
 
 
         //public DbSet<SavedTourGuide> FavoriteTourGuides { get; set; }

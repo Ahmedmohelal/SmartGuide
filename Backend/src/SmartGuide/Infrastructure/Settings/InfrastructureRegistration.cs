@@ -2,10 +2,11 @@ using Application.DTOs.ProfileDTOs;
 using Application.DTOs.Saved;
 using Application.DTOs.SavedPlaces;
 using Application.Services.Interfaces.Admin;
-using Application.Services.Interfaces.Admin;
 using Application.Services.Interfaces.Auth;
+using Application.Services.Interfaces.Cashing;
 using Application.Services.Interfaces.Chat;
 using Application.Services.Interfaces.GuideDashboard;
+using Application.Services.Interfaces.Notifications;
 using Application.Services.Interfaces.Payment;
 using Application.Services.Interfaces.PictureMaker;
 using Application.Services.Interfaces.Profiles;
@@ -21,15 +22,18 @@ using Infrastructure.Data.Entities.Identity;
 using Infrastructure.Repository.Book;
 using Infrastructure.Repository.Chat;
 using Infrastructure.Repository.Home;
+using Infrastructure.Repository.PlaceRating;
 using Infrastructure.Repository.Profile;
 using Infrastructure.Repository.Tours;
 using Infrastructure.Services.Admin;
 using Infrastructure.Services.Auth;
+using Infrastructure.Services.Caching;
 using Infrastructure.Services.Chat;
 using Infrastructure.Services.Email;
 using Infrastructure.Services.Files;
 using Infrastructure.Services.GuideDashboard;
 using Infrastructure.Services.Identity;
+using Infrastructure.Services.Notifications;
 using Infrastructure.Services.Payment;
 using Infrastructure.Services.Token;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -39,6 +43,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using StackExchange.Redis;
+using System.Security.Authentication;
 using System.Text;
 
 namespace Infrastructure.Settings
@@ -49,7 +55,7 @@ namespace Infrastructure.Settings
         {
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(
-                    configuration.GetConnectionString("MainConnection"),
+                    configuration.GetConnectionString("DefaultConnection"),
                         sqlOptions => sqlOptions.EnableRetryOnFailure()
             ));
 
@@ -62,6 +68,7 @@ namespace Infrastructure.Settings
             })
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddDefaultTokenProviders();
+
             services.Configure<JWT>(configuration.GetSection("JWT"));
 
             var JWT = configuration.GetSection("JWT");
@@ -104,6 +111,8 @@ namespace Infrastructure.Settings
                    };
                });
 
+
+
             //Repositories 
             services.AddScoped<ITourRepository, TourRepository>();
             services.AddScoped<IProfileRepository<TourGuideProfileDto, UpdateTourGuideProfileDto>, TourGuideProfileRepository>();
@@ -111,12 +120,17 @@ namespace Infrastructure.Settings
             services.AddScoped<ITouristFavoritesRepository<SavedTourGuideDto>, TouristFavoritesRepository>();
             services.AddScoped<IBookingRepository, BookingRepository>();
             services.AddScoped<ITouristFavoritesRepository<SavedTourGuideDto>, TouristFavoritesRepository>();
-            services.AddScoped<IPlaceRepository<Place>, PlaceRepository<Place>>();
+            services.AddScoped<IPlaceRepository<Place>, PlaceRepository>();
 
             //Services
             services.Configure<GoogleAuthOptions>(configuration.GetSection(GoogleAuthOptions.SectionName));
             services.Configure<EmailSettings>(configuration.GetSection(EmailSettings.SectionName));
             services.Configure<StripeSettings>(configuration.GetSection(StripeSettings.SectionName));
+            services.Configure<CloudinarySettings>(configuration.GetSection("CloudinarySettings"));
+
+
+
+
 
             services.AddHttpContextAccessor();
             services.AddScoped<IImageUrlService, ImageUrlService>();
@@ -137,6 +151,9 @@ namespace Infrastructure.Settings
             services.AddScoped<ITourAdminService, TourAdminService>();
             services.AddScoped<IBookingAdminService, BookingAdminService>();
             services.AddScoped<IGuideDashboardService, GuideDashboardService>();
+            services.AddScoped<INotificationService, NotificationService>();
+            services.AddScoped<IAttachmentService, CloudinaryAttachmentService>();
+            //services.AddScoped<IAdminAuditService, AdminAuditService>();
 
 
             //seeders
@@ -155,6 +172,43 @@ namespace Infrastructure.Settings
             services.AddScoped<IChatUserReader, ChatUserReader>();
             services.AddSignalR();
             services.AddSingleton<IUserIdProvider, NameIdentifierUserIdProvider>();
+            services.AddScoped<IPlaceRatingRepository, PlaceRatingRepository>();
+            services.AddScoped<IFirebaseNotificationService, FirebaseNotificationService>();
+
+
+            services.AddSingleton<IConnectionMultiplexer>(sp =>
+            {
+                var config =
+                    sp.GetRequiredService<IConfiguration>();
+
+                var options =
+                    new ConfigurationOptions
+                    {
+                        EndPoints =
+                        {
+                             {
+                                 config["Redis:Host"]!,
+                                 int.Parse(config["Redis:Port"]!)
+                             }
+                        },
+
+                        User =
+                            config["Redis:User"],
+
+                        Password =
+                            config["Redis:Password"],
+
+                        AbortOnConnectFail = false,
+
+                        Ssl = false
+                    };
+
+                return ConnectionMultiplexer
+                    .Connect(options);
+            });
+
+            services.AddScoped<IRedisCacheService,RedisCacheService>();
+
 
             return services;
         }

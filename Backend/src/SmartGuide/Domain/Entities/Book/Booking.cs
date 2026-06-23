@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Domain.Entities.Tours;
+using System;
 using System.Collections.Generic;
 
 namespace Domain.Entities.Book
@@ -9,12 +10,6 @@ namespace Domain.Entities.Book
         public string GuideId { get; set; } = null!;
         public string TouristId { get; set; } = null!;
         public Guid TourId { get; set; }
-        public DateOnly BookingDate { get; set; }
-        public TimeOnly StartTime { get; set; }
-        public TimeOnly EndTime { get; set; }
-        //public Guid SlotId { get; set; }
-
-        //public BookingSlot Slot { get; set; }
         public BookingStatus Status { get; set; } = BookingStatus.Pending;
         public Guid SlotId { get; set; }
         public decimal TotalPrice { get; set; }
@@ -25,5 +20,7 @@ namespace Domain.Entities.Book
 
         public BookingSlot Slot { get; set; } = null!;
         public List<BookingAddOn> SelectedAddOns { get; set; } = new();
+
+        public DateTime? ConfirmedAtUtc { get; set; }
     }
 }

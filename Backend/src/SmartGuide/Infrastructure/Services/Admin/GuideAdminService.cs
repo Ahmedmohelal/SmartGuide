@@ -1,11 +1,17 @@
-﻿using Application.DTOs.AdminDashboard;
+﻿using Application.Common.Pagination;
+using Application.DTOs.AdminDashboard;
 using Application.DTOs.AuthenticationDTOs;
+using Application.DTOs.Home;
 using Application.Services.Interfaces.Admin;
 using Application.Services.Interfaces.Auth;
+using Application.Services.Interfaces.Notifications;
 using Application.Services.Interfaces.PictureMaker;
+using Domain.Entities.Notifications;
 using Infrastructure.Data;
-using Infrastructure.Data.Entities.Identity;
 using Infrastructure.Data.Entities.Enums;
+using Infrastructure.Data.Entities.Identity;
+using Infrastructure.Services.Admin.Specs;
+using Infrastructure.Services.Home;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -19,6 +25,7 @@ namespace Infrastructure.Services.Admin
         private readonly IRefreshTokenService _refreshTokenService;
         private readonly IAdminAuditService _auditService;
         private readonly ILogger<GuideAdminService> _logger;
+        private readonly INotificationService _notificationService;
 
         public GuideAdminService(
             ApplicationDbContext context,
@@ -26,7 +33,8 @@ namespace Infrastructure.Services.Admin
             IImageUrlService imageUrlService,
             IRefreshTokenService refreshTokenService,
             IAdminAuditService auditService,
-            ILogger<GuideAdminService> logger)
+            ILogger<GuideAdminService> logger,
+            INotificationService notificationService)
         {
             _context = context;
             _emailService = emailService;
@@ -34,39 +42,65 @@ namespace Infrastructure.Services.Admin
             _refreshTokenService = refreshTokenService;
             _auditService = auditService;
             _logger = logger;
+            _notificationService = notificationService;
         }
 
-
-
-        public async Task<List<AdminGuideVerificationDto>> GetPendingGuidesAsync()
+        public async Task<Pagination<AdminGuideVerificationDto>> GetPendingGuidesAsync(AdminGuideSpecParams param)
         {
-            var users = await _context.Users
+            param.VerificationStatus = GuideVerificationStatus.Pending.ToString();
+
+            var spec = new AdminGuidesSpecification(param);
+            var countSpec = new AdminGuidesCountSpecification(param);
+
+            var usersQuery = SpecificationEvaluator<ApplicationUser>
+                .GetQuery(_context.Users.Include(x => x.TourGuideProfile).AsQueryable(), spec);
+
+            var countQuery = SpecificationEvaluator<ApplicationUser>
+                .GetQuery(_context.Users.AsQueryable(), countSpec);
+
+            var users = await usersQuery.AsNoTracking().ToListAsync();
+            var count = await countQuery.CountAsync();
+
+            var users = await usersQuery
+
                 .AsNoTracking()
-                .Include(u => u.TourGuideProfile)
-                .Where(u =>
-                    u.Role == "TourGuide" &&
-                    (u.IsGuideVerified == GuideVerificationStatus.Pending ||
-                     u.IsGuideVerified == GuideVerificationStatus.NotVerified))
+
                 .ToListAsync();
 
-            return users.Select(u => AdminUserMapper.MapToVerificationDto(u, _imageUrlService)).ToList();
+            var count = await countQuery
+                .CountAsync();
+
+            var mappedUsers = users
+                .Select(u => AdminUserMapper.MapToVerificationDto(u, _imageUrlService))
+                .ToList();
+
+            return new Pagination<AdminGuideVerificationDto>(param.PageIndex, param.PageSize, count, mappedUsers);
         }
 
-        public async Task<List<AdminGuideVerificationDto>> GetAllGuidesAsync()
+        public async Task<Pagination<AdminGuideVerificationDto>> GetAllGuidesAsync(AdminGuideSpecParams param)
         {
-            var users = await _context.Users
-                .AsNoTracking()
-                .Include(u => u.TourGuideProfile)
-                .Where(u => u.Role == "TourGuide")
-                .ToListAsync();
+            var spec = new AdminGuidesSpecification(param);
+            var countSpec = new AdminGuidesCountSpecification(param);
 
-            return users.Select(u => AdminUserMapper.MapToVerificationDto(u, _imageUrlService)).ToList();
+            var usersQuery = SpecificationEvaluator<ApplicationUser>
+                .GetQuery(_context.Users.Include(x => x.TourGuideProfile).AsQueryable(), spec);
+
+            var countQuery = SpecificationEvaluator<ApplicationUser>
+                .GetQuery(_context.Users.AsQueryable(), countSpec);
+
+            var users = await usersQuery.AsNoTracking().ToListAsync();
+            var count = await countQuery.CountAsync();
+
+            var mappedUsers = users
+                .Select(u => AdminUserMapper.MapToVerificationDto(u, _imageUrlService))
+                .ToList();
+
+            return new Pagination<AdminGuideVerificationDto>(param.PageIndex, param.PageSize, count, mappedUsers);
         }
 
         public async Task<OperationResultDto> ApproveGuideAsync(string guideId)
         {
-            var user = await _context.Users
-                .FirstOrDefaultAsync(x => x.Id == guideId);
+            var user = await _context.Users.FirstOrDefaultAsync(x => x.Id == guideId);
 
             if (user == null)
                 return new OperationResultDto { IsSuccess = false, Message = "Guide not found." };
@@ -76,7 +110,17 @@ namespace Infrastructure.Services.Admin
 
             user.IsGuideVerified = GuideVerificationStatus.Verified;
             user.GuideAccountStatus = GuideAccountStatus.Active;
+
+            _context.Users.Update(user);
+
             await _context.SaveChangesAsync();
+
+            await _notificationService.SendAsync(
+                guideId,
+                "Account Approved 🎉",
+                "Your tour guide account has been approved. You can now create tours!",
+                NotificationType.GuideApproved,
+                guideId, "Guide");
 
             try
             {
@@ -117,7 +161,15 @@ namespace Infrastructure.Services.Admin
             user.GuideAccountStatus = GuideAccountStatus.Rejected;
             user.LockoutEnabled = true;
             user.LockoutEnd = DateTimeOffset.UtcNow.AddYears(100);
+            _context.Users.Update(user);
             await _context.SaveChangesAsync();
+
+            await _notificationService.SendAsync(
+                guideId,
+                "Account Not Approved",
+                $"Your verification was rejected. Reason: {reason}",
+                NotificationType.GuideRejected,
+                guideId, "Guide");
 
             try
             {
@@ -153,7 +205,15 @@ namespace Infrastructure.Services.Admin
             user.LockoutEnabled = false;
             user.LockoutEnd = null;
             user.ForceLogoutRequired = false;
+            _context.Users.Update(user);
             await _context.SaveChangesAsync();
+
+            await _notificationService.SendAsync(
+                guideId,
+                "Account Activated ✅",
+                "Your account is now active again.",
+                NotificationType.AccountActivated,
+                guideId, "Guide");
 
             await _auditService.WriteAsync(adminId, "ActivateGuide", "Guide", user.Id, reason, ipAddress);
 
@@ -162,17 +222,39 @@ namespace Infrastructure.Services.Admin
 
         public async Task<OperationResultDto> SuspendGuideAsync(string guideId, string adminId, string reason, string? ipAddress)
         {
-            return await ChangeGuideAccessStateAsync(guideId, adminId, reason, ipAddress, GuideAccountStatus.Suspended, "SuspendGuide");
+            return await ChangeGuideAccessStateAsync(
+                guideId,
+                adminId,
+                reason,
+                ipAddress,
+                GuideAccountStatus.Suspended,
+                "SuspendGuide",
+                lockoutDuration: TimeSpan.FromDays(30));
         }
+
 
         public async Task<OperationResultDto> BanGuideAsync(string guideId, string adminId, string reason, string? ipAddress)
         {
-            return await ChangeGuideAccessStateAsync(guideId, adminId, reason, ipAddress, GuideAccountStatus.Banned, "BanGuide");
+            return await ChangeGuideAccessStateAsync(
+                guideId,
+                adminId,
+                reason,
+                ipAddress,
+                GuideAccountStatus.Banned,
+                "BanGuide",
+                lockoutDuration: TimeSpan.FromDays(365 * 100));
         }
 
         public async Task<OperationResultDto> PutUnderReviewAsync(string guideId, string adminId, string reason, string? ipAddress)
         {
-            return await ChangeGuideAccessStateAsync(guideId, adminId, reason, ipAddress, GuideAccountStatus.UnderReview, "PutGuideUnderReview");
+            return await ChangeGuideAccessStateAsync(
+                guideId,
+                adminId,
+                reason,
+                ipAddress,
+                GuideAccountStatus.UnderReview,
+                "PutGuideUnderReview",
+                lockoutDuration: TimeSpan.FromDays(30));
         }
 
         public async Task<OperationResultDto> ForceLogoutGuideAsync(string guideId, string adminId, string reason, string? ipAddress)
@@ -181,13 +263,18 @@ namespace Infrastructure.Services.Admin
             if (user == null)
                 return new OperationResultDto { IsSuccess = false, Message = "Guide not found." };
 
+            if (user.ForceLogoutRequired)
+                return new OperationResultDto { IsSuccess = false, Message = "Guide is already forced to log out." };
+
             await _refreshTokenService.RevokeAllUserTokensAsync(guideId, CancellationToken.None);
             user.ForceLogoutRequired = true;
             await _context.SaveChangesAsync();
 
             await _auditService.WriteAsync(adminId, "ForceLogoutGuide", "Guide", user.Id, reason, ipAddress);
+
             return new OperationResultDto { IsSuccess = true, Message = "Guide logged out from all sessions." };
         }
+
 
         private async Task<OperationResultDto> ChangeGuideAccessStateAsync(
             string guideId,
@@ -195,17 +282,42 @@ namespace Infrastructure.Services.Admin
             string reason,
             string? ipAddress,
             GuideAccountStatus targetStatus,
-            string action)
+            string action,
+            TimeSpan lockoutDuration)
         {
             var user = await GetGuideAsync(guideId);
             if (user == null)
                 return new OperationResultDto { IsSuccess = false, Message = "Guide not found." };
 
+
+
+
             user.GuideAccountStatus = targetStatus;
             user.ForceLogoutRequired = true;
             user.LockoutEnabled = true;
-            user.LockoutEnd = DateTimeOffset.UtcNow.AddYears(100);
+            user.LockoutEnd = DateTimeOffset.UtcNow.Add(lockoutDuration);
+
             await _context.SaveChangesAsync();
+
+            var (notifTitle, notifType) = targetStatus switch
+            {
+                GuideAccountStatus.Suspended =>
+                    ("Account Suspended ⚠️", NotificationType.AccountSuspended),
+                GuideAccountStatus.Banned =>
+                    ("Account Banned 🚫", NotificationType.AccountBanned),
+                GuideAccountStatus.UnderReview =>
+                    ("Account Under Review 🔍", NotificationType.AccountUnderReview),
+                _ =>
+                    ("Account Status Updated", NotificationType.AccountActivated)
+            };
+
+            await _notificationService.SendAsync(
+                guideId,
+                notifTitle,
+                $"Reason: {reason}",
+                notifType,
+                guideId, "Guide");
+
             await _refreshTokenService.RevokeAllUserTokensAsync(guideId, CancellationToken.None);
 
             await _auditService.WriteAsync(adminId, action, "Guide", user.Id, reason, ipAddress);
@@ -221,12 +333,11 @@ namespace Infrastructure.Services.Admin
         {
             var user = await _context.Users.FirstOrDefaultAsync(x => x.Id == guideId);
             if (user == null || user.Role != "TourGuide")
-            {
                 return null;
-            }
 
             return user;
         }
+
         public async Task<GuideDocumentsDto?> GetGuideDocumentsAsync(string guideId)
         {
             var guide = await _context.Users
@@ -244,6 +355,14 @@ namespace Infrastructure.Services.Admin
                 LicenseImageUrl = _imageUrlService.ToPublicImageUrl(guide.GuideLicenseImage, "licenses"),
                 Status = guide.IsGuideVerified.ToString()
             };
+        }
+        private async static Task<OperationResultDto> AlreadyDone()
+        {
+            return await Task.FromResult(new OperationResultDto
+            {
+                IsSuccess = false,
+                Message = "This action has already been performed on this guide."
+            });
         }
     }
 }

@@ -1,6 +1,8 @@
 ﻿using Application.DTOs.AuthenticationDTOs;
 using Application.DTOs.Saved;
+using Application.Services.Interfaces.Notifications;
 using Application.Services.Interfaces.Profiles;
+using Domain.Entities.Notifications;
 using Domain.Interfaces;
 using System;
 using System.Collections.Generic;
@@ -11,10 +13,14 @@ namespace Application.Services.UseCases.Profiles
     public class TouristFavoritesService : ITouristFavoritesService
     {
         private readonly ITouristFavoritesRepository<SavedTourGuideDto> _repository;
+        private readonly INotificationService _notificationService;
 
-        public TouristFavoritesService(ITouristFavoritesRepository<SavedTourGuideDto> repository)
+        public TouristFavoritesService(
+            ITouristFavoritesRepository<SavedTourGuideDto> repository,
+            INotificationService notificationService)
         {
             _repository = repository;
+            _notificationService = notificationService;
         }
         public Task<IReadOnlyList<SavedTourGuideDto>> GetSavedAsync(string touristUserId, CancellationToken cancellationToken = default)
         {
@@ -63,6 +69,14 @@ namespace Application.Services.UseCases.Profiles
                 return new OperationResultDto { IsSuccess = false, Message = "Tour guide already saved." };
 
             await _repository.AddFavoriteAsync(touristUserId, guideUserId, cancellationToken);
+
+            await _notificationService.SendAsync(
+                guideUserId,
+                "New Follower ⭐",
+                "A tourist has added you to their saved guides.",
+                NotificationType.GuideSaved,
+                touristUserId, "Tourist",
+                cancellationToken);
 
             return new OperationResultDto { IsSuccess = true, Message = "Tour guide saved successfully." };
         }

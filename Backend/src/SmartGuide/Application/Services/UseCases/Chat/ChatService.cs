@@ -130,18 +130,59 @@ namespace Application.Services.UseCases.Chat
             var ids = list.Select(c => c.Id).ToList();
             var unread = await _messages.GetUnreadCountsAsync(ids, userId, cancellationToken);
 
-            var items = list.Select(c => new ConversationSummaryDto
+
+            //        var items = (await Task.WhenAll(
+            //list.Select(async c => new ConversationSummaryDto
+            //        {
+            //            Id = c.Id,
+            //            TouristUserId = c.TouristUserId,
+            //            GuideUserId = c.GuideUserId,
+
+            //            ProfilePictureUrl = c.TouristUserId == userId
+            //                ? await _users.GetProfilePictureUrlAsync(c.GuideUserId)
+            //                : await _users.GetProfilePictureUrlAsync(c.TouristUserId),
+
+            //            FullName = c.TouristUserId == userId
+            //                ? await _users.GetFullNameAsync(c.GuideUserId)
+            //                : await _users.GetFullNameAsync(c.TouristUserId),
+
+            //            CreatedAtUtc = c.CreatedAtUtc,
+            //            UpdatedAtUtc = c.UpdatedAtUtc,
+            //            LastMessagePreview = c.LastMessagePreview,
+            //            LastMessageSentAtUtc = c.LastMessageSentAtUtc,
+            //            UnreadCount = unread.TryGetValue(c.Id, out var u) ? u : 0,
+            //            IsMessagingBlocked = c.IsMessagingBlocked
+            //        })
+            //    )).ToList();
+
+            var items = new List<ConversationSummaryDto>();
+
+            foreach (var c in list)
             {
-                Id = c.Id,
-                TouristUserId = c.TouristUserId,
-                GuideUserId = c.GuideUserId,
-                CreatedAtUtc = c.CreatedAtUtc,
-                UpdatedAtUtc = c.UpdatedAtUtc,
-                LastMessagePreview = c.LastMessagePreview,
-                LastMessageSentAtUtc = c.LastMessageSentAtUtc,
-                UnreadCount = unread.TryGetValue(c.Id, out var u) ? u : 0,
-                IsMessagingBlocked = c.IsMessagingBlocked
-            }).ToList();
+                var otherUserId =
+                    c.TouristUserId == userId
+                    ? c.GuideUserId
+                    : c.TouristUserId;
+
+                var fullName = await _users.GetFullNameAsync(otherUserId);
+
+                var photo = await _users.GetProfilePictureUrlAsync(otherUserId);
+
+                items.Add(new ConversationSummaryDto
+                {
+                    Id = c.Id,
+                    FullName = fullName,
+                    ProfilePictureUrl = photo,
+                    TouristUserId = c.TouristUserId,
+                    GuideUserId = c.GuideUserId,
+                    CreatedAtUtc = c.CreatedAtUtc,
+                    UpdatedAtUtc = c.UpdatedAtUtc,
+                    LastMessagePreview = c.LastMessagePreview,
+                    LastMessageSentAtUtc = c.LastMessageSentAtUtc,
+                    UnreadCount = unread.TryGetValue(c.Id, out var u) ? u : 0,
+                    IsMessagingBlocked = c.IsMessagingBlocked
+                });
+            }
 
             return ChatActionResult<PagedResultDto<ConversationSummaryDto>>.Ok(new PagedResultDto<ConversationSummaryDto>
             {
@@ -241,6 +282,18 @@ namespace Application.Services.UseCases.Chat
 
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
+            await _realtime.PublishConversationSummaryUpdatedAsync(conversation.Id,
+                     new ConversationUpdatedRealtimeDto
+                     {
+                         ConversationId = conversation.Id,
+                         LastMessagePreview = conversation.LastMessagePreview,
+                         LastMessageSentAtUtc = conversation.LastMessageSentAtUtc,
+                         IsEdited = false,
+                         IsDeleted = false
+                     },
+                     cancellationToken);
+
+
             var dto = MapMessageDto(message);
             var realtime = ToRealtimeDto(message);
 
@@ -290,20 +343,43 @@ namespace Application.Services.UseCases.Chat
             message.EditedAtUtc = now;
             _messages.Update(message);
 
-            var conversation = await _conversations.GetByIdForUpdateAsync(message.ConversationId, cancellationToken);
+            var conversation = await _conversations.GetByIdForUpdateAsync(message.ConversationId,cancellationToken);
+
             if (conversation != null && !conversation.IsDeleted)
             {
                 conversation.UpdatedAtUtc = now;
-                var latest = await _messages.GetLatestNonDeletedAsync(conversation.Id, cancellationToken);
-                if (latest != null)
+
+                if (conversation.LastMessageSentAtUtc == message.SentAtUtc)
                 {
-                    conversation.LastMessagePreview = latest.Content.Length > 200 ? latest.Content[..200] : latest.Content;
-                    conversation.LastMessageSentAtUtc = latest.SentAtUtc;
+                    conversation.LastMessagePreview =
+                        newContent.Length > 200
+                            ? newContent[..200]
+                            : newContent;
+
+                    conversation.LastMessageSentAtUtc =
+                        message.SentAtUtc;
                 }
+
                 _conversations.Update(conversation);
             }
 
             await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            if (conversation != null)
+            {
+                await _realtime.PublishConversationSummaryUpdatedAsync(
+                    conversation.Id,
+                    new ConversationUpdatedRealtimeDto
+                    {
+                        ConversationId = conversation.Id,
+                        LastMessagePreview = conversation.LastMessagePreview,
+                        LastMessageSentAtUtc = conversation.LastMessageSentAtUtc,
+                        IsEdited = true,
+                        IsDeleted = false
+                    },
+                    cancellationToken);
+            }
+
 
             var dto = MapMessageDto(message);
             await _realtime.PublishMessageEditedAsync(message.ConversationId, new ChatMessageEditedRealtimeDto
@@ -346,6 +422,7 @@ namespace Application.Services.UseCases.Chat
             if (conversation != null && !conversation.IsDeleted)
             {
                 conversation.UpdatedAtUtc = now;
+
                 var latest = await _messages.GetLatestNonDeletedAsync(conversation.Id, cancellationToken);
                 if (latest != null)
                 {
@@ -363,6 +440,22 @@ namespace Application.Services.UseCases.Chat
             }
 
             await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            if (conversation != null)
+            {
+                await _realtime.PublishConversationSummaryUpdatedAsync(
+                    conversation.Id,
+                    new ConversationUpdatedRealtimeDto
+                    {
+                        ConversationId = conversation.Id,
+                        LastMessagePreview = conversation.LastMessagePreview,
+                        LastMessageSentAtUtc = conversation.LastMessageSentAtUtc,
+                        IsEdited = false,
+                        IsDeleted = true
+                    },
+                    cancellationToken);
+            }
+
 
             await _realtime.PublishMessageDeletedAsync(message.ConversationId, new ChatMessageDeletedRealtimeDto
             {
@@ -535,7 +628,8 @@ namespace Application.Services.UseCases.Chat
                 UnreadCount = unread.TryGetValue(c.Id, out var u) ? u : 0,
                 IsMessagingBlocked = c.IsMessagingBlocked,
                 OtherPartyUserId = otherPartyId,
-                OtherPartyDisplayName = other?.DisplayName
+                OtherPartyDisplayName = other?.DisplayName,
+                OtherPartyProfilePictureUrl = await _users.GetProfilePictureUrlAsync(otherPartyId, cancellationToken)
             };
         }
 
