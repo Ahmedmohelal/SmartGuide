@@ -355,6 +355,8 @@ export default function GuideProfile() {
       await fetchDashboard();
       await fetchGuideBookings();
     } catch (error) {
+       console.log(error.response?.status);
+  console.log(error.response?.data);
       toast.error(error?.response?.data?.message || "Failed to delete tour");
       console.error("Delete error:", error);
     } finally {

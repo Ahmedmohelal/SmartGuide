@@ -218,5 +218,6 @@ export const deleteTour = async (id) => {
   const res = await axios.delete(`${ENDPOINTS.DASHBOARD_TOUR}/${id}`, {
     headers: authHeader(),
   });
+  console.log(res);
   return res.data;
 };
