@@ -120,7 +120,7 @@ export default function Places() {
       <div className="min-h-screen p-10 bg-gradient-to-br from-[#0a7462] via-white to-[#e7f0ff] ">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-8 mx-auto m-20">
           <div>
-            <h1 className="text-4xl font-bold text-white mb-2">Tourist Places</h1>
+            <h1 className="text-4xl font-bold text-white mb-2">Places</h1>
             
           </div>
 
