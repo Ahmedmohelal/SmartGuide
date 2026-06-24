@@ -12,6 +12,7 @@ import {
 import { getPlaceImage, getPlaceTitle } from "../Services/utils/placeUtils";
 
 import { getToken, isGuide } from "../Services/utils/tokenUtils";
+import { useNavigate } from "react-router-dom";
 
 export default function PlaceDetails() {
   const { id } = useParams();
@@ -31,6 +32,7 @@ export default function PlaceDetails() {
   const [hasSubmittedRating, setHasSubmittedRating] = useState(false);
 
   const isAuthenticated = !!getToken();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (id) {
@@ -101,28 +103,40 @@ export default function PlaceDetails() {
   };
 
   const handleSubmitRating = async () => {
-    if (!isAuthenticated) {
-      window.location.href = "/login";
-      return;
-    }
+  if (!isAuthenticated) {
+    window.location.href = "/login";
+    return;
+  }
 
-    if (!selectedRating) return;
+  if (!selectedRating) return;
 
-    try {
-      setSubmittingRating(true);
+  try {
+    setSubmittingRating(true);
 
-      await ratePlace(place.id, selectedRating, review);
+    await ratePlace(place.id, selectedRating, review);
 
-      await fetchPlace();
+    // refresh details page data
+    await fetchPlace();
 
-      setReview("");
-      setHasSubmittedRating(true);
-    } catch (error) {
-      console.error("Failed to submit rating:", error);
-    } finally {
-      setSubmittingRating(false);
-    }
-  };
+    setReview("");
+    setHasSubmittedRating(true);
+
+    // 🔥 مهم: نرجّع Places مع تحديث
+    navigate("/places", {
+      state: {
+        refresh: true,
+        updatedPlace: {
+          id: place.id,
+          rating: place?.rating ?? place?.averageRating ?? 0,
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Failed to submit rating:", error);
+  } finally {
+    setSubmittingRating(false);
+  }
+};
 
   if (!place) {
     return (

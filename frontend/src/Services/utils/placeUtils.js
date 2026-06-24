@@ -14,14 +14,12 @@ const convertWikiFileUrl = (url) => {
 
 export const getPlaceImage = (place) => {
   const url = place?.imageUrl || place?.ImageUrl || place?.image || place?.coverImage || "";
-  return (
-    convertWikiFileUrl(url) ||
-    "https://images.unsplash.com/photo-1539768942893-daf53e449371?auto=format&fit=crop&w=800&q=80"
-  );
+  const convertedUrl = convertWikiFileUrl(url);
+  return convertedUrl || "https://images.unsplash.com/photo-1539768942893-daf53e449371?auto=format&fit=crop&w=800&q=80";
 };
 
 export const getPlaceRating = (place) =>
-  Number(place?.averageRating ?? 0);
+  Number(place?.rating ?? place?.averageRating ?? 0);
 
 export const getPlaceTitle = (place) => place?.name || place?.title || "Untitled Place";
 export const getPlaceDescription = (place) => place?.description || place?.desc || "";
